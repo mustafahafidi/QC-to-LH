@@ -1,10 +1,12 @@
-module Reverse where
+module Main where
 import           Test.QuickCheck
 import           Prelude                 hiding ( (++)
                                                 , sum
                                                 , const
                                                 , id
                                                 )
+import           Equational
+
 
 {-@ LIQUID "--higherorder"    @-}
 {-@ LIQUID "--exact-data-con" @-}
@@ -32,17 +34,13 @@ prop_const a = (const a) == 1
 const :: a -> Int
 const _ = 1
 
+{-@ reflect const @-}
 
-{-@ proof :: a:a -> {const a = 1} @-}
-proof :: a -> ()
-(const a) == 1
+{-@ constProof :: a:a -> {const a = 1} @-}
+constProof :: a -> Proof
+constProof x = const x ==. 1 *** QED
 
-{- 
-- 
-- find a library that uses quickcheck to take into consideration (smaller than xmonad)
-- xmonad quickcheck tests
-16:30 weekly calls
- -}
+
 
 
 {- SUM two params FUNCTION -}
@@ -52,6 +50,13 @@ prop_sum a b = (sum a b) == a + b
 {-@ sum :: a:Int -> b:Int -> {v:Int | v = a + b} @-}
 sum :: Int -> Int -> Int
 sum a b = a + b
+
+
+{-@ reflect sum @-}
+{-@ proof_sum :: a:Int -> b:Int -> {(sum a b) = a + b} @-}
+proof_sum :: Int -> Int -> Proof
+proof_sum a b = (sum a b) ==. a + b
+                *** QED
 
 
 
@@ -67,15 +72,22 @@ size :: [a] -> Int
 size []       = 0
 size (_ : xs) = 1 + size xs
 
-prop_len :: [Int] -> Bool
-prop_len xs = (len xs) == (size xs) -- transform "size" to a measure (or reflect it) then used it in the refinement type
-
-{-@ len :: ls:[a] -> {v:Int | v == size ls } @-}
+{-@ reflect len @-}
+{-@ len :: ls:[a] -> {v:Int | v = size ls } @-}
 len :: [a] -> Int
 len []       = 0
 len (_ : xs) = 1 + len xs
 
+prop_len :: [Int] -> Bool
+prop_len xs = (len xs) == (size xs) -- transform "size" to a measure (or reflect it) then used it in the refinement type
 
+
+{-@ proof_len :: xs:[Int] -> {(len xs) = (size xs)} @-}
+proof_len  :: [Int] -> Proof
+proof_len []       = len [] ==. 0
+                      *** QED 
+proof_len (x : xs) =  len (x:xs) ==. 1 + len xs
+                      *** QED 
 
 
 
