@@ -10,13 +10,18 @@ where
 import           Equational
 
 import           Test.QuickCheck
-import           Data.Maybe                     ( fromJust )
+-- import           Data.Maybe                     ( fromJust )
 import           Data.List                      ( genericTake )
 import Prelude hiding (foldl, reverse, (++), (.))
 
 
 {-@ LIQUID "--higherorder"    @-}
 {-@ LIQUID "--exact-data-con" @-}
+
+{-@ data Maybe a = Nothing | Just a @-}
+{-@ reflect fromJust @-}
+fromJust :: Maybe a -> a
+fromJust (Just a) = a
 
 {-# INLINE (.) #-}
 
@@ -40,7 +45,10 @@ foldl :: (b -> a -> b) -> b -> [a] -> b
 foldl f b []        = b 
 foldl f b (x:xs) = foldl f (f b x) xs
 
+-- LIBRARY CODE
 
+
+{-@ reflect mDigitsRev @-}
 mDigitsRev
     :: Integral n
     => n         -- ^ The base to use.
@@ -58,6 +66,7 @@ mDigitsRev base i = if base < 1
 
 -- | Returns the digits of a positive integer as a Maybe list.
 --   or Nothing if a zero or negative base is given
+{-@ reflect mDigits @-}
 mDigits
     :: Integral n
     => n -- ^ The base to use.
@@ -107,11 +116,9 @@ prop_digitsRoundTrip i b = i > 0 ==> b > 0 ==> i == (unDigits b . digits b) i
 
 {-@ digitsRoundTrip :: {b:Int | b>0} -> {i:Int | i>0} -> { i = 1} @-}
 digitsRoundTrip :: Int -> Int -> Proof
-
 digitsRoundTrip b i = 
                     i ==. (unDigits b . digits b) i
                      *** QED
-
 
 
 main = do
