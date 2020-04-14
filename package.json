@@ -1,0 +1,15 @@
+{
+  "name": "master-thesis",
+  "version": "1.0.0",
+  "main": "",
+  "scripts": {
+    "liquid-spy": "cd src && spy run  -n -g *.hs \"stack exec -- liquid \"$(pwd)/Main.hs\"  \" .",
+    "dev": "cd src && runhaskell Main.hs",
+    "dev-spy": "cd src && spy run -n  \"runhaskell Main.hs\" .",
+    "liquid": "stack exec -- liquid -isrc/",
+    "spy": "spy run -n "
+  },
+  "repository": "git@github.com:mustafahafidi/QC-to-LH.git",
+  "author": "Mustafa <mustafahafidi96@gmail.com>",
+  "license": "MIT"
+}

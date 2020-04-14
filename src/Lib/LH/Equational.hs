@@ -1,4 +1,4 @@
-module Equational where
+module Lib.LH.Equational where
 
 -------------------------------------------------------------------------------
 -- | Proof is just unit
