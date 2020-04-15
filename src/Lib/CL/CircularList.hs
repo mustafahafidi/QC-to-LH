@@ -50,11 +50,11 @@ module Lib.CL.CircularList (
     CList,
     -- * Functions
     -- ** Creation of CLists
-    empty, fromList, singleton,
+    empty, toList, fromList, singleton,
     -- ** Update of CList
     update, reverseDirection,
     -- ** Converting CLists to Lists
-    leftElements, rightElements, toList, toInfList,
+    leftElements, rightElements, toInfList,
     -- ** Extraction and Accumulation
     focus, insertL, insertR,
     removeL, removeR,
@@ -66,40 +66,72 @@ module Lib.CL.CircularList (
     -- ** Manipulation of Packing
     balance, packL, packR,
     -- ** Information
-    isEmpty, size,
+    isEmpty, size, 
 ) where
 
 import Control.Applicative hiding (empty)
-import Prelude hiding ( length, (++), reverse, cycle)
+import Prelude hiding ( length, (++), reverse, cycle, iterate)
 import Data.List(find,unfoldr,foldl')
 import Control.DeepSeq(NFData(..))
 import Control.Monad(join)
 import qualified Data.Traversable as T
 import qualified Data.Foldable as F
 import Lib.LH.Prelude
+import Lib.LH.Equational
 import Test.QuickCheck.Arbitrary
 import Test.QuickCheck.Gen
+-- import Language.Haskell.Liquid.ProofCombinators ((?))
 
 {-@ LIQUID "--reflection"    @-}
+{-@ LIQUID "--no-totality" @-}
+{-@ LIQUID "--no-termination-check" @-}
+{-@ measure size @-}
+{-@ reflect rightElements @-}
+{-@ reflect empty @-}
+{-@ reflect toList @-}
+{-@ ignore rotN @-}
+
+
+
 
 -- | A functional ring type.
 data CList a = Empty
              | CList [a] a [a]
-
-
-{- LIQUID HASKELL -}
--- {-@ data CList a = Empty | CList [a] a [a] @-}
-{-@ reflect size @-}
-{-@ reflect rightElements @-}
-{-@ reflect empty @-}
--- {-@ assume toInfList :: {cl:CList a | size cl>0} -> {xs:[a] | (length xs) > 0} @-}
--- {-@ assume toList :: {cl:CList a | size cl>0} -> {xs:[a] | (length xs) > 0} @-}
--- {-@ assume cycle :: {ls: [a] | length ls >0} -> {xs:[a] | (length xs) > 0} @-}
 {- Creating CLists -}
-
 -- | An empty CList.
+{-@  empty :: {ls:CList a | ls==Empty && (size ls) == 0} @-}
 empty :: CList a
-empty = Empty
+empty = Empty -- ? (prop_empty Empty)
+
+
+
+{- {-@ prop_empty ::ls:CList a -> { ls==Empty ==> (size ls) == 0} @-}
+prop_empty :: CList a -> Proof
+prop_empty Empty = size Empty ==. 0
+                   ***QED
+prop_empty cl = ()
+  -}
+
+-- |Starting with the focus, go right and accumulate all
+-- elements of the CList in a list.
+{-@  rightElements::  cs:CList a -> {ls:[a] | (size cs) == (length ls) } @-}
+rightElements :: CList a -> [a]
+rightElements Empty = []
+rightElements (CList l f r) = f : (r ++ (reverse l))
+
+-- |Make a list from a CList.
+{-@  toList:: cs:CList a -> {ls:[a] | (size cs) == (length  ls)} @-}
+toList :: CList a -> [a]
+toList = rightElements
+
+
+-- |Return the size of the CList.
+-- {-@ size :: cl:CList a -> {v:Int | length (toList cl) == v && v >= 0} @-}
+size :: CList a -> Int
+size Empty = 0
+size (CList l _ r) = 1 + (length l) + (length r)
+
+
 
 -- |Make a (balanced) CList from a list.
 fromList :: [a] -> CList a
@@ -130,16 +162,6 @@ reverseDirection (CList l f r) = CList r f l
 leftElements :: CList a -> [a]
 leftElements Empty = []
 leftElements (CList l f r) = f : (l ++ (reverse r))
-
--- |Starting with the focus, go right and accumulate all
--- elements of the CList in a list.
-rightElements :: CList a -> [a]
-rightElements Empty = []
-rightElements (CList l f r) = f : (r ++ (reverse l))
-
--- |Make a list from a CList.
-toList :: CList a -> [a]
-toList = rightElements
 
 -- |Make a CList into an infinite list.
 toInfList :: CList a -> [a]
@@ -172,6 +194,10 @@ removeL (CList [] _ []) = Empty
 removeL (CList (l:ls) _ rs) = CList ls l rs
 removeL (CList [] _ rs) = let (f:ls) = reverse rs
                           in CList ls f []
+
+
+
+                            
 
 -- |Remove the focus from the CList.
 removeR :: CList a -> CList a
@@ -324,11 +350,6 @@ isEmpty :: CList a -> Bool
 isEmpty Empty = True
 isEmpty _ = False
 
--- |Return the size of the CList.
-size :: CList a -> Int
-size Empty = 0
-size (CList l _ r) = 1 + (length l) + (length r)
-
 {- Instances -}
 
 instance (Show a) => Show (CList a) where
@@ -375,3 +396,4 @@ instance T.Traversable CList where
   traverse g (CList l f r) = (\f' r' l' -> CList l' f' r') <$> g f
                                                            <*> T.traverse g r
                                                            <*> T.traverse g l
+ 
