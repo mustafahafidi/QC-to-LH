@@ -1,6 +1,6 @@
 module Lib.LH.Prelude where
 
-import Prelude hiding (length, (++), reverse, iterate, null)
+import Prelude hiding (length, (++), reverse, iterate, null, splitAt)
 import Lib.LH.Equational
 
 {-@ LIQUID "--no-totality" @-}
@@ -49,8 +49,16 @@ cycle xs                = xs' where xs' = xs ++ xs'
 iterate :: (a -> a) -> a -> [a]
 iterate f x =  x : iterate f (f x)
 
-{-@ (==>) :: p:Bool -> q:Bool -> {v:Bool | v <=> (p ==> q)} @-}
+
+{-@ reflect splitAt @-}
+splitAt :: Int -> [a] -> ([a], [a])
+splitAt 0         as  = ([], as)
+splitAt n (a:as) = let (b1, b2) = splitAt (n - 1) as
+                        in (a:b1, b2)
+
+
+{- {-@ (==>) :: p:Bool -> q:Bool -> {v:Bool | v <=> (p ==> q)} @-}
 False ==> False = True
 False ==> True  = True
 True  ==> True  = True
-True  ==> False = False
+True  ==> False = False -}

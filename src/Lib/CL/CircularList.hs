@@ -70,7 +70,7 @@ module Lib.CL.CircularList (
 ) where
 
 import Control.Applicative hiding (empty)
-import Prelude hiding ( length, (++), reverse, cycle, iterate)
+import Prelude hiding ( length, (++), reverse, cycle, iterate,splitAt)
 import Data.List(find,unfoldr,foldl')
 import Control.DeepSeq(NFData(..))
 import Control.Monad(join)
@@ -88,7 +88,9 @@ import Test.QuickCheck.Gen
 {-@ measure size @-}
 {-@ reflect rightElements @-}
 {-@ reflect empty @-}
+{-@ reflect isEmpty @-}
 {-@ reflect toList @-}
+{-@ reflect fromList @-}
 {-@ ignore rotN @-}
 
 
