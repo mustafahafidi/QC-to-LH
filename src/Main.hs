@@ -35,7 +35,23 @@ prop_focus c v = (Just v) ==. (focus $ insertR v c)
                   ***QED 
                   
 
+-- Proved by assuming the safety of ref. type of reflected functions
+{-@ prop_list :: c:CList Int -> {c == (fromList (toList  c))} @-}
+prop_list :: CList Int -> Proof
+prop_list c = c ==. (fromList (toList c))
+                  ***QED 
+
+{-@  prop_rot :: c:CList Int -> {c == (rotR (rotL c))} @-}
+prop_rot :: CList Int -> Proof
+prop_rot c = c ==. (rotR (rotL c))
+                ***QED 
+
+{- 
+reverseCList :: CList a -> CList a
+reverseCList Empty = Empty
+reverseCList (CList ls f rs) = CList 
+ -}
 
 main :: IO ()
-main = putStrLn (show $ "Hello world" ++ show (splitAt 2 [1,2,3,4]))
+main = putStrLn (show $ "Hello world")
 

@@ -93,7 +93,16 @@ import Test.QuickCheck.Gen
 {-@ reflect fromList @-}
 {-@ reflect focus @-}
 {-@ reflect insertR @-}
+{-@ reflect rotR @-}
+{-@ reflect rotL @-}
+{-@ reflect packL @-}
+
 {-@ ignore rotN @-}
+{-@ ignore fromList @-}
+{-@ ignore toList @-}
+{-@ ignore rotL @-}
+{-@ ignore rotR @-}
+
 
 
 
@@ -123,7 +132,7 @@ rightElements Empty = []
 rightElements (CList l f r) = f : (r ++ (reverse l))
 
 -- |Make a list from a CList.
-{-@  toList:: cs:CList a -> {ls:[a] | (size cs) == (length  ls)} @-}
+{-@  toList:: cs:CList a -> {ls:[a] | (size cs) == (length  ls) && fromList ls == cs} @-}
 toList :: CList a -> [a]
 toList = rightElements
 
@@ -137,7 +146,7 @@ size (CList l _ r) = 1 + (length l) + (length r)
 
 
 -- |Make a (balanced) CList from a list.
-{-@ fromList :: l:[a] -> { cl:CList a | (size cl) == (length l) } @-}
+{-@ fromList :: l:[a] -> { cl:CList a | (size cl) == (length l) && toList cl == l } @-}
 fromList :: [a] -> CList a
 fromList [] = Empty
 fromList a@(i:is) = let len = length a
@@ -223,6 +232,7 @@ allRotations cl = CList ls cl rs
     rs = unfoldr (fmap (join (,)) . mRotR) cl
 
 -- |Rotate the focus to the previous (left) element.
+{-@ rotL :: cl:CList a -> {l:CList a | rotR l == cl} @-}
 rotL :: CList a -> CList a
 rotL Empty = Empty
 rotL r@(CList [] _ []) = r
@@ -237,6 +247,7 @@ mRotL (CList (l:ls) f rs) = Just $ CList ls l (f:rs)
 mRotL _ = Nothing
 
 -- |Rotate the focus to the next (right) element.
+{-@ rotR :: cl:CList a -> {l:CList a | rotL l == cl} @-}
 rotR :: CList a -> CList a
 rotR Empty = Empty
 rotR r@(CList [] _ []) = r
