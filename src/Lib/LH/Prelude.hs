@@ -51,6 +51,9 @@ iterate f x =  x : iterate f (f x)
 
 
 {-@ reflect splitAt @-}
+{-@ splitAt :: n:Int
+            -> a:{[t]| length a >= n}
+            -> {b:([t], [t])| length (snd b) = length a - n && n = length (fst b)} @-}
 splitAt :: Int -> [a] -> ([a], [a])
 splitAt 0         as  = ([], as)
 splitAt n (a:as) = let (b1, b2) = splitAt (n - 1) as

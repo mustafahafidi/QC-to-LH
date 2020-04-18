@@ -77,7 +77,7 @@ import Control.Monad(join)
 import qualified Data.Traversable as T
 import qualified Data.Foldable as F
 import Lib.LH.Prelude
-import Lib.LH.Equational
+import Lib.LH.Equational ()
 import Test.QuickCheck.Arbitrary
 import Test.QuickCheck.Gen
 -- import Language.Haskell.Liquid.ProofCombinators ((?))
@@ -92,7 +92,6 @@ import Test.QuickCheck.Gen
 {-@ reflect toList @-}
 {-@ reflect fromList @-}
 {-@ ignore rotN @-}
-
 
 
 
@@ -136,6 +135,7 @@ size (CList l _ r) = 1 + (length l) + (length r)
 
 
 -- |Make a (balanced) CList from a list.
+{-@ fromList :: l:[a] -> { cl:CList a | (size cl) == (length l) } @-}
 fromList :: [a] -> CList a
 fromList [] = Empty
 fromList a@(i:is) = let len = length a

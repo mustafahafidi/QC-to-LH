@@ -23,6 +23,14 @@ prop_isEmpty l = null l ==. isEmpty (fromList l)
 
 
 
+{-@ prop_size :: l:[Int] -> { (length l) == (size (fromList l)) } @-}
+prop_size :: [Int] -> Proof
+prop_size l = (length l) ==.  (size (fromList l))
+             ***QED 
+             
+
+
+
 
 main :: IO ()
 main = putStrLn (show $ "Hello world" ++ show (splitAt 2 [1,2,3,4]))
