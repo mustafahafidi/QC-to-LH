@@ -33,6 +33,7 @@ prop_size l = (length l) ==. (size (fromList l))
 prop_focus :: CList Int -> Int -> Proof
 prop_focus c v = (Just v) ==. (focus $ insertR v c)
                   ***QED 
+                  
 
 
 main :: IO ()
