@@ -25,11 +25,14 @@ prop_isEmpty l = null l ==. isEmpty (fromList l)
 
 {-@ prop_size :: l:[Int] -> { (length l) == (size (fromList l)) } @-}
 prop_size :: [Int] -> Proof
-prop_size l = (length l) ==.  (size (fromList l))
+prop_size l = (length l) ==. (size (fromList l))
              ***QED 
              
-
-
+             
+{-@ prop_focus :: c:CList Int -> v:Int -> {(Just v) == (focus (insertR v c))} @-}
+prop_focus :: CList Int -> Int -> Proof
+prop_focus c v = (Just v) ==. (focus $ insertR v c)
+                  ***QED 
 
 
 main :: IO ()

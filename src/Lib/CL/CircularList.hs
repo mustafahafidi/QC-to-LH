@@ -91,6 +91,8 @@ import Test.QuickCheck.Gen
 {-@ reflect isEmpty @-}
 {-@ reflect toList @-}
 {-@ reflect fromList @-}
+{-@ reflect focus @-}
+{-@ reflect insertR @-}
 {-@ ignore rotN @-}
 
 
