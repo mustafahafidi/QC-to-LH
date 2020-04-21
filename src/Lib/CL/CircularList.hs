@@ -47,7 +47,7 @@ the focus position.
 -}
 module Lib.CL.CircularList (
     -- * Data Types
-    CList,
+    CList (..),
     -- * Functions
     -- ** Creation of CLists
     empty, toList, fromList, singleton,
@@ -77,7 +77,7 @@ import Control.Monad(join)
 import qualified Data.Traversable as T
 import qualified Data.Foldable as F
 import Lib.LH.Prelude
-import Lib.LH.Equational ()
+import Lib.LH.Equational
 import Test.QuickCheck.Arbitrary
 import Test.QuickCheck.Gen
 -- import Language.Haskell.Liquid.ProofCombinators ((?))
@@ -87,6 +87,7 @@ import Test.QuickCheck.Gen
 {-@ LIQUID "--no-termination-check" @-}
 {-@ measure size @-}
 {-@ reflect rightElements @-}
+{-@ reflect singleton @-}
 {-@ reflect empty @-}
 {-@ reflect isEmpty @-}
 {-@ reflect toList @-}
@@ -96,6 +97,9 @@ import Test.QuickCheck.Gen
 {-@ reflect rotR @-}
 {-@ reflect rotL @-}
 {-@ reflect packL @-}
+{-@ reflect update @-}
+{-@ reflect focus @-}
+{-@ reflect reverseDirection @-}
 
 -- To convince LH of the safety of this file
 {-@ ignore rotN @-}
@@ -105,8 +109,9 @@ import Test.QuickCheck.Gen
 {-@ ignore toList @-}
  
 {-@ ignore rotL @-}
-{-@ ignore rotR @-}
+{-@ ignore rotR @-} 
  
+{-@ ignore singleton @-} 
 
 
 
@@ -130,15 +135,32 @@ prop_empty cl = ()
 
 -- |Starting with the focus, go right and accumulate all
 -- elements of the CList in a list.
-{-@  rightElements::  cs:CList a -> {ls:[a] | (size cs) == (length ls) } @-}
+{-@  rightElements::  cs:CList a -> {ls:[a] | (size cs) == (length ls)} @-}
 rightElements :: CList a -> [a]
 rightElements Empty = []
 rightElements (CList l f r) = f : (r ++ (reverse l))
 
+
+
+
 -- |Make a list from a CList.
-{-@  toList:: cs:CList a -> {ls:[a] | (size cs) == (length  ls) && fromList ls == cs} @-}
+{-@  toList:: cs:CList a -> {ls:[a] | (size cs) == (length  ls) && (fromList ls) == cs } @-}
 toList :: CList a -> [a]
 toList = rightElements
+
+-- |Make a (balanced) CList from a list.
+{-@ fromList :: l:[a] -> { cl:CList a | (size cl) == (length l) && toList cl == l} @-}
+fromList :: [a] -> CList a
+fromList [] = Empty
+fromList a@(i:is) = let len = length a
+                        (r,l) = splitAt (len `div` 2) is
+                    in CList (reverse l) i r
+
+{-@ singleton :: e:a -> {cl:CList a | toList cl == [e]} @-}
+singleton :: a -> CList a
+singleton e = CList [] e [] 
+              -- ==. fromList [e]
+              -- ==. fromList (toList (CList [] e []))
 
 
 -- |Return the size of the CList.
@@ -149,16 +171,6 @@ size (CList l _ r) = 1 + (length l) + (length r)
 
 
 
--- |Make a (balanced) CList from a list.
-{-@ fromList :: l:[a] -> { cl:CList a | (size cl) == (length l) && toList cl == l } @-}
-fromList :: [a] -> CList a
-fromList [] = Empty
-fromList a@(i:is) = let len = length a
-                        (r,l) = splitAt (len `div` 2) is
-                    in CList (reverse l) i r
-
-singleton :: a -> CList a
-singleton a = CList [] a []
 
 {- Updating of CLists -}
 
@@ -168,6 +180,7 @@ update v Empty = CList [] v []
 update v (CList l _ r) = CList l v r
 
 -- |Reverse the direction of rotation.
+{-@ reverseDirection :: cl:CList a -> {rcl:CList a | size rcl == size cl} @-}
 reverseDirection :: CList a -> CList a
 reverseDirection Empty = Empty
 reverseDirection (CList l f r) = CList r f l

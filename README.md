@@ -14,7 +14,7 @@ This project aims to facilitate the migration/conversion of QuickCheck propertie
 - :heavy_check_mark: Find a simple library that uses quickcheck to take into consideration (smaller than xmonad)~~ -> **Data.CircularList**
 - :heavy_check_mark: Get familiar with LH to parse the codebase
 - :heavy_check_mark: Transform not very deep test properties to formal proofs with LiquidHaskell
-- [...] Find patterns to implement --> light properties like `prop_empty, prop_isEmpty, prop_size, prop_focus` get proved automatically with no additional equational reasoning.
+- [...] Find patterns to implement --> light properties like `prop_empty, prop_isEmpty, prop_size, prop_focus` get proved automatically with no additional equational reasoning, and `prop_list, prop_rot` by assumption on some refined types
 
 ## Usage
 

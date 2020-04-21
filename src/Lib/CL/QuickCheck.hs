@@ -2,7 +2,7 @@
 module Lib.CL.QuickCheck where
 
 import Test.QuickCheck
-import Lib.CL.CircularList
+import Lib.CL.CircularList 
 -- import Lib.LH.Prelude hiding (length)
 
 
@@ -35,6 +35,26 @@ prop_packL c = c == (packL c)
 prop_packR :: CList Int -> Bool
 prop_packR c = c == (packR c)
 
+-- Additional properties
+
+prop_singleton :: Int -> Bool
+prop_singleton i = toList (singleton i) == [i]
+
+prop_update :: Int -> CList Int -> Bool
+prop_update v cl@Empty = size (update v cl) == 1
+prop_update v cl = size (update v cl) == size cl
+
+
+
+prop_focus_update :: Int -> CList Int -> Bool
+prop_focus_update v cl = focus(update v cl) == Just v
+
+
+prop_reverse_direction ::  CList Int -> Bool
+prop_reverse_direction cl = reverseDirection (reverseDirection cl) == cl && size (reverseDirection cl) == size cl
+
+
+
 
 main :: IO ()
 main = do
@@ -61,3 +81,16 @@ main = do
 
     putStrLn "prop_size"
     quickCheck prop_size
+
+    -- Additional
+    putStrLn "prop_singleton"
+    quickCheck prop_singleton
+
+    putStrLn "prop_update"
+    quickCheck prop_update
+
+    putStrLn "prop_focus_update"
+    quickCheck prop_focus_update
+
+    putStrLn "prop_reverse_direction"
+    quickCheck prop_reverse_direction

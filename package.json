@@ -4,7 +4,8 @@
   "main": "",
   "scripts": {
     "liquid-spy": "sh -c 'spy run -n \"stack exec -- liquid $0 -isrc/\" src/'",
-    "dev": "sh -c 'spy run -n \"stack exec -- runghc -isrc/ $0 \" src/'",
+    "start": "stack exec -- runghc -isrc/",
+    "spy": "sh -c 'spy run -n \"stack exec -- runghc -isrc/ $0 \" src/'",
     "liquid": "stack exec -- liquid -isrc/"
   },
   "repository": "git@github.com:mustafahafidi/QC-to-LH.git",
