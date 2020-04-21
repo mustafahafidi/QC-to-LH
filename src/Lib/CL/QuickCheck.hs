@@ -64,6 +64,14 @@ prop_removeR cl = size (removeR cl) == (size cl)-1
 prop_insertR_removeR :: Int -> CList Int -> Bool
 prop_insertR_removeR v cl = removeR (insertR v cl) == cl
 
+
+prop_fromList_focus :: Bool
+prop_fromList_focus = focus (fromList ([1]::[Int])) == Just 1
+
+
+{- prop_fromList_toList :: Bool
+prop_fromList_toList = let l =
+ -}
 main :: IO ()
 main = do
     putStrLn "prop_empty"
@@ -112,3 +120,6 @@ main = do
 
     putStrLn "prop_insertR_removeR"
     quickCheck prop_insertR_removeR
+
+    putStrLn "prop_fromList_focus"
+    quickCheck prop_fromList_focus

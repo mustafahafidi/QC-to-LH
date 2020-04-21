@@ -108,7 +108,7 @@ import Test.QuickCheck.Gen
  -- needed for prop_list and prop_rot in src/Main.hs
 {-@ ignore fromList @-} 
 {-@ ignore toList @-}
- 
+  
 {-@ ignore rotL @-}
 {-@ ignore rotR @-} 
  
@@ -144,13 +144,13 @@ rightElements (CList l f r) = f : (r ++ (reverse l))
 
 
 
--- |Make a list from a CList.
+-- |Make a list from a CList.  
 {-@  toList:: cs:CList a -> {ls:[a] | (size cs) == (length  ls) && (fromList ls) == cs } @-}
 toList :: CList a -> [a]
 toList = rightElements
 
 -- |Make a (balanced) CList from a list.
-{-@ fromList :: l:[a] -> { cl:CList a | (size cl) == (length l) && toList cl == l} @-}
+{-@ fromList :: l:[a] -> { cl:CList a | (size cl) == (length l)  && toList cl == l } @-}
 fromList :: [a] -> CList a
 fromList [] = Empty
 fromList a@(i:is) = let len = length a

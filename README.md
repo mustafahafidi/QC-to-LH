@@ -4,17 +4,25 @@ This project aims to facilitate the migration/conversion of QuickCheck propertie
 
 ## Roadmap / Timeline :calendar:
 
-- Study automatic translation of GHC properties to Liquidhaskell proofs
-- Design the tool and implement it
-- Write paper/thesis describing the whole work (can happen in parallel to the work)
-- Defend thesis (mid-end of July 2020)
-
-#### Currently Doing :hammer:
+### Study automatic translation of GHC properties to Liquidhaskell proofs
 
 - :heavy_check_mark: Find a simple library that uses quickcheck to take into consideration (smaller than xmonad)~~ -> **Data.CircularList**
 - :heavy_check_mark: Get familiar with LH to parse the codebase
 - :heavy_check_mark: Transform not very deep test properties to formal proofs with LiquidHaskell
-- [...] Find patterns to implement --> light properties like `prop_empty, prop_isEmpty, prop_size, prop_focus` get proved automatically with no additional equational reasoning, and `prop_list, prop_rot` by assumption on some refined types
+- :heavy_check_mark: Find patterns to implement --> light properties like `prop_empty, prop_isEmpty, prop_size, prop_focus` get proved automatically with no additional equational reasoning, and `prop_list, prop_rot` by assumption on some refined types. Added multiple properties with proofs.
+- [..] Do the induction for the properties ignored
+- [..] Apply everything on the examples of quickcheck (github)
+- [..] Make a report/table on the proofs done until now
+
+- [..] Add more examples to try the tool on
+
+### Design the tool and implement it
+
+### Write paper/thesis describing the whole work (can happen in parallel to the work)
+
+### Defend thesis (mid-end of July 2020)
+
+#### Currently Doing :hammer:
 
 ## Usage
 

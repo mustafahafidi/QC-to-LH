@@ -40,23 +40,40 @@ prop_focus c v = (Just v) === (focus $ insertR v c)
 -- Proved by assuming the safety of ref. type of reflected functions
 {-@ prop_list :: c:CList Int -> {c == (fromList (toList  c))} @-}
 prop_list :: CList Int -> Proof
+-- prop_list Empty = 
 prop_list c = c === (fromList (toList c))
                   ***QED 
 
- 
+
 {-@  prop_rot :: c:CList Int -> {c == (rotR (rotL c))} @-}
 prop_rot :: CList Int -> Proof
 prop_rot c = c === (rotR (rotL c))
                 ***QED 
 
+{- {-@ prop_packL ::  c:CList Int -> { c == (packL c) } @-}
+prop_packL ::  CList Int -> Proof
+prop_packL c@Empty = c === (packL c)
+                     === (Empty)
+                       ***QED 
+prop_packL c@(CList l f r) = c === (packL c)
+                          ***QED 
 
-
+ -}
 {- ===============  Additional ====================-}
 
-{-@ prop_singleton :: i:Int -> {toList (singleton i) == [i]} @-}
+{-@ prop_singleton :: i:Int -> {toList (singleton i) == [i] && size (singleton i) == 1} @-}
 prop_singleton :: Int -> Proof
-prop_singleton i = toList (singleton i) === [i]
-                    ***QED 
+prop_singleton i = (toList (singleton i) === [i]
+                    ***QED)  &&&
+                   (size (singleton i) === 1
+                   ***QED)
+
+
+
+{-@ prop_fromList_focus ::  {focus (fromList ([1])) == Just 1} @-}
+prop_fromList_focus ::  Proof
+prop_fromList_focus = focus (fromList ([1]::[Int])) === Just 1
+                                ***QED
 
 
 
@@ -85,15 +102,17 @@ prop_insertR i cl = size (insertR i cl) === size cl+1
                           ***QED 
 
 
+
+
 {-@ prop_insertR_removeR ::  v:Int -> cl:CList Int -> {removeR (insertR v cl) == cl} @-}
 prop_insertR_removeR ::  Int -> CList Int -> Proof
 prop_insertR_removeR v cl = removeR (insertR v cl)
-                         === (case cl of
+                          === (case cl of
                                 Empty -> removeR (CList [] v [])
                                 (CList l f r) -> removeR (CList l v (f:r)))
-                            
-                            === cl
-                            ***QED
+                        
+                         === cl
+                         ***QED
 
 
 
@@ -103,36 +122,45 @@ prop_insertR_removeR v cl = removeR (insertR v cl)
 @-}
 prop_update :: Int -> CList Int -> Proof
 prop_update v cl@Empty = size (update v cl) 
-                        === size (CList [] v [])
-                        === 1
-                         ***QED 
+                       === size (CList [] v [])
+                       === 1
+                       ***QED 
                          
 prop_update v cl@(CList l _ r) = size (update v cl) 
-                    === size (CList l v r) 
-                    === size cl
-                    ***QED 
+                               === size (CList l v r) 
+                               === size cl
+                               ***QED 
+
+
+
 
 {-@ prop_removeR ::  cl:CList Int -> 
                 { cl == Empty ==> size (removeR cl) == 0 &&
                   cl != Empty ==> size (removeR cl) == (size cl)-1 } @-}
+
 prop_removeR ::  CList Int -> Proof
 prop_removeR cl@Empty = size (removeR cl) === 0
-                    ***QED 
-prop_removeR cl@(CList [] _ []) =   size (removeR cl) ===
-                                    size (Empty)      ===
-                                    (size cl)-1
-                                 ***QED
-prop_removeR cl@(CList l _ (r:rs)) =  size (removeR cl) ===
-                                      size (CList l r rs)      ===
-                                      (size cl)-1
-                                 ***QED
-prop_removeR  cl@(CList l _ []) = size (removeR cl) ===
-                               (let (f:rs)=reverse l in
-                                size(CList [] f rs))  ===
-                               (size cl)-1
+                        ***QED 
+
+prop_removeR cl@(CList [] _ []) =   size (removeR cl) 
+                                ===   size (Empty)      
+                                ===  (size cl)-1
+                                ***QED
+
+prop_removeR cl@(CList l _ (r:rs)) =  size (removeR cl) 
+                                   ===   size (CList l r rs)      
+                                   ===   (size cl)-1
+                                   ***QED
+
+prop_removeR  cl@(CList l _ []) = size (removeR cl)
+                                === (let (f:rs)=reverse l in
+                                     size(CList [] f rs)) 
+                                ===  (size cl)-1
                                 ***QED
 
 
+
+
 main :: IO ()
-main = putStrLn (show $ toList (reverseDirection (fromList [1,2,3,4])))
+main = putStrLn (show $ "Hi")--toList (reverseDirection (fromList [1,2,3,4])))
 
