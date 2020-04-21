@@ -97,12 +97,16 @@ import Test.QuickCheck.Gen
 {-@ reflect rotL @-}
 {-@ reflect packL @-}
 
+-- To convince LH of the safety of this file
 {-@ ignore rotN @-}
-{-@ ignore fromList @-}
+
+ -- needed for prop_list and prop_rot in src/Main.hs
+{-@ ignore fromList @-} 
 {-@ ignore toList @-}
+ 
 {-@ ignore rotL @-}
 {-@ ignore rotR @-}
-
+ 
 
 
 

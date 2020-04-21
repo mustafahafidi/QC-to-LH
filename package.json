@@ -1,13 +1,11 @@
 {
-  "name": "QC-to-LH",
+  "name": "quickcheck-to-liquidhaskell",
   "version": "1.0.0",
   "main": "",
   "scripts": {
-    "liquid-spy": "cd src && spy run  -n -g *.hs \"stack exec -- liquid \"$(pwd)/Main.hs\"  \" .",
-    "dev": "cd src && runhaskell Main.hs",
-    "dev-spy": "cd src && spy run -n  \"runhaskell Main.hs\" .",
-    "liquid": "stack exec -- liquid -isrc/",
-    "spy": "spy run -n "
+    "liquid-spy": "sh -c 'spy run -n \"stack exec -- liquid $0 -isrc/\" src/'",
+    "dev": "sh -c 'spy run -n \"stack exec -- runghc -isrc/ $0 \" src/'",
+    "liquid": "stack exec -- liquid -isrc/"
   },
   "repository": "git@github.com:mustafahafidi/QC-to-LH.git",
   "author": "Mustafa <mustafahafidi96@gmail.com>",

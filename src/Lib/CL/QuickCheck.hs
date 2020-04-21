@@ -19,13 +19,15 @@ prop_size l = (length l) == (size . fromList $ l)
 prop_focus :: CList Int -> Int -> Bool
 prop_focus c v = (Just v) == (focus $ insertR v c)
 
--- Make sure converting to/from lists works.
 prop_list :: CList Int -> Bool
 prop_list c = c == (fromList . toList $ c)
 
-
 prop_rot :: CList Int -> Bool
 prop_rot c = c == (rotR $ rotL c)
+
+-- Make sure converting to/from lists works.
+
+
 
 prop_packL :: CList Int -> Bool
 prop_packL c = c == (packL c)

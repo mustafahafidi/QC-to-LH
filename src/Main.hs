@@ -40,7 +40,8 @@ prop_focus c v = (Just v) ==. (focus $ insertR v c)
 prop_list :: CList Int -> Proof
 prop_list c = c ==. (fromList (toList c))
                   ***QED 
-
+                  
+ 
 {-@  prop_rot :: c:CList Int -> {c == (rotR (rotL c))} @-}
 prop_rot :: CList Int -> Proof
 prop_rot c = c ==. (rotR (rotL c))
