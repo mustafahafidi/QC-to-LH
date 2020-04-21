@@ -100,6 +100,7 @@ import Test.QuickCheck.Gen
 {-@ reflect update @-}
 {-@ reflect focus @-}
 {-@ reflect reverseDirection @-}
+{-@ reflect removeR @-}
 
 -- To convince LH of the safety of this file
 {-@ ignore rotN @-}
@@ -206,6 +207,7 @@ focus (CList _ f _) = Just f
 
 -- |Insert an element into the CList as the new focus. The
 -- old focus is now the next element to the right.
+{-@ insertR :: i:a-> cl:CList a -> {rl: CList a | size rl == size cl + 1 } @-}
 insertR :: a -> CList a -> CList a
 insertR i Empty = CList [] i []
 insertR i (CList l f r) = CList l i (f:r)

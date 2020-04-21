@@ -27,8 +27,6 @@ prop_rot c = c == (rotR $ rotL c)
 
 -- Make sure converting to/from lists works.
 
-
-
 prop_packL :: CList Int -> Bool
 prop_packL c = c == (packL c)
 
@@ -55,6 +53,16 @@ prop_reverse_direction cl = reverseDirection (reverseDirection cl) == cl && size
 
 
 
+prop_insertR :: Int -> CList Int -> Bool
+prop_insertR i cl = let r = (insertR i cl) in
+                        size r == size cl+1
+
+prop_removeR :: CList Int -> Bool
+prop_removeR cl@Empty = size (removeR cl) == 0
+prop_removeR cl = size (removeR cl) == (size cl)-1
+
+prop_insertR_removeR :: Int -> CList Int -> Bool
+prop_insertR_removeR v cl = removeR (insertR v cl) == cl
 
 main :: IO ()
 main = do
@@ -94,3 +102,13 @@ main = do
 
     putStrLn "prop_reverse_direction"
     quickCheck prop_reverse_direction
+
+    putStrLn "prop_insertR"
+    quickCheck prop_insertR
+
+
+    putStrLn "prop_removeR"
+    quickCheck prop_removeR
+
+    putStrLn "prop_insertR_removeR"
+    quickCheck prop_insertR_removeR
