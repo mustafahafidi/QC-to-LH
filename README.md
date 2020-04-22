@@ -4,7 +4,7 @@ This project aims to facilitate the migration/conversion of QuickCheck propertie
 
 ## Roadmap / Timeline :calendar:
 
-### Study automatic translation of GHC properties to Liquidhaskell proofs
+### 1) Study automatic translation of GHC properties to Liquidhaskell proofs
 
 - :heavy_check_mark: Find a simple library that uses quickcheck to take into consideration (smaller than xmonad)~~ -> **Data.CircularList**
 - :heavy_check_mark: Get familiar with LH to parse the codebase
@@ -16,13 +16,11 @@ This project aims to facilitate the migration/conversion of QuickCheck propertie
 
 - [..] Add more examples to try the tool on
 
-### Design the tool and implement it
+### 2) Design the tool and implement it
 
-### Write paper/thesis describing the whole work (can happen in parallel to the work)
+### 3) Write paper/thesis describing the whole work (can happen in parallel to the work)
 
-### Defend thesis (mid-end of July 2020)
-
-#### Currently Doing :hammer:
+### 4) Defend thesis (17 July 2020)
 
 ## Usage
 
