@@ -1,12 +1,11 @@
 module Lib.LH.Prelude where
 
 import Prelude hiding (length, (++), reverse, iterate, null, splitAt)
-import Lib.LH.Equational
 
 {-@ LIQUID "--no-totality" @-}
 {-@ LIQUID "--no-termination-check" @-}
 {-@ LIQUID "--reflection"    @-}
-
+ 
 {-@ measure length @-}
 {-@ length :: x:[a] -> { length x >=0 } @-}
 length :: [a] -> Int

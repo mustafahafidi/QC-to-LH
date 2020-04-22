@@ -8,7 +8,10 @@ import Prelude hiding (length, null, splitAt, (++), reverse)
 {-@ LIQUID "--reflection"    @-}
 {-@ LIQUID "--no-totality"    @-}
 
--- {-@ LIQUID "--prune-unsorted"    @-}
+{-@ LIQUID "--no-termination"    @-}
+-- {-@ LIQUID "--pe"    @-}
+-- {-@ LIQUID "--short-names"    @-}
+
 
 
 
@@ -41,9 +44,47 @@ prop_focus c v = (Just v) === (focus $ insertR v c)
 {-@ prop_list :: c:CList Int -> {c == (fromList (toList  c))} @-}
 prop_list :: CList Int -> Proof
 -- prop_list Empty = 
-prop_list c = c === (fromList (toList c))
-                  ***QED 
+-- prop_list c = c === (fromList (toList c))
+--                   ***QED 
+prop_list c@Empty = c === Empty
+                      === (fromList [])
+                      === (fromList (rightElements Empty))
+                      === (fromList (toList Empty))
+                      === (fromList (toList  c))
+                     ***QED 
+prop_list c@(CList [] f []) = c 
+                              === (CList [] f [])
+                             {-  === (let 
+                                      a@(i:is) = [f]
+                                      len = 1
+                                      (sr,sl) = ([],is)
+                                  in CList [] i []) -}
+                              ==! (let 
+                                      (sr,sl) = ([],[])
+                                  in CList (reverse sl) f sr) 
+                              === (let 
+                                      (sr,sl) = splitAt (0) []
+                                  in CList (reverse sl) f sr) 
+                              === (let 
+                                      (i:is) = [f]
+                                      (sr,sl) = splitAt (0) is
+                                  in CList (reverse sl) i sr) 
+                              === (fromList ([f]))
+                              === (fromList (f : ([] ++ (reverse []))))
+                              === (fromList (rightElements c))
+                              === (fromList (toList c))
+                            ***QED 
 
+prop_list c@(CList l f r) = c 
+                              ==! (let 
+                                                a@(i:is) = f : (r ++ (reverse l))
+                                                len = length a
+                                                (sr,sl) = splitAt (len `div` 2) is
+                                            in CList (reverse sl) i sr)
+                              === (fromList (f : (r ++ (reverse l))))
+                              === (fromList (rightElements c))
+                              === (fromList (toList c))
+                            ***QED  
 
 {-@  prop_rot :: c:CList Int -> {c == (rotR (rotL c))} @-}
 prop_rot :: CList Int -> Proof
