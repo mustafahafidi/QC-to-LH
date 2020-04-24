@@ -18,15 +18,14 @@ jobs:
         uses: actions/cache@v1
         with:
           path: ~/.stack
-          key: stack-global-2-e679c7261689bab4ab13f4561721f46706c99a77e5650884290e57ab8f33429b
+          key: stack-global-2-${{ hashFiles('.github/workflows/**.yaml') }}
 
       - name: Cache liquidhaskell
         id: cache-lh
         uses: actions/cache@v1
         with:
           path: ~/liquidhaskell
-          key: stack-global-lh-2-e679c7261689bab4ab13f4561721f46706c99a77e5650884290e57ab8f33429b
-          #${{ hashFiles('**/haskell.yml') }}
+          key: liquidhaskell-2-${{ hashFiles('.github/workflows/**.yaml') }}
           # restore-keys: stack-global-${{ hashFiles('.github/workflows/**.yaml') }}
       - name: Cache stack bin
         id: cache-bin
@@ -34,7 +33,7 @@ jobs:
         with:
           path: ~/.local/bin
           key:
-            stack-global-2-e679c7261689bab4ab13f4561721f46706c99a77e5650884290e57ab8f33429b
+            stack-global-bin-2-${{ hashFiles('.github/workflows/**.yaml') }}
             #${{ hashFiles('**/haskell.yml') }}
 
       - name: Install z3
@@ -49,7 +48,7 @@ jobs:
           z3 --version
           # sudo apt-get install -y z3
 
-      - name: Installing LH
+      - name: Setup LH
         if: steps.cache-lh.outputs.cache-hit != 'true'
         run: |
           cd ~
@@ -57,10 +56,11 @@ jobs:
           cd liquidhaskell
           git checkout 6f29ece8f61483f0546d052308882c8abef6da78
           stack install
-
-      - name: Running LH
-        run: |
+          cd ~
           stack --resolver=lts-14.12 install QuickCheck
+
+      - name: Running LiquidHaskell
+        run: |
           stack --resolver=lts-14.12 exec -- ~/.local/bin/liquid -isrc/ src/Main.hs
     # - name: Free disk space
     #   run: |
