@@ -10,7 +10,7 @@ import Prelude hiding (length, null, splitAt, (++), reverse)
 
 {-@ LIQUID "--no-termination"    @-}
 -- {-@ LIQUID "--pe"    @-}
--- {-@ LIQUID "--short-names"    @-}
+{-@ LIQUID "--short-names"    @-}
 
 
 
@@ -39,6 +39,10 @@ prop_focus :: CList Int -> Int -> Proof
 prop_focus c v = (Just v) === (focus $ insertR v c)
                   ***QED 
 
+{-@ lemma_split :: { splitAt (0) [] == ([],[])} @-}
+lemma_split ::  Proof
+lemma_split = splitAt (0) [] === ([],[])
+              ***QED
 
 -- Proved by assuming the safety of ref. type of reflected functions
 {-@ prop_list :: c:CList Int -> {c == (fromList (toList  c))} @-}
@@ -54,17 +58,11 @@ prop_list c@Empty = c === Empty
                      ***QED 
 prop_list c@(CList [] f []) = c 
                               === (CList [] f [])
-                             {-  === (let 
-                                      a@(i:is) = [f]
-                                      len = 1
-                                      (sr,sl) = ([],is)
-                                  in CList [] i []) -}
-                              ==! (let 
-                                      (sr,sl) = ([],[])
-                                  in CList (reverse sl) f sr) 
+                              === (CList (reverse (snd ([],[]))) f (fst ([],[]))) 
+                              === (CList (reverse (snd (splitAt (0) []))) f (fst (splitAt (0) []))) 
                               === (let 
-                                      (sr,sl) = splitAt (0) []
-                                  in CList (reverse sl) f sr) 
+                                      (sr,sl) = (splitAt (0) [])
+                                  in CList (reverse sl) f sr)
                               === (let 
                                       (i:is) = [f]
                                       (sr,sl) = splitAt (0) is
@@ -74,6 +72,30 @@ prop_list c@(CList [] f []) = c
                               === (fromList (rightElements c))
                               === (fromList (toList c))
                             ***QED 
+
+
+prop_list c@(CList [] f r) = c 
+
+                              ==! (let 
+                                                a@(i:is) = f : r
+                                                len = length a
+                                                (sr,sl) = splitAt (len `div` 2) is
+                                                clist = CList (reverse sl) i sr
+                                           in fromList(toList(clist)) ? (prop_list clist))
+                              === (let 
+                                                a@(i:is) = f : r
+                                                len = length a
+                                                (sr,sl) = splitAt (len `div` 2) is
+                                                clist = CList (reverse sl) i sr
+                                           in clist ? (prop_list clist))
+                                  
+                              === (fromList (f : r))
+                              === (fromList (f : r))
+                              ==! (fromList (f : (r ++ []))) -- to prove commutativity
+                              === (fromList (f : (r ++ (reverse []))))
+                              === (fromList (rightElements c))
+                              === (fromList (toList c))
+                            ***QED  
 
 prop_list c@(CList l f r) = c 
                               ==! (let 
