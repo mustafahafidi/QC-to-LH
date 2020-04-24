@@ -1,0 +1,82 @@
+name: LiquidHaskell
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v2
+
+      - name: Cache stack
+        id: cache
+        uses: actions/cache@v1
+        with:
+          path: ~/.stack
+          key: stack-global-2-e679c7261689bab4ab13f4561721f46706c99a77e5650884290e57ab8f33429b
+
+      - name: Cache liquidhaskell
+        id: cache-lh
+        uses: actions/cache@v1
+        with:
+          path: ~/liquidhaskell
+          key: stack-global-lh-2-e679c7261689bab4ab13f4561721f46706c99a77e5650884290e57ab8f33429b
+          #${{ hashFiles('**/haskell.yml') }}
+          # restore-keys: stack-global-${{ hashFiles('.github/workflows/**.yaml') }}
+      - name: Cache stack bin
+        id: cache-bin
+        uses: actions/cache@v1
+        with:
+          path: ~/.local/bin
+          key:
+            stack-global-2-e679c7261689bab4ab13f4561721f46706c99a77e5650884290e57ab8f33429b
+            #${{ hashFiles('**/haskell.yml') }}
+
+      - name: Install z3
+        run: |
+          sudo wget https://github.com/Z3Prover/z3/releases/download/z3-4.8.7/z3-4.8.7-x64-ubuntu-16.04.zip
+          sudo unzip z3-4.8.7-x64-ubuntu-16.04.zip
+          sudo rm -f z3-4.8.7-x64-ubuntu-16.04.zip
+          sudo cp z3-4.8.7-x64-ubuntu-16.04/bin/libz3.a /usr/local/lib
+          sudo cp z3-4.8.7-x64-ubuntu-16.04/bin/z3 /usr/local/bin
+          sudo cp z3-4.8.7-x64-ubuntu-16.04/include/* /usr/local/include
+          sudo rm -rf z3-4.8.7-x64-ubuntu-16.04
+          z3 --version
+          # sudo apt-get install -y z3
+
+      - name: Installing LH
+        if: steps.cache-lh.outputs.cache-hit != 'true'
+        run: |
+          cd ~
+          git clone --recursive https://github.com/ucsd-progsys/liquidhaskell.git
+          cd liquidhaskell
+          git checkout 6f29ece8f61483f0546d052308882c8abef6da78
+          stack install
+
+      - name: Running LH
+        run: |
+          stack --resolver=lts-14.12 install QuickCheck
+          stack --resolver=lts-14.12 exec -- ~/.local/bin/liquid -isrc/ src/Main.hs
+    # - name: Free disk space
+    #   run: |
+    #   df -h /
+    #   # 8G:
+    #   sudo swapoff -a
+    #   sudo rm -f /swapfile
+    #   # 3G:
+    #   sudo apt clean
+    #   # 3G, takes 30s:
+    #   # docker image ls -aq
+    #   # docker rmi $(docker image ls -aq)
+    #   # 1G:
+    #   find ~/work/_temp -name "cache.tgz" -exec rm -f {} \;
+    #   # 4G, takes 14s:
+    #   # sudo rm -rf "/usr/local/share/boost"
+    #   # 2G:
+    #   sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+    #   df -h /
