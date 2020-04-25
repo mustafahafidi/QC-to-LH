@@ -82,9 +82,18 @@ lemma_fromList (x:xs) = (x:xs) ? lemma_fromList xs
                                                       in CList (reverse l) x r)
                                         === toList (fromList [x])
 
-                                  (m:ms) -> x: (toList (let len = length xs
-                                                            (r,l) = splitAt (len `div` 2) ms
-                                                        in CList (reverse l) m r))
+                                  (m:ms) -> let len = length xs
+                                                (r,l) = splitAt (len `div` 2) ms
+                                            in (
+                                              x: toList (fromList xs)
+                                              === x: (toList (CList (reverse l) m r))
+                                              === x: (rightElements (CList (reverse l) m r))
+                                              === x: (m : (r ++ (reverse (reverse l))))
+                                              === x: ((m:r) ++ (reverse (reverse l)))
+                                              === rightElements (CList (reverse l) x (m:r))
+                                              === toList (CList (reverse l) x (m:r))
+                                              === toList (CList (reverse l) x (m:r)) -- how to get to tolist . fromlist?
+                                            )
                             ) 
                        {-  === x: (case xs of
                                      [] -> []
