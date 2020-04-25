@@ -1,10 +1,12 @@
 module Lib.LH.Prelude where
+import Language.Haskell.Liquid.ProofCombinators
 
 import Prelude hiding (length, (++), reverse, iterate, null, splitAt)
 
 {-@ LIQUID "--no-totality" @-}
 {-@ LIQUID "--no-termination-check" @-}
 {-@ LIQUID "--reflection"    @-}
+{-@ LIQUID "--ple-local"    @-}
  
 {-@ measure length @-}
 {-@ length :: x:[a] -> { length x >=0 } @-}
@@ -64,3 +66,78 @@ False ==> False = True
 False ==> True  = True
 True  ==> True  = True
 True  ==> False = False -}
+
+
+singletonP :: a -> Proof
+{-@ singletonP :: x:a -> { reverse [x] == [x] } @-}
+singletonP x
+  =   reverse [x]
+  === reverse [] ++ [x]
+  === [] ++ [x]
+  === [x]
+  *** QED 
+
+{-@ involutionP :: xs:[a] -> {reverse (reverse xs) == xs } @-}
+involutionP :: [a] -> Proof 
+involutionP [] 
+  =   reverse (reverse []) 
+      -- applying inner reverse
+  === reverse []
+      -- applying reverse
+  === [] 
+  *** QED 
+involutionP (x:xs) 
+  =   reverse (reverse (x:xs))
+      -- applying inner reverse
+  === reverse (reverse xs ++ [x])
+      ? distributivityP (reverse xs) [x]
+  === reverse [x] ++ reverse (reverse xs) 
+      ? involutionP xs 
+  === reverse [x] ++ xs 
+      ? singletonP x 
+  === [x] ++ xs
+      -- applying append on []
+  === x:([]++ xs)
+      -- applying ++
+  === (x:xs)
+  *** QED 
+
+{-@ distributivityP :: xs:[a] -> ys:[a] -> {reverse (xs ++ ys) == (reverse ys) ++ (reverse xs)} @-}
+
+distributivityP :: [a] -> [a] -> Proof
+distributivityP [] ys =   reverse ([] ++ ys)
+    === reverse ys 
+        ? rightIdP (reverse ys) 
+    === reverse ys ++ []
+    === reverse ys ++ reverse []
+    *** QED 
+distributivityP (x:xs) ys  =   reverse ((x:xs) ++ ys)
+    === reverse (x:(xs ++ ys))
+    === reverse (xs ++ ys) ++ [x]
+        ? distributivityP xs ys 
+    === (reverse ys ++ reverse xs) ++ [x]
+        ? assocP (reverse ys) (reverse xs) [x]
+    === reverse ys ++ (reverse xs ++ [x])
+    === reverse ys ++ reverse (x:xs)
+    *** QED 
+
+
+{-@ rightIdP :: xs:[a] -> { xs ++ [] == xs } @-}
+rightIdP :: [a] -> Proof
+rightIdP []     
+  =   [] ++ [] 
+  === [] 
+  *** QED 
+rightIdP (x:xs)
+  =   (x:xs) ++ [] 
+  === x : (xs ++ [])
+      ? rightIdP xs
+  === x : xs
+  *** QED
+
+{-@ ple assocP @-}
+{-@ assocP :: xs:[a] -> ys:[a] -> zs:[a] 
+          -> { xs ++ (ys ++ zs) == (xs ++ ys) ++ zs }  @-}
+assocP :: [a] -> [a] -> [a] -> Proof
+assocP [] _ _       = trivial
+assocP (x:xs) ys zs = assocP xs ys zs

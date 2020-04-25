@@ -77,7 +77,6 @@ import Control.Monad(join)
 import qualified Data.Traversable as T
 import qualified Data.Foldable as F
 import Lib.LH.Prelude
-import Lib.LH.Equational
 import Test.QuickCheck.Arbitrary
 import Test.QuickCheck.Gen
 -- import Language.Haskell.Liquid.ProofCombinators ((?))
@@ -119,6 +118,7 @@ import Test.QuickCheck.Gen
 -- | A functional ring type.
 data CList a = Empty
              | CList [a] a [a]
+             deriving (Show)
 {- Creating CLists -}
 -- | An empty CList.
 {-@  empty :: {ls:CList a | ls==Empty && (size ls) == 0} @-}
@@ -385,11 +385,11 @@ isEmpty Empty = True
 isEmpty _ = False
 
 {- Instances -}
-
+{- 
 instance (Show a) => Show (CList a) where
  showsPrec d cl  = showParen (d > 10) $
                    showString "fromList " . shows (toList cl)
-
+ -}
 instance (Read a) => Read (CList a) where
  readsPrec p = readParen (p > 10) $ \ r -> do
    ("fromList",s) <- lex r

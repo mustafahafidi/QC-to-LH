@@ -9,7 +9,7 @@ import Prelude hiding (length, null, splitAt, (++), reverse)
 {-@ LIQUID "--no-totality"    @-}
 
 {-@ LIQUID "--no-termination"    @-}
--- {-@ LIQUID "--pe"    @-}
+-- {-@ LIQUID "--ple"    @-}
 {-@ LIQUID "--short-names"    @-}
 
 
@@ -39,17 +39,83 @@ prop_focus :: CList Int -> Int -> Proof
 prop_focus c v = (Just v) === (focus $ insertR v c)
                   ***QED 
 
-{-@ lemma_split :: { splitAt (0) [] == ([],[])} @-}
-lemma_split ::  Proof
-lemma_split = splitAt (0) [] === ([],[])
-              ***QED
+
+--  (++) [(head l)]  (toList(fromList(tail l))) == []
+{- 
+{-@ lemma_a :: l:{ls:[a]| len ls >0} -> { cons (head l) (toList(fromList(tail l))) == l} @-}
+lemma_a ::  [a]-> Proof
+lemma_a l@(x:xs) = x:xs === l
+                  ***QED -}
+
+{-@ lemma_fromList :: l:[a] -> { l == toList (fromList l)} @-}
+lemma_fromList ::  [a] -> Proof
+lemma_fromList l@[] = l
+                  === []
+                  === rightElements Empty
+                  === toList (Empty)
+                  === toList (fromList [])
+                  === toList (fromList l)
+                  ***QED
+
+lemma_fromList (x:xs) = (x:xs) ? lemma_fromList xs
+                        === x: (toList (fromList xs)) 
+                        === x: (case xs of
+                                     [] -> toList (Empty)
+                                     (m:ms) -> toList (let len = length xs
+                                                           (r,l) = splitAt (len `div` 2) ms
+                                                        in CList (reverse l) m r)
+                                ) 
+                        === (case xs of
+                                  [] -> x: (toList (fromList []))
+                                        === x: rightElements Empty
+                                        === [x]
+                                        === x :[]
+                                        === x : ([] ++ [])
+                                        === x : ([] ++ (reverse []))
+                                        === rightElements (CList [] x [])
+                                        === toList (CList [] x [])
+                                        === toList (CList (reverse []) x [] )
+                                        === toList (CList (reverse (snd (([],[])))) x (fst (([],[]))) )
+                                        === toList (CList (reverse (snd (splitAt 0 []))) x (fst (splitAt 0 [])) )
+                                        === toList ( let len = length [x]
+                                                         (r,l) = splitAt (len `div` 2) []
+                                                      in CList (reverse l) x r)
+                                        === toList (fromList [x])
+
+                                  (m:ms) -> x: (toList (let len = length xs
+                                                            (r,l) = splitAt (len `div` 2) ms
+                                                        in CList (reverse l) m r))
+                            ) 
+                       {-  === x: (case xs of
+                                     [] -> []
+                                     (m:ms) ->  (let len = length xs
+                                                     (r,l) = splitAt (len `div` 2) ms
+                                                 in toList (CList (reverse l) m r))
+                                )
+                        === x: (case xs of
+                                     [] -> []
+                                     (m:ms) ->  (let len = length xs
+                                                     (r,l) = splitAt (len `div` 2) ms
+                                                 in rightElements (CList (reverse l) m r))
+                                )
+                        === x:(case xs of
+                                     [] -> []
+                                     (m:ms) ->  (let len = length xs
+                                                     (r,l) = splitAt (len `div` 2) ms
+                                                    in m : (r ++ (reverse (reverse l)) ? involutionP l))
+                                ) 
+                        === x: (case xs of
+                                     [] -> []
+                                     (m:ms) ->  (let len = length xs
+                                                     (r,l) = splitAt (len `div` 2) ms
+                                                 in m : (r ++ (l)))
+                                )     -}                               
+                        ==! toList (fromList (x:xs))
+                        ***QED
 
 -- Proved by assuming the safety of ref. type of reflected functions
 {-@ prop_list :: c:CList Int -> {c == (fromList (toList  c))} @-}
 prop_list :: CList Int -> Proof
--- prop_list Empty = 
--- prop_list c = c === (fromList (toList c))
---                   ***QED 
 prop_list c@Empty = c === Empty
                       === (fromList [])
                       === (fromList (rightElements Empty))
@@ -60,7 +126,11 @@ prop_list c@(CList [] f []) = c
                               === (CList [] f [])
                               === (CList (reverse (snd ([],[]))) f (fst ([],[]))) 
                               === (CList (reverse (snd (splitAt (0) []))) f (fst (splitAt (0) []))) 
-                              === (let 
+                             {-  === (let 
+                                      (sr,sl) = ([],[])
+                                  in CList (reverse sl) f sr) -} -- crashes if I put this
+                              ===
+                                   (let 
                                       (sr,sl) = (splitAt (0) [])
                                   in CList (reverse sl) f sr)
                               === (let 
@@ -74,23 +144,16 @@ prop_list c@(CList [] f []) = c
                             ***QED 
 
 
+
 prop_list c@(CList [] f r) = c 
 
-                              ==! (let 
-                                                a@(i:is) = f : r
-                                                len = length a
-                                                (sr,sl) = splitAt (len `div` 2) is
-                                                clist = CList (reverse sl) i sr
-                                           in fromList(toList(clist)) ? (prop_list clist))
-                              === (let 
-                                                a@(i:is) = f : r
-                                                len = length a
-                                                (sr,sl) = splitAt (len `div` 2) is
-                                                clist = CList (reverse sl) i sr
-                                           in clist ? (prop_list clist))
-                                  
-                              === (fromList (f : r))
-                              === (fromList (f : r))
+                              ==!
+
+                              fromList (toList (CList (reverse (snd (splitAt ((length (f : r)) `div` 2) r))) f (fst (splitAt ((length (f : r)) `div` 2) r))))
+
+                              ==! CList (reverse (snd (splitAt ((length (f : r)) `div` 2) r))) f (fst (splitAt ((length (f : r)) `div` 2) r)) ? prop_list (CList (reverse (snd (splitAt ((length (f : r)) `div` 2) r))) f (fst (splitAt ((length (f : r)) `div` 2) r)))
+                        
+                              ==! (fromList (f : r))
                               ==! (fromList (f : (r ++ []))) -- to prove commutativity
                               === (fromList (f : (r ++ (reverse []))))
                               === (fromList (rightElements c))
