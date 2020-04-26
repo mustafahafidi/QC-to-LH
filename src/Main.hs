@@ -3,6 +3,7 @@ import Lib.LH.Prelude
 -- import Lib.LH.Equational
 import Lib.CL.CircularList
 import Language.Haskell.Liquid.ProofCombinators
+import Language.Haskell.Liquid.Prelude
 import Prelude hiding (length, null, splitAt, (++), reverse)
 
 {-@ LIQUID "--reflection"    @-}
@@ -11,7 +12,6 @@ import Prelude hiding (length, null, splitAt, (++), reverse)
 {-@ LIQUID "--no-termination"    @-}
 -- {-@ LIQUID "--ple"    @-}
 {-@ LIQUID "--short-names"    @-}
-
 
 
 
@@ -40,13 +40,6 @@ prop_focus c v = (Just v) === (focus $ insertR v c)
                   ***QED 
 
 
---  (++) [(head l)]  (toList(fromList(tail l))) == []
-{- 
-{-@ lemma_a :: l:{ls:[a]| len ls >0} -> { cons (head l) (toList(fromList(tail l))) == l} @-}
-lemma_a ::  [a]-> Proof
-lemma_a l@(x:xs) = x:xs === l
-                  ***QED -}
-
 {-@ lemma_fromList :: l:[a] -> { l == toList (fromList l)} @-}
 lemma_fromList ::  [a] -> Proof
 lemma_fromList l@[] = l
@@ -59,14 +52,9 @@ lemma_fromList l@[] = l
 
 lemma_fromList (x:xs) = (x:xs) ? lemma_fromList xs
                         === x: (toList (fromList xs)) 
-                        === x: (case xs of
-                                     [] -> toList (Empty)
-                                     (m:ms) -> toList (let len = length xs
-                                                           (r,l) = splitAt (len `div` 2) ms
-                                                        in CList (reverse l) m r)
-                                ) 
                         === (case xs of
                                   [] -> x: (toList (fromList []))
+                                        === x:  toList (Empty)
                                         === x: rightElements Empty
                                         === [x]
                                         === x :[]
@@ -92,34 +80,34 @@ lemma_fromList (x:xs) = (x:xs) ? lemma_fromList xs
                                               === x: ((m:r) ++ (reverse (reverse l)))
                                               === rightElements (CList (reverse l) x (m:r))
                                               === toList (CList (reverse l) x (m:r))
-                                              === toList (CList (reverse l) x (m:r)) -- how to get to tolist . fromlist?
+                                              === toList (CList (reverse l) x (m:r)) 
+                                                 ? (let 
+                                                        n = (length (x:xs)) `div` 2
+                                                        (b1, b2) = splitAt (n - 1) xs
+                                                        (m1:_) = xs
+                                                    in  (l ==! b2 ***QED )        &&&
+                                                        ((m:r) ==! (m1:b1) ***QED) -- how to prove this?
+                                                       )
+                                              === toList (let len1 = length (x:xs)
+                                                              (m1:_) = xs
+                                                              n = len1 `div` 2
+                                                              (b1, b2) = splitAt (n - 1) xs
+                                                        in CList (reverse b2) x (m1:b1) )
+
+                                     
+                                              === toList (let len1 = length (x:xs)
+                                                              n = len1 `div` 2
+                                                              (m1:m1s) = xs
+                                                              (b1, b2) = let (c1, c2) = splitAt (n - 1) m1s in (m1:c1, c2)
+                                                        in CList (reverse b2) x b1)
+
+                                              === toList (let len1 = length (x:xs)
+                                                              (b1, b2) = splitAt (len1 `div` 2) xs
+                                                          in CList (reverse b2) x b1)
+
+                                              === toList (fromList (x:xs))
                                             )
-                            ) 
-                       {-  === x: (case xs of
-                                     [] -> []
-                                     (m:ms) ->  (let len = length xs
-                                                     (r,l) = splitAt (len `div` 2) ms
-                                                 in toList (CList (reverse l) m r))
-                                )
-                        === x: (case xs of
-                                     [] -> []
-                                     (m:ms) ->  (let len = length xs
-                                                     (r,l) = splitAt (len `div` 2) ms
-                                                 in rightElements (CList (reverse l) m r))
-                                )
-                        === x:(case xs of
-                                     [] -> []
-                                     (m:ms) ->  (let len = length xs
-                                                     (r,l) = splitAt (len `div` 2) ms
-                                                    in m : (r ++ (reverse (reverse l)) ? involutionP l))
-                                ) 
-                        === x: (case xs of
-                                     [] -> []
-                                     (m:ms) ->  (let len = length xs
-                                                     (r,l) = splitAt (len `div` 2) ms
-                                                 in m : (r ++ (l)))
-                                )     -}                               
-                        ==! toList (fromList (x:xs))
+                            )        
                         ***QED
 
 -- Proved by assuming the safety of ref. type of reflected functions
@@ -182,23 +170,65 @@ prop_list c@(CList l f r) = c
 
 {-@  prop_rot :: c:CList Int -> {c == (rotR (rotL c))} @-}
 prop_rot :: CList Int -> Proof
-prop_rot c = c === (rotR (rotL c))
-                ***QED 
+prop_rot c@Empty = c 
+                  === (rotR (c))
+                  === (rotR (rotL c))
+                  ***QED 
+prop_rot c@(CList [] _ [])  = c 
+                            === (rotR (c))
+                            === (rotR (rotL c))
+                            ***QED 
+prop_rot c@(CList (l:ls) f rs)  = c 
+                            === CList (l:ls) f rs
+                            === (rotR (CList ls l (f:rs)))
+                            === (rotR (rotL c))
+                            ***QED  
 
-{- {-@ prop_packL ::  c:CList Int -> { c == (packL c) } @-}
+prop_rot c@(CList [] f rs)  = c 
+                            ==!  (CList (reverse rs) f [])
+                            === (let (l:ls) = reverse rs
+                                  in  (CList (l:ls) f [])
+                                )
+                            === (let (l:ls) = reverse rs
+                                  in  rotR (CList ls l [f])
+                                )
+                            === (rotR (let (l:ls) = reverse rs
+                                        in CList ls l [f]))
+                            === (rotR (rotL c))
+                            ***QED  
+
+{- 
+infixl 3 =*=
+{-@ (=*=)  :: x:CList a-> y:CList a
+          -> {c:CList a | any (compose (toList x ==)  toList) (toList (allRotations y)) } @-}
+(=*=) :: CList a -> CList a -> CList a
+_ =*= y  = y
+ -}
+
+{-@ prop_packL ::  c:CList Int -> { c == (packL c) } @-}
 prop_packL ::  CList Int -> Proof
 prop_packL c@Empty = c === (packL c)
-                     === (Empty)
+                       === (Empty)
                        ***QED 
-prop_packL c@(CList l f r) = c === (packL c)
-                          ***QED 
 
- -}
+prop_packL c@(CList l f r) = c 
+                            === CList l f r
+                            ==! (CList (l ++ (reverse r)) f [])
+                            === (packL c)
+                            ***QED 
+
+
+ 
 {- ===============  Additional ====================-}
-
 {-@ prop_singleton :: i:Int -> {toList (singleton i) == [i] && size (singleton i) == 1} @-}
 prop_singleton :: Int -> Proof
-prop_singleton i = (toList (singleton i) === [i]
+prop_singleton i = ([i]
+                    === i : ([])
+                    === i : ([] ++ [])
+                    === i : ([] ++ (reverse []))
+                    === rightElements (CList [] i [])
+                    === toList (CList [] i [])
+                    === toList (singleton i) 
                     ***QED)  &&&
                    (size (singleton i) === 1
                    ***QED)

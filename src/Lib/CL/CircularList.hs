@@ -104,15 +104,6 @@ import Test.QuickCheck.Gen
 -- To convince LH of the safety of this file
 {-@ ignore rotN @-}
 
- -- needed for prop_list and prop_rot in src/Main.hs
--- {-@ ignore fromList @-} 
-{-@ ignore toList @-}
-  
-{-@ ignore rotL @-}
-{-@ ignore rotR @-} 
- 
-{-@ ignore singleton @-} 
-
 
 
 -- | A functional ring type.
@@ -157,7 +148,7 @@ fromList a@(i:is) = let len = length a
                         (r,l) = splitAt (len `div` 2) is
                     in CList (reverse l) i r
 
-{-@ singleton :: e:a -> {cl:CList a | toList cl == [e]} @-}
+-- {-@ singleton :: e:a -> {cl:CList a | toList cl == [e]} @-}
 singleton :: a -> CList a
 singleton e = CList [] e [] 
               -- ==. fromList [e]
@@ -251,7 +242,7 @@ allRotations cl = CList ls cl rs
     rs = unfoldr (fmap (join (,)) . mRotR) cl
 
 -- |Rotate the focus to the previous (left) element.
-{-@ rotL :: cl:CList a -> {l:CList a | rotR l == cl} @-}
+-- {-@ rotL :: cl:CList a -> {l:CList a | rotR l == cl} @-}
 rotL :: CList a -> CList a
 rotL Empty = Empty
 rotL r@(CList [] _ []) = r
@@ -266,7 +257,7 @@ mRotL (CList (l:ls) f rs) = Just $ CList ls l (f:rs)
 mRotL _ = Nothing
 
 -- |Rotate the focus to the next (right) element.
-{-@ rotR :: cl:CList a -> {l:CList a | rotL l == cl} @-}
+-- {-@ rotR :: cl:CList a -> {l:CList a | rotL l == cl} @-}
 rotR :: CList a -> CList a
 rotR Empty = Empty
 rotR r@(CList [] _ []) = r
