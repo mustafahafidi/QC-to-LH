@@ -11,7 +11,7 @@ import Lib.CL.CircularList
 prop1 :: Bool
 prop1 = let p1 = (CList [] 0 [1] == CList [1] 0 []) -- not ok
             p2  = (CList [] 0 [] == CList [] 0 []) -- ok 
-        in (\p -> liquidAssert (p) (p)) p2
+        in (liquidAssertB p2)
         
 
 main :: IO ()

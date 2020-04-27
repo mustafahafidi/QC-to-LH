@@ -1,4 +1,11 @@
-module Main where
+{- 
+=================================================================
+                      Data.CircularList proofs
+=================================================================
+-}
+
+
+module CList_Proofs where
 import Lib.LH.Prelude
 -- import Lib.LH.Equational
 import Lib.CL.CircularList
@@ -8,9 +15,7 @@ import Prelude hiding (length, null, splitAt, (++), reverse)
 
 {-@ LIQUID "--reflection"    @-}
 {-@ LIQUID "--no-totality"    @-}
-
 {-@ LIQUID "--no-termination"    @-}
--- {-@ LIQUID "--ple"    @-}
 {-@ LIQUID "--short-names"    @-}
 
 
@@ -219,7 +224,7 @@ prop_packL c@(CList l f r) = c
 
 
  
-{- ===============  Additional ====================-}
+{- ===============  Additional props ====================-}
 {-@ prop_singleton :: i:Int -> {toList (singleton i) == [i] && size (singleton i) == 1} @-}
 prop_singleton :: Int -> Proof
 prop_singleton i = ([i]
@@ -323,9 +328,4 @@ prop_removeR  cl@(CList l _ []) = size (removeR cl)
                                 ===  (size cl)-1
                                 ***QED
 
-
-
-
-main :: IO ()
-main = putStrLn (show $ "Hi")--toList (reverseDirection (fromList [1,2,3,4])))
 

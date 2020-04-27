@@ -61,12 +61,27 @@ splitAt n (a:as) = let (b1, b2) = splitAt (n - 1) as
                         in (a:b1, b2)
 
 
-{- {-@ (==>) :: p:Bool -> q:Bool -> {v:Bool | v <=> (p ==> q)} @-}
-False ==> False = True
-False ==> True  = True
-True  ==> True  = True
-True  ==> False = False -}
+{-@ type OList a    = [a]<{\fld v -> (v >= fld)}> @-}
 
+{-@ reflect sort @-}
+{-@ sort :: (Ord a) => xs:[a] -> OList a @-}
+sort            :: (Ord a) => [a] -> [a]
+sort []         = []
+sort (x:xs)     = insertSort x (sort xs) 
+
+{-@ reflect insertSort @-}
+{-@ insertSort :: Ord t => t -> OList t -> OList t @-}
+insertSort :: Ord t => t -> [t] -> [t]
+insertSort y []                   = [y]
+insertSort y (x : xs) | y <= x    = y : x : xs 
+                  | otherwise = x : insertSort y xs
+
+
+
+
+
+
+{-    ==================== SOME PRELUDE PROOFS ====================  -}
 
 singletonP :: a -> Proof
 {-@ singletonP :: x:a -> { reverse [x] == [x] } @-}
