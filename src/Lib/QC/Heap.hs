@@ -48,6 +48,7 @@ isEmpty _     = False
 unit :: a -> Heap a
 unit x = Node x empty empty
 
+{-@ reflect size @-}
 size :: Heap a -> Int
 size Empty          = 0
 size (Node _ h1 h2) = 1 + size h1 + size h2
@@ -123,7 +124,7 @@ prop_IsEmpty (h :: Heap Int) =
 prop_Unit (x :: Int) =
   unit x ==? [x]
 
--- {-@ inline prop_Size @-}
+{-@ inline prop_Size @-}
 prop_Size (h :: Heap Int) =
   size h == length (toList h)
 

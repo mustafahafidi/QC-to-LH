@@ -15,9 +15,9 @@ import Language.Haskell.Liquid.ProofCombinators
 import Prelude hiding (length, null, splitAt, (++), reverse)
 
 {-@ LIQUID "--reflection"    @-}
--- {-@ LIQUID "--no-totality"    @-}
+{-@ LIQUID "--no-totality"    @-}
 {-@ LIQUID "--short-names"    @-}
-{-@ LIQUID "--higherorder"    @-}
+{-@ LIQUID "--no-termination"    @-}
 
 
 {-@ prop_Empty :: { Lib.QC.Heap.prop_Empty } @-}
@@ -71,4 +71,39 @@ prop_Unit x = (unit x ==? [x])
                 === (let e = (Empty::Heap Int) in -- definition of invariant
                       (x <=? Empty && x <=? Empty && invariant e && invariant e))
             --  === (True && True && True && True)
+            ***QED
+
+
+
+{-@ inline dsp @-}
+dsp h1 h2 = toList' (h1++h2) == (toList' h1 ++ toList' h2)
+
+
+{-@ distProp ::  Eq a =>  h1:[Heap a] -> h2:[Heap a] -> { dsp h1 h2 } @-}
+distProp :: Eq a => [Heap a] -> [Heap a] -> Proof
+distProp h1@(h:hs) h2 =  (toList' ((h:hs)++h2) == (toList' (h:hs) ++ toList' h2))
+                              ? distProp (h:hs) (h2)
+                        -- === (toList' (h:hs) ++ toList' h2 == toList' (h:hs) ++ toList' h2)
+                        ***QED
+
+{-@ prop_Size ::  h:Heap Int -> { Lib.QC.Heap.prop_Size h } @-}
+prop_Size ::  Heap Int -> Proof
+prop_Size Empty =  (size Empty == length (toList Empty))
+                  ===  ( 0 == length (toList' [Empty]))
+                  ===  ( 0 == length (toList' []))
+                  ===  ( 0 == length [])
+                  ***QED
+
+prop_Size h@(Node v hl hr) =  (size h == length (toList h))
+            ===  (1 + size hl + size hr == length (toList' [h]))
+            ===  (1 + size hl + size hr == length (v:toList' [hl,hr])) ? ([hl]++[hr]===hl:([]++[hr])===hl:[hr])
+            === (1 + size hl + size hr == length (v:toList' ([hl]++[hr]))) -- distAppend of toList'
+                  ? distProp [hl] [hr]
+            ===  (1 + size hl + size hr == length (v:(toList' [hl] ++ toList' [hr]))) 
+            ===  (1 + size hl + size hr == 1 + length (toList' [hl] ++ toList' [hr]))
+            ===  (1 + size hl + size hr == 1 + length (toList' [hl]) + length (toList' [hr]))
+            === (1 + size hl + size hr == 1 + length (toList hl) + length (toList hr))
+                  ? Heap_Proofs.prop_Size hl
+                  ? Heap_Proofs.prop_Size hr
+            === (size h == length (toList h)) 
             ***QED

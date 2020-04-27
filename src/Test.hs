@@ -4,7 +4,8 @@ import Prelude
 import Lib.CL.CircularList
 
 {-@ LIQUID "--reflection"    @-}
--- {-@ LIQUID "--short-names"    @-}
+{-@ LIQUID "--short-names"    @-}
+{-@ LIQUID "--no-termination"    @-}
 {-@ LIQUID "--higherorder"     @-}
 -- {-@ infix   : @-}
 
@@ -17,8 +18,15 @@ a == b = any ((toList a Prelude.==) . toList) . toList $ allRotations b
 prop1 :: Bool
 prop1 = let p1 = (CList [] 0 [1] == CList [1] 0 []) -- not ok
             p2  = (CList [] 0 [] == CList [] 0 []) -- ok 
-        in (liquidAssertB p0)
-        
+        in (liquidAssertB p2)
+
+p :: [a] -> Bool
+p [] = False
+p b@(l:ls) = p b
+
+-- >>> 
+-- "asD"
+--
 
 main :: IO ()
 main = do
