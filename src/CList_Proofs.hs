@@ -9,8 +9,8 @@ module CList_Proofs where
 import Lib.LH.Prelude
 -- import Lib.LH.Equational
 import Lib.CL.CircularList
+import qualified Lib.CL.QuickCheck as QC
 import Language.Haskell.Liquid.ProofCombinators
-import Language.Haskell.Liquid.Prelude
 import Prelude hiding (length, null, splitAt, (++), reverse)
 
 {-@ LIQUID "--reflection"    @-}
@@ -173,7 +173,7 @@ prop_list c@(CList l f r) = c
                               === (fromList (toList c))
                             ***QED  
 
-{-@  prop_rot :: c:CList Int -> {c == (rotR (rotL c))} @-}
+{-@  prop_rot :: c:CList Int -> { QC.prop_rot c } @-}
 prop_rot :: CList Int -> Proof
 prop_rot c@Empty = c 
                   === (rotR (c))
@@ -202,6 +202,21 @@ prop_rot c@(CList [] f rs)  = c
                             === (rotR (rotL c))
                             ***QED  
 
+ 
+{- prop_rot c@(CList [] f rs)  = 
+                             (any ((toList c ==) . toList) . toList $ allRotations (CList (reverse rs) f []))
+                            === (c == (CList (reverse rs) f []))
+                            === (c == let (l:ls) = reverse rs
+                                  in  (CList (l:ls) f [])
+                                )
+                            === (c == let (l:ls) = reverse rs
+                                  in  rotR (CList ls l [f])
+                                )
+                            === (c == rotR (let (l:ls) = reverse rs
+                                        in CList ls l [f]))
+                            ==! (c == (rotR $ rotL c))
+                            ***QED
+ -}
 {- 
 infixl 3 =*=
 {-@ (=*=)  :: x:CList a-> y:CList a

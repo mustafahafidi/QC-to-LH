@@ -387,6 +387,7 @@ instance (Read a) => Read (CList a) where
    (xs,t) <- reads s
    return (fromList xs,t)
 
+
 instance (Eq a) => Eq (CList a) where
   a == b = any ((toList a ==) . toList) . toList $ allRotations b
 

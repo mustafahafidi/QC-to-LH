@@ -44,6 +44,7 @@ isEmpty :: Heap a -> Bool
 isEmpty Empty = True
 isEmpty _     = False
 
+{-@ inline unit @-}
 unit :: a -> Heap a
 unit x = Node x empty empty
 
@@ -118,12 +119,15 @@ prop_Empty =
 prop_IsEmpty (h :: Heap Int) =
   isEmpty h == null (toList h)
 
+{-@ inline prop_Unit @-}
 prop_Unit (x :: Int) =
   unit x ==? [x]
 
+-- {-@ inline prop_Size @-}
 prop_Size (h :: Heap Int) =
   size h == length (toList h)
 
+-- {-@ inline prop_Insert @-}
 prop_Insert x (h :: Heap Int) =
   insert x h ==? (x : toList h)
 

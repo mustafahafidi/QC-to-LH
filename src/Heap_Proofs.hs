@@ -48,9 +48,27 @@ prop_IsEmpty h@Empty =
 prop_IsEmpty h@(Node v hl hr) =  
         (isEmpty h == null (toList h))
         === (False == null (toList h))
-        === (False == null (toList' [h]))
-        === (False == null (v: (toList' (hl:hr:[]))))
-        === (False == null (v: (toList' (hl:hr:[])))) -- lazy evaluation helps to prove
+        === not (null (toList' [h]))
+        === not (null (v: (toList' (hl:hr:[]))))
+        === not (null (v: (toList' (hl:hr:[])))) 
         ***QED
 
 
+{-@ prop_Unit ::  x:Int -> { Lib.QC.Heap.prop_Unit x } @-}
+prop_Unit ::  Int -> Proof
+prop_Unit x = (unit x ==? [x])
+            === -- definition of ==?
+              (let h = Node x empty empty in 
+                    (invariant h && sort (toList h) == sort [x])
+                === (invariant h && sort (toList h) == sort [x])
+                === (invariant h && sort (toList' [h]) == sort [x])
+                === (invariant h && sort (x:toList' (Empty:Empty:[])) == sort [x])
+                === (invariant h && sort (x:toList' (Empty:Empty:[])) == sort [x])
+                === (invariant h && sort (x:toList' (Empty:[])) == sort [x])
+                === (invariant h && sort (x:toList' []) == sort [x])
+                === (invariant h && sort [x] == sort [x])
+                === (invariant h)) 
+                === (let e = (Empty::Heap Int) in -- definition of invariant
+                      (x <=? Empty && x <=? Empty && invariant e && invariant e))
+            --  === (True && True && True && True)
+            ***QED

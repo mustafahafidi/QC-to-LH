@@ -1,9 +1,10 @@
-{-# OPTIONS -Wall #-}
+-- {-# OPTIONS -Wall #-}
 module Lib.CL.QuickCheck where
 
 import Test.QuickCheck
 import Lib.CL.CircularList 
 -- import Lib.LH.Prelude hiding (length)
+{-@ LIQUID "--reflection"    @-}
 
 
 -- Make sure empty really is empty.
@@ -22,10 +23,9 @@ prop_focus c v = (Just v) == (focus $ insertR v c)
 prop_list :: CList Int -> Bool
 prop_list c = c == (fromList . toList $ c)
 
+{-@ inline prop_rot @-}
 prop_rot :: CList Int -> Bool
 prop_rot c = c == (rotR $ rotL c)
-
--- Make sure converting to/from lists works.
 
 prop_packL :: CList Int -> Bool
 prop_packL c = c == (packL c)
@@ -33,7 +33,7 @@ prop_packL c = c == (packL c)
 prop_packR :: CList Int -> Bool
 prop_packR c = c == (packR c)
 
--- Additional properties
+-- ========================== Additional properties =====================
 
 prop_singleton :: Int -> Bool
 prop_singleton i = toList (singleton i) == [i]
