@@ -53,6 +53,7 @@ size :: Heap a -> Int
 size Empty          = 0
 size (Node _ h1 h2) = 1 + size h1 + size h2
 
+{-@ reflect insert @-}
 insert :: Ord a => a -> Heap a -> Heap a
 insert x h = unit x `merge` h
 
@@ -60,6 +61,7 @@ removeMin :: Ord a => Heap a -> Maybe (a, Heap a)
 removeMin Empty          = Nothing
 removeMin (Node x h1 h2) = Just (x, h1 `merge` h2)
 
+{-@ reflect merge @-}
 merge :: Ord a => Heap a -> Heap a -> Heap a
 h1    `merge` Empty = h1
 Empty `merge` h2    = h2
@@ -128,7 +130,7 @@ prop_Unit (x :: Int) =
 prop_Size (h :: Heap Int) =
   size h == length (toList h)
 
--- {-@ inline prop_Insert @-}
+{-@ inline prop_Insert @-}
 prop_Insert x (h :: Heap Int) =
   insert x h ==? (x : toList h)
 
@@ -165,7 +167,7 @@ instance (Ord a, Arbitrary a) => Arbitrary (Heap a) where
                     where arbHeap2 = arbHeap (Just y) (n `div` 2))
         | n > 0
         ]
- -}
+  -}
 --------------------------------------------------------------------------
 -- main
 {- 
@@ -190,3 +192,9 @@ prop_HeapIsNotSorted (h :: Heap Int) =
   expectFailure $
     toList h == toSortedList h
 -}
+
+-- >>>       putStrLn "ciao"
+-- >>> prop_Insert 2 (Node 4 Empty Empty)
+-- ciao
+-- True
+--

@@ -21,7 +21,7 @@ null [] = True
 null xs = False 
 
     
-{-@ infix   ++ @-}
+{-@ infix 4  ++ @-}
 {-@ reflect ++ @-}
 {-@ (++) :: xs:[a] -> ls:[a] -> {vs:[a] | length vs == (length xs) + (length ls) } @-}
 (++) :: [a] -> [a] -> [a]
