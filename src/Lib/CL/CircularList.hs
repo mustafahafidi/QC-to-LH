@@ -96,6 +96,7 @@ import Test.QuickCheck.Gen
 {-@ reflect rotR @-}
 {-@ reflect rotL @-}
 {-@ reflect packL @-}
+{-@ reflect packR @-}
 {-@ reflect update @-}
 {-@ reflect focus @-}
 {-@ reflect reverseDirection @-}
