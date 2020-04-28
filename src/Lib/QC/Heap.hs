@@ -36,6 +36,15 @@ data Heap a
   | Empty
  deriving ( Eq, Ord, Show )
 
+{-@ 
+data Heap a = Node { 
+         k :: a
+        , left  :: Heap {v:a | v <= k}
+        , right :: Heap {v:a | v > k } }
+  | Empty 
+@-}
+
+{-@ reflect isEmpty @-}
 empty :: Heap a
 empty = Empty
 
@@ -96,6 +105,7 @@ toSortedList (Node x h1 h2) = x : toList (h1 `merge` h2)
 -- specification
 
 {-@ reflect invariant @-}
+{-@  invariant ::  Ord a => Heap a -> {True } @-}
 invariant :: Ord a => Heap a -> Bool
 invariant Empty          = True
 invariant (Node x h1 h2) = x <=? h1 && x <=? h2 && invariant h1 && invariant h2
@@ -111,7 +121,7 @@ x <=? Node y _ _ = x <= y
 {-@ reflect ==? @-}
 (==?) :: Ord a => Heap a -> [a] -> Bool
 h ==? xs = invariant h && sort (toList h) == sort xs
-
+-- skew heap
 --------------------------------------------------------------------------
 -- properties
 {-@ inline prop_Empty @-}

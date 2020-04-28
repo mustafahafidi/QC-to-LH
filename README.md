@@ -10,9 +10,12 @@ This project aims to facilitate the migration/conversion of QuickCheck propertie
 - :heavy_check_mark: Get familiar with LH to parse the codebase
 - :heavy_check_mark: Transform not very deep test properties to formal proofs with LiquidHaskell
 - :heavy_check_mark: Find patterns to implement --> light properties like `prop_empty, prop_isEmpty, prop_size, prop_focus` get proved automatically with no additional equational reasoning, and `prop_list, prop_rot` by assumption on some refined types. Added multiple properties with proofs.
-- [..] Do the induction for the properties ignored
-- [..] Apply everything on the examples of quickcheck (github)
-- [..] Make a report/table on the proofs done until now
+- :heavy_check_mark: Do the induction for the properties ignored
+- :heavy_check_mark: Apply everything on the examples of quickcheck (github)
+- :heavy_check_mark: Make a report/table on the proofs done until now
+
+- [..] Redefine Eq == and rewrite properties, then prove them
+- [..] Solve the Heap proofs (try the refined data-type to ease the proofs)
 
 - [..] Add more examples to try the tool on
 

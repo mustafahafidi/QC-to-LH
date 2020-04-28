@@ -15,9 +15,9 @@ import Language.Haskell.Liquid.ProofCombinators
 import Prelude hiding (length, null, splitAt, (++), reverse)
 
 {-@ LIQUID "--reflection"    @-}
-{-@ LIQUID "--no-totality"    @-}
+-- {-@ LIQUID "--no-totality"    @-}
 {-@ LIQUID "--short-names"    @-}
-{-@ LIQUID "--no-termination"    @-}
+
 
 
 {-======================================================
@@ -26,7 +26,7 @@ import Prelude hiding (length, null, splitAt, (++), reverse)
 {-@ prop_Empty :: { Lib.QC.Heap.prop_Empty } @-}
 prop_Empty :: Proof
 prop_Empty =
-  (empty ==? ([]::[Int]))
+      (empty ==? ([]::[Int]))
   === (Empty ==? ([]::[Int]))
   === (invariant (Empty::Heap Int) && sort (toList Empty) == sort ([]::[Int]))
   === (True && sort (toList Empty) == sort ([]::[Int]))
@@ -118,10 +118,10 @@ distProp (h:hs) h2 =    (toList' ((h:hs)++h2) == (toList' (h:hs) ++ toList' h2))
                         === (toList' (h:hs) ++ toList' h2 == toList' (h:hs) ++ toList' h2)
                         ***QED
 
-{-  This proves !?
+{- 
 distProp (h:hs) h2 =  (toList' ((h:hs)++h2) == (toList' (h:hs) ++ toList' h2))
                               ? distProp (h:hs) (h2)
-                        ***QED -}
+                        ***QED  -}
 
 {-@ prop_Size ::  h:Heap Int -> { Lib.QC.Heap.prop_Size h } @-}
 prop_Size ::  Heap Int -> Proof
@@ -159,11 +159,11 @@ prop_Size h@(Node v hl hr) =  (size h == length (toList h)) -- apply size
 -- {-@ inline inv @-}
 -- inv:: Heap Int -> Bool
 -- inv h = invariant h
-{- {-@ lemma_invariant ::  x:Int -> h:{ Heap Int | Lib.QC.Heap.invariant h } -> { Lib.QC.Heap.invariant (merge (unit x) h) } @-}
+{-@ lemma_invariant ::  x:Int -> h:{ Heap Int | Lib.QC.Heap.invariant h } -> { Lib.QC.Heap.invariant (merge (unit x) h) } @-}
 lemma_invariant ::  Int -> Heap Int  -> Proof
 lemma_invariant x h = True
                     ***Admit
- -}
+ 
 {-@ prop_Insert ::  x:Int -> hp:Heap Int -> { Lib.QC.Heap.prop_Insert x hp } @-}
 prop_Insert ::  Int -> Heap Int -> Proof
 prop_Insert x Empty =   ( insert x Empty ==? (x : toList Empty) )
@@ -185,9 +185,9 @@ prop_Insert x Empty =   ( insert x Empty ==? (x : toList Empty) )
                 ===  (sort (x:toList' []) == sort [x])
                 ===  (sort [x] == sort [x])
                 ***QED
-{- 
+
 prop_Insert x h@(Node y hl hr) 
-            | x <= y    = ( insert x h ==? (x : toList h) )
+            | x <= y    =    ( insert x h ==? (x : toList h) )
                         ===  ( unit x `merge` h ==? (x : toList' [h]) )
                         ===  ( unit x `merge` h ==? (x : y : toList' [hl,hr]) )
                         ===  ( (Node x empty empty) `merge` h ==? (x : y : toList' [hl,hr]) )
@@ -221,4 +221,4 @@ prop_Insert x h@(Node y hl hr)
                   -- Node y (h22 `merge` h1) h21
 
                 ***Admit
- -}
+ 

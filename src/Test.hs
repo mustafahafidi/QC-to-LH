@@ -18,7 +18,7 @@ a == b = any ((toList a Prelude.==) . toList) . toList $ allRotations b
 prop1 :: Bool
 prop1 = let p1 = (CList [] 0 [1] == CList [1] 0 []) -- not ok
             p2  = (CList [] 0 [] == CList [] 0 []) -- ok 
-        in (liquidAssertB p2)
+        in (liquidAssertB p1)
 
 p :: [a] -> Bool
 p [] = False
