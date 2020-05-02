@@ -10,10 +10,12 @@ import Lib.CL.CircularList
 -- {-@ infix   : @-}
 
 
--- {-@ inline == @-}
-{- (==) :: Eq a  => CList a -> CList a -> Bool
-a == b = any ((toList a Prelude.==) . toList) . toList $ allRotations b
- -}
+{-@ reflect =*= @-}
+{-@ infix =*= @-}
+(=*=) :: Eq a  => CList a -> CList a -> Bool
+a =*= b = any ((toList a ==) . toList) . toList $ allRotations b
+
+
 
 prop1 :: Bool
 prop1 = let p1 = (CList [] 0 [1] == CList [1] 0 []) -- not ok
