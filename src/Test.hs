@@ -15,11 +15,9 @@ import Lib.CL.CircularList
 (=*=) :: Eq a  => CList a -> CList a -> Bool
 a =*= b = any ((toList a ==) . toList) . toList $ allRotations b
 
-
-
 prop1 :: Bool
-prop1 = let p1 = (CList [] 0 [1] == CList [1] 0 []) -- not ok
-            p2  = (CList [] 0 [] == CList [] 0 []) -- ok 
+prop1 = let p1 = (CList [] 0 [1] =*= CList [1] 0 []) -- not ok
+            p2  = (CList [] 0 [] =*= CList [] 0 []) -- ok 
         in (liquidAssertB p1)
 
 p :: [a] -> Bool
