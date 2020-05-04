@@ -1,7 +1,13 @@
 module Lib.LH.Prelude where
 import Language.Haskell.Liquid.ProofCombinators
 
-import Prelude hiding (length, (++), reverse, iterate, null, splitAt)
+import Prelude hiding (length, 
+                        (++), 
+                        reverse, 
+                        iterate, 
+                        null, 
+                        splitAt,
+                        any )
 
 {-@ LIQUID "--no-totality" @-}
 {-@ LIQUID "--no-termination-check" @-}
@@ -77,7 +83,17 @@ insertSort y (x : xs) | y <= x    = y : x : xs
                   | otherwise = x : insertSort y xs
 
 
+{-======================================================
+                Trying to lift Eq CList
+=======================================================-}
 
+{-@ reflect any @-}
+any :: (a -> Bool) -> [a] -> Bool
+any _ []        = False
+any p (x:xs)    = p x || any p xs
+
+
+ 
 
 
 

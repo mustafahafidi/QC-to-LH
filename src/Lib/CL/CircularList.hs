@@ -70,7 +70,8 @@ module Lib.CL.CircularList (
 ) where
 
 import Control.Applicative hiding (empty)
-import Prelude hiding ( length, (++), reverse, cycle, iterate,splitAt)
+import Prelude hiding ( length, (++), reverse, cycle, iterate,splitAt
+                        ,any)
 import Data.List(find,unfoldr,foldl')
 import Control.DeepSeq(NFData(..))
 import Control.Monad(join)
@@ -235,6 +236,7 @@ removeR (CList l _ []) = let (f:rs) = reverse l
 
 -- |Return all possible rotations of the provided 'CList', where the
 -- focus is the provided 'CList'.
+-- {-@ reflect allRotations @-}
 allRotations :: CList a -> CList (CList a)
 allRotations Empty = singleton Empty
 allRotations cl = CList ls cl rs
