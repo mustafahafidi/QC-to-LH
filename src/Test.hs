@@ -44,8 +44,8 @@ p3_proof = p3
         === ( (\ls -> any ((toList Empty ==) . toList) (toList ls)) $ allRotations (Empty::CList Int) )
         === ( (\ls -> any ((toList Empty ==) . toList) (toList ls)) (allRotations (Empty::CList Int)) )
         === ( any ((toList Empty ==) . toList) (toList (allRotations (Empty::CList Int))) )
-                                                       ?( (allRotations (Empty::CList Int))
-                                                        ==! ( singleton (Empty::CList Int))
+                                                       ?( allRotations (Empty::CList Int)
+                                                        === singleton (Empty::CList Int)
                                                         )
 
         ===  any ((toList Empty ==) . toList) (toList (singleton (Empty::CList Int))) 
