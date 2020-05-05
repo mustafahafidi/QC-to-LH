@@ -4,7 +4,7 @@ module Lib.QC.Heap where
 --------------------------------------------------------------------------
 -- imports
 
-import Test.QuickCheck
+import Test.QuickCheck hiding((===))
 
 import Data.List
   ( --sort
@@ -19,13 +19,15 @@ import Control.Monad
 
 import Prelude hiding (length, (++), reverse, iterate, null, splitAt)
 import Lib.LH.Prelude
-
+import Language.Haskell.Liquid.ProofCombinators
 --------------------------------------------------------------------------
 -- skew heaps
 
 {-@ LIQUID "--reflection"    @-}
 {-@ LIQUID "--no-totality"    @-}
 {-@ LIQUID "--no-termination"    @-}
+{-@ LIQUID "--short-names"    @-}
+{-@ LIQUID "--prune-unsorted"    @-}
 {-@ reflect empty @-}
 {-@ reflect toList @-}
 {-@ reflect toList' @-}
@@ -36,15 +38,25 @@ data Heap a
   | Empty
  deriving ( Eq, Ord, Show )
 
+-- {-@ 
+-- data Heap a = Node { 
+--          k :: a
+--         , left  :: Heap {v:a | k <= v}
+--         , right :: Heap {v:a | k <= v} }
+--         | Empty 
+-- @-}
+
 {-@ 
 data Heap a = Node { 
-         k :: a
-        , left  :: Heap {v:a | k <= v}
-        , right :: Heap {v:a | k <= v} }
-        | Empty 
+         k :: a,
+         left  :: {hl:Heap a|Lib.QC.Heap.invariant hl},
+         right :: {hr:Heap a|Lib.QC.Heap.invariant hr && Lib.QC.Heap.invariant (Node k left hr)} 
+        }
+        | Empty {True}
 @-}
 
-{-@ reflect isEmpty @-}
+
+{-@ reflect empty @-}
 empty :: Heap a
 empty = Empty
 
@@ -53,6 +65,7 @@ isEmpty :: Heap a -> Bool
 isEmpty Empty = True
 isEmpty _     = False
 
+-- {-@ ignore unit @-}
 {-@ inline unit @-}
 unit :: a -> Heap a
 unit x = Node x empty empty
@@ -70,6 +83,7 @@ removeMin :: Ord a => Heap a -> Maybe (a, Heap a)
 removeMin Empty          = Nothing
 removeMin (Node x h1 h2) = Just (x, h1 `merge` h2)
 
+
 {-@ reflect merge @-}
 merge :: Ord a => Heap a -> Heap a -> Heap a
 h1    `merge` Empty = h1
@@ -77,6 +91,29 @@ Empty `merge` h2    = h2
 h1@(Node x h11 h12) `merge` h2@(Node y h21 h22)
   | x <= y    = Node x (h12 `merge` h2) h11
   | otherwise = Node y (h22 `merge` h1) h21
+
+{-======================================================
+                Testing a proof here
+=======================================================-}
+
+{-@ lemma_invariant :: Ord a =>  h1:{ Heap a | Lib.QC.Heap.invariant h1 }
+                      -> h2:{ Heap a | Lib.QC.Heap.invariant h2 } 
+                      -> { Lib.QC.Heap.invariant (merge h1 h2) } @-}
+lemma_invariant ::  Ord a => Heap a -> Heap a -> Proof
+lemma_invariant h1 h2 = invariant (merge h1 h2)
+                    ***Admit
+ 
+ 
+
+{-@ prop_Insert_proof::  x:Int -> hp:Heap Int -> { Lib.QC.Heap.prop_Insert x hp } @-}
+prop_Insert_proof ::  Int -> Heap Int -> Proof
+prop_Insert_proof x Empty =   ( insert x Empty ==? (x : toList Empty) )
+                          === ( invariant (insert x Empty) && sort (toList (insert x Empty)) == sort (x : toList Empty) )
+                      ***Admit
+
+{-======================================================
+=======================================================-}
+
 
 fromList :: Ord a => [a] -> Heap a
 fromList xs = merging [ unit x | x <- xs ]

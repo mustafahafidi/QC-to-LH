@@ -152,18 +152,14 @@ prop_Size h@(Node v hl hr) =  (size h == length (toList h)) -- apply size
 {-======================================================
                         prop_Insert
 =======================================================-}
--- {-@ measure getVal @-}
--- getVal :: Heap Int -> Int
--- getVal (Node y hl hr) = y
 
--- {-@ inline inv @-}
--- inv:: Heap Int -> Bool
--- inv h = invariant h
-{-@ lemma_invariant ::  x:Int -> h:{ Heap Int | Lib.QC.Heap.invariant h } -> { Lib.QC.Heap.invariant (merge (unit x) h) } @-}
-lemma_invariant ::  Int -> Heap Int  -> Proof
-lemma_invariant x h = True
-                    ***Admit
- 
+{-@ lemma_invariant :: Ord a =>  h1:{ Heap a | Lib.QC.Heap.invariant h1 }
+                      -> h2:{ Heap a | Lib.QC.Heap.invariant h2 } 
+                      -> { Lib.QC.Heap.invariant (merge h1 h2) } @-}
+lemma_invariant ::  Ord a => Heap a -> Heap a -> Proof
+lemma_invariant h1 h2 = invariant (merge h1 h2)
+                    ***QED
+                    
 {-@ prop_Insert ::  x:Int -> hp:Heap Int -> { Lib.QC.Heap.prop_Insert x hp } @-}
 prop_Insert ::  Int -> Heap Int -> Proof
 prop_Insert x Empty =   ( insert x Empty ==? (x : toList Empty) )
