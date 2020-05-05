@@ -52,7 +52,7 @@ data Heap a = Node {
          left  :: {hl:Heap a|Lib.QC.Heap.invariant hl},
          right :: {hr:Heap a|Lib.QC.Heap.invariant hr && Lib.QC.Heap.invariant (Node k left hr)} 
         }
-        | Empty {True}
+        | Empty
 @-}
 
 
