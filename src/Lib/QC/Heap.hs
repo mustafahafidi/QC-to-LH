@@ -39,9 +39,9 @@ data Heap a
 {-@ 
 data Heap a = Node { 
          k :: a
-        , left  :: Heap {v:a | v <= k}
-        , right :: Heap {v:a | v > k } }
-  | Empty 
+        , left  :: Heap {v:a | k <= v}
+        , right :: Heap {v:a | k <= v} }
+        | Empty 
 @-}
 
 {-@ reflect isEmpty @-}
