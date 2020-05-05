@@ -93,6 +93,15 @@ any _ []        = False
 any p (x:xs)    = p x || any p xs
 
 
+{-@ reflect unfoldr @-}
+unfoldr :: (b -> Maybe (a, b)) -> b -> [a]
+unfoldr f b0 = case f b0 of
+                Just (a, new_b) -> a : (unfoldr f new_b)
+                Nothing         -> []
+
+ 
+
+
  
 
 
