@@ -178,7 +178,7 @@ distributivityP (x:xs) ys  =   reverse ((x:xs) ++ ys)
     === reverse ys ++ (reverse xs ++ [x])
     === reverse ys ++ reverse (x:xs)
     *** QED 
-
+    
 
 {-@ rightIdP :: xs:[a] -> { xs ++ [] == xs } @-}
 rightIdP :: [a] -> Proof

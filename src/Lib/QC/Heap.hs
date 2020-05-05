@@ -27,10 +27,7 @@ import Language.Haskell.Liquid.ProofCombinators
 {-@ LIQUID "--no-totality"    @-}
 {-@ LIQUID "--no-termination"    @-}
 {-@ LIQUID "--short-names"    @-}
-{-@ LIQUID "--prune-unsorted"    @-}
-{-@ reflect empty @-}
-{-@ reflect toList @-}
-{-@ reflect toList' @-}
+-- {-@ LIQUID "--prune-unsorted"    @-}
 
 
 data Heap a
@@ -46,14 +43,14 @@ data Heap a
 --         | Empty 
 -- @-}
 
-{-@ 
-data Heap a = Node { 
-         k :: a,
-         left  :: {hl:Heap a|Lib.QC.Heap.invariant hl},
-         right :: {hr:Heap a|Lib.QC.Heap.invariant hr && Lib.QC.Heap.invariant (Node k left hr)} 
-        }
-        | Empty
-@-}
+-- {-@ 
+-- data Heap a = Node { 
+--          k :: a,
+--          left  :: {hl:Heap a|Lib.QC.Heap.invariant hl},
+--          right :: {hr:Heap a|Lib.QC.Heap.invariant hr && Lib.QC.Heap.invariant (Node k left hr)} 
+--         }
+--         | Empty
+-- @-}
 
 
 {-@ reflect empty @-}
@@ -92,29 +89,6 @@ h1@(Node x h11 h12) `merge` h2@(Node y h21 h22)
   | x <= y    = Node x (h12 `merge` h2) h11
   | otherwise = Node y (h22 `merge` h1) h21
 
-{-======================================================
-                Testing a proof here
-=======================================================-}
-
-{-@ lemma_invariant :: Ord a =>  h1:{ Heap a | Lib.QC.Heap.invariant h1 }
-                      -> h2:{ Heap a | Lib.QC.Heap.invariant h2 } 
-                      -> { Lib.QC.Heap.invariant (merge h1 h2) } @-}
-lemma_invariant ::  Ord a => Heap a -> Heap a -> Proof
-lemma_invariant h1 h2 = invariant (merge h1 h2)
-                    ***Admit
- 
- 
-
-{-@ prop_Insert_proof::  x:Int -> hp:Heap Int -> { Lib.QC.Heap.prop_Insert x hp } @-}
-prop_Insert_proof ::  Int -> Heap Int -> Proof
-prop_Insert_proof x Empty =   ( insert x Empty ==? (x : toList Empty) )
-                          === ( invariant (insert x Empty) && sort (toList (insert x Empty)) == sort (x : toList Empty) )
-                      ***Admit
-
-{-======================================================
-=======================================================-}
-
-
 fromList :: Ord a => [a] -> Heap a
 fromList xs = merging [ unit x | x <- xs ]
  where
@@ -126,9 +100,11 @@ fromList xs = merging [ unit x | x <- xs ]
   sweep [h]        = [h]
   sweep (h1:h2:hs) = (h1 `merge` h2) : sweep hs
 
+{-@ reflect toList @-}
 toList :: Heap a -> [a]
 toList h = toList' [h]
 
+{-@ reflect toList' @-}
 toList' :: [Heap a] -> [a]
 toList' []                  = []
 toList' (Empty        : hs) = toList' hs
