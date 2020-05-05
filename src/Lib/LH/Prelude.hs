@@ -95,6 +95,7 @@ any p (x:xs)    = p x || any p xs
 
 
 data LMaybe a = LNothing | LJust a
+                deriving (Show)
 
 {-@ reflect unfoldr @-}
 unfoldr :: (b -> LMaybe (a, b)) -> b -> [a]
@@ -108,6 +109,11 @@ fmapLMaybe :: (a->b) -> LMaybe a -> LMaybe b
 fmapLMaybe _ LNothing       = LNothing
 fmapLMaybe f (LJust a)      = LJust (f a)
 
+-- instance Monad ((->) r) where
+--     f >>= k = \ r -> k (f r) r
+{-@ reflect join @-}
+join :: (Monad m) => m (m a) -> m a
+join x            =  x >>= id
  
 
 

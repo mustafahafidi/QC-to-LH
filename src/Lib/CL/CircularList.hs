@@ -74,7 +74,7 @@ import Prelude hiding ( length, (++), reverse, cycle, iterate,splitAt
                         ,any)
 import Data.List(find,foldl')
 import Control.DeepSeq(NFData(..))
-import Control.Monad(join)
+-- import Control.Monad(join)
 import qualified Data.Traversable as T
 import qualified Data.Foldable as F
 import Lib.LH.Prelude
@@ -244,8 +244,7 @@ allRotations cl = CList ls cl rs
     ls = unfoldr (fmapLMaybe (join (,)) . mRotL) cl
     rs = unfoldr (fmapLMaybe (join (,)) . mRotR) cl
 
--- |Rotate the focus to the previous (left) element.
--- {-@ rotL :: cl:CList a -> {l:CList a | rotR l == cl} @-}
+
 rotL :: CList a -> CList a
 rotL Empty = Empty
 rotL r@(CList [] _ []) = r
