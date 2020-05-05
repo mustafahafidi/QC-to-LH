@@ -102,8 +102,11 @@ unfoldr f b0 = case f b0 of
                 LJust (a, new_b) -> a : (unfoldr f new_b)
                 LNothing         -> []
 
- 
 
+{-@ reflect fmapLMaybe @-}
+fmapLMaybe :: (a->b) -> LMaybe a -> LMaybe b
+fmapLMaybe _ LNothing       = LNothing
+fmapLMaybe f (LJust a)      = LJust (f a)
 
  
 

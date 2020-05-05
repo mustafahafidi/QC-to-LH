@@ -241,8 +241,8 @@ allRotations :: CList a -> CList (CList a)
 allRotations Empty = singleton Empty
 allRotations cl = CList ls cl rs
   where
-    ls = unfoldr (fmap (join (,)) . mRotL) cl
-    rs = unfoldr (fmap (join (,)) . mRotR) cl
+    ls = unfoldr (fmapLMaybe (join (,)) . mRotL) cl
+    rs = unfoldr (fmapLMaybe (join (,)) . mRotR) cl
 
 -- |Rotate the focus to the previous (left) element.
 -- {-@ rotL :: cl:CList a -> {l:CList a | rotR l == cl} @-}
@@ -255,9 +255,9 @@ rotL (CList [] f rs) = let (l:ls) = reverse rs
 
 -- |A non-cyclic version of 'rotL'; that is, only rotate the focus if
 -- there is a previous (left) element to rotate to.
-mRotL :: CList a -> Maybe (CList a)
-mRotL (CList (l:ls) f rs) = Just $ CList ls l (f:rs)
-mRotL _ = Nothing
+mRotL :: CList a -> LMaybe (CList a)
+mRotL (CList (l:ls) f rs) = LJust $ CList ls l (f:rs)
+mRotL _ = LNothing
 
 -- |Rotate the focus to the next (right) element.
 -- {-@ rotR :: cl:CList a -> {l:CList a | rotL l == cl} @-}
@@ -270,9 +270,9 @@ rotR (CList ls f []) = let (r:rs) = reverse ls
 
 -- |A non-cyclic version of 'rotL'; that is, only rotate the focus if
 -- there is a previous (left) element to rotate to.
-mRotR :: CList a -> Maybe (CList a)
-mRotR (CList ls f (r:rs)) = Just $ CList (f:ls) r rs
-mRotR _ = Nothing
+mRotR :: CList a -> LMaybe (CList a)
+mRotR (CList ls f (r:rs)) = LJust $ CList (f:ls) r rs
+mRotR _ = LNothing
 
 -- |Rotate the focus the specified number of times; if the index is
 -- positive then it is rotated to the right; otherwise it is rotated
