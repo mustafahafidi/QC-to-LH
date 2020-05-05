@@ -7,7 +7,8 @@ import Prelude hiding (length,
                         iterate, 
                         null, 
                         splitAt,
-                        any )
+                        any
+                        )
 
 {-@ LIQUID "--no-totality" @-}
 {-@ LIQUID "--no-termination-check" @-}
@@ -93,11 +94,13 @@ any _ []        = False
 any p (x:xs)    = p x || any p xs
 
 
+data LMaybe a = LNothing | LJust a
+
 {-@ reflect unfoldr @-}
-unfoldr :: (b -> Maybe (a, b)) -> b -> [a]
+unfoldr :: (b -> LMaybe (a, b)) -> b -> [a]
 unfoldr f b0 = case f b0 of
-                Just (a, new_b) -> a : (unfoldr f new_b)
-                Nothing         -> []
+                LJust (a, new_b) -> a : (unfoldr f new_b)
+                LNothing         -> []
 
  
 
