@@ -96,7 +96,7 @@ any p (x:xs)    = p x || any p xs
 
 
 data LMaybe a = LNothing | LJust a
-                deriving (Show)
+                deriving (Show, Eq)
 
 {-@ reflect unfoldr @-}
 unfoldr :: (b -> LMaybe (a, b)) -> b -> [a]

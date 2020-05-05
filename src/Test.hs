@@ -14,6 +14,7 @@ import Language.Haskell.Liquid.ProofCombinators
 
 {-@ LIQUID "--reflection"    @-}
 {-@ LIQUID "--short-names"    @-}
+-- {-@ LIQUID "--ple"    @-}
 
 
 {-@ reflect =*= @-}
@@ -45,7 +46,7 @@ p3_proof = p3
         === ( (\ls -> any ((toList Empty ==) . toList) (toList ls)) (allRotations (Empty::CList Int)) )
         === ( any ((toList Empty ==) . toList) (toList (allRotations (Empty::CList Int))) )
                                                        ?( allRotations (Empty::CList Int)
-                                                        === singleton (Empty::CList Int)
+                                                        ==! singleton (Empty::CList Int)
                                                         )
 
         ===  any ((toList Empty ==) . toList) (toList (singleton (Empty::CList Int))) 
@@ -65,45 +66,13 @@ p3_proof = p3
 
 -- prop2 = liquidAssertB p3 -- doesn't work?
 
-{- {-@ prop2 ::  { allRotations Empty == singleton Empty } @-}
-prop2 ::  Proof
-prop2 = toProof True
- -}
+-- {-@ reflect asd @-} -- reflects (but mRotL no) why?
+-- asd :: CList a -> LMaybe (CList a)
+-- asd (CList (l:ls) f rs) = LJust $ CList ls l (f:rs)
+-- asd _ = LNothing
 
+-- {-@ pp ::  { asd Empty == LNothing} @-}
+-- pp ::  Bool
+-- pp = True
 
-{- unfoldr :: (b -> Maybe (a, b)) -> b -> [a]
-
-unfoldr f b0 = case f b0 of
-                Just (a, new_b) -> a : (unfoldr f new_b)
-                Nothing         -> []
-
-  -}
-{- 
-{-@ asd :: { p2 } @-}
-asd :: Proof
-asd = p1
-    ===  CList [] 0 [1] =*= CList [1] 0 []
-    === ( any ((toList (CList [] 0 [1]) ==) . toList) . toList $ allRotations (CList [1] 0 []) )
-    === ( any ((rightElements (CList [] 0 [1]) ==) . toList) . toList $ allRotations (CList [1] 0 []) )
-    === ( any ((0 : ([1] ++ (reverse [])) ==) . toList) . toList $ allRotations (CList [1] 0 []) )
-    === ( any ((0 : ([1] ++ ([])) ==) . toList) . toList $ allRotations (CList [1] 0 []) )
-    === ( any ((0 : ([1]) ==) . toList) . toList $ allRotations (CList [1] 0 []) )
-    === ( any (([0,1]) ==) . toList) . toList $ allRotations (CList [1] 0 []) )
-    -- allRotations definition
-    === ( let cl = CList [1] 0 []
-              ls =  unfoldr (fmap (join (,)) . mRotL) cl
-                    -- unfoldr definition
-                 === case (fmap (join (,)) . mRotL) cl of
-                        Just (a, new_b) -> a : (unfoldr f new_b)
-                        Nothing         -> []
-                 === case (\c -> fmap (join (,)) . mRotL) cl of
-                        Just (a, new_b) -> a : (unfoldr f new_b)
-                        Nothing         -> []
-                    
-                 
-              rs =  unfoldr (fmap (join (,)) . mRotR) cl
-          in ( any ((([0,1]) ==) . toList) . toList $ allRotations (CList ls cl rs)))
-    === ( any (([0,1]) ==) . toList) . toList $ allRotations (CList ) )
-    ***QED
-
- -}
+-- PLE crashes here
