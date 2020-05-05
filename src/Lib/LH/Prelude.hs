@@ -7,7 +7,8 @@ import Prelude hiding (length,
                         iterate, 
                         null, 
                         splitAt,
-                        any
+                        any,
+                        id
                         )
 
 {-@ LIQUID "--no-totality" @-}
@@ -114,6 +115,8 @@ fmapLMaybe f (LJust a)      = LJust (f a)
 -- infix >>*=
 f >>*= k = \ r -> k (f r) r
 
+{-@ reflect id @-}
+id x = x
 
 {-@ reflect join @-}
 join ::  (e -> e -> a) -> e -> a
