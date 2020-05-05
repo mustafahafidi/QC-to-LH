@@ -109,13 +109,16 @@ fmapLMaybe :: (a->b) -> LMaybe a -> LMaybe b
 fmapLMaybe _ LNothing       = LNothing
 fmapLMaybe f (LJust a)      = LJust (f a)
 
--- instance Monad ((->) r) where
---     f >>= k = \ r -> k (f r) r
-{-@ reflect join @-}
-join :: (Monad m) => m (m a) -> m a
-join x            =  x >>= id
- 
+{-@ reflect >>*= @-}
+{-@ infix >>*= @-}
+-- infix >>*=
+f >>*= k = \ r -> k (f r) r
 
+
+{-@ reflect join @-}
+join ::  (e -> e -> a) -> e -> a
+join x            =  x >>*= id
+ 
 
 
 {-    ==================== SOME PRELUDE PROOFS ====================  -}
