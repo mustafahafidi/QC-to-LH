@@ -7,6 +7,7 @@ import Prelude  hiding (length,
                         null, 
                         splitAt,
                         any
+                        
                         )
 import Data.List (find)
 import Lib.LH.Prelude 
@@ -16,7 +17,9 @@ import Language.Haskell.Liquid.ProofCombinators
 {-@ LIQUID "--reflection"    @-}
 -- {-@ LIQUID "--higherorder"    @-}
 -- {-@ LIQUID "--exact-data-cons"    @-}
--- {-@ LIQUID "--short-names"    @-}
+{-@ LIQUID "--short-names"    @-}
+-- {-@ LIQUID "--ple-local"    @-}
+
 
 
 
@@ -81,23 +84,28 @@ p3_proof = p3
 
 {-@ inline refl @-}
 refl cl = cl =*= cl
+-- {-@ ple lemma_refl @-}
 {-@ lemma_refl ::  Eq a => cl:CList a -> { refl cl} @-}
 lemma_refl :: Eq a =>  CList a -> Proof
 lemma_refl Empty = p3_proof
 lemma_refl cl@(CList l f r) = refl cl 
                            === cl =*= cl
                            === ( any ((toList cl ==) . toList) . toList $ allRotations cl) -- def. allRotations
+                           === ( any ((toList cl ==) . toList) . toList $ allRotations cl) -- def. allRotations
                            === ( let  ls = unfoldr (\x->(fmapLMaybe (join(,))) (mRotL x)) cl
-
                                       rs = unfoldr (\x->(fmapLMaybe (join(,))) (mRotR x)) cl
 
                                  in     ( (\ls -> any ((toList cl ==) . toList) (toList ls)) $ CList ls cl rs )
                                     === ( any ((toList cl ==) . toList) (toList (CList ls cl rs)) )
                                     === ( any ((toList cl ==) . toList) (rightElements (CList ls cl rs)) )
-                                          ? ( ((toList cl ==) . toList)
-                                          === (\x->((toList cl ==) (toList x)))
-                                            )
-                                --     === ( any (\x-> toList cl == toList x) (cl : (rs ++ (reverse ls))) )
+                                    === ( any ((toList cl ==) . toList) (cl : (rs ++ (reverse ls))) ) 
+                                    -- def of any
+                                    === ( let p = (((toList cl ==) . toList))
+                                              (x:xs) = (cl : (rs ++ (reverse ls)))
+                                         in (p x || any p xs )
+                                          === (toList cl == toList x || any p xs )
+                                         )
+                                        
                                )
-                           ***Admit
+                           ***QED
 

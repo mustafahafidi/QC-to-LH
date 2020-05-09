@@ -122,6 +122,11 @@ id x = x
 join ::  (e -> e -> a) -> e -> a
 join x            =  x >>*= id
  
+{-@ reflect comp @-}
+infixr 9 `comp`
+comp :: (b -> c) -> (a -> b) -> a -> c   
+f `comp` g = \x -> f(g(x))
+
 
 
 {-    ==================== SOME PRELUDE PROOFS ====================  -}
