@@ -3,7 +3,7 @@ module Lib.CL.QuickCheck where
 
 import Test.QuickCheck
 import Lib.CL.CircularList 
--- import Lib.LH.Prelude hiding (length)
+import Lib.LH.Prelude (reverse) -- needed because of https://github.com/ucsd-progsys/liquidhaskell/issues/1665 
 {-@ LIQUID "--reflection"    @-}
 
 

@@ -60,7 +60,7 @@ module Lib.CL.CircularList (
     removeL, removeR,
     -- ** Manipulation of Focus
     allRotations, rotR, rotL, rotN, rotNR, rotNL, 
-    mRotL, mRotR,
+    -- mRotL, mRotR,
     rotateTo, findRotateTo,
     -- ** List-like functions
     filterR, filterL, foldrR, foldrL, foldlR, foldlL,

@@ -64,7 +64,7 @@ jobs:
 
       - name: Running LiquidHaskell
         run: |
-          stack --resolver=lts-14.12 exec -- ~/.local/bin/liquid -isrc/ src/CList_Proofs.hs src/Heap_Proofs.hs
+          stack --resolver=lts-14.12 exec -- ~/.local/bin/liquid -isrc/ ${{matrix.lh-entry}}
     # - name: Free disk space
     #   run: |
     #   df -h /
