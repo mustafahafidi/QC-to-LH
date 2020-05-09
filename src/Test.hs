@@ -14,7 +14,9 @@ import Lib.CL.CircularList
 import Language.Haskell.Liquid.ProofCombinators
 
 {-@ LIQUID "--reflection"    @-}
-{-@ LIQUID "--short-names"    @-}
+{-@ LIQUID "--higherorder"    @-}
+-- {-@ LIQUID "--short-names"    @-}
+
 
 
 {-@ reflect =*= @-}
@@ -83,11 +85,18 @@ lemma_refl Empty = p3_proof
 lemma_refl cl@(CList l f r) = refl cl 
                            === cl =*= cl
                            === ( any ((toList cl ==) . toList) . toList $ allRotations cl) -- def. allRotations
-                           === ( let  ls = unfoldr ((fmapLMaybe (join(,))) . mRotL) cl
+                           === ( let  ls = unfoldr (\x->(fmapLMaybe (join(,))) (mRotL x)) cl
 
-                                      rs = unfoldr ((fmapLMaybe (join(,))) . mRotR) cl
+                                      rs = unfoldr (\x->(fmapLMaybe (join(,))) (mRotR x)) cl
 
-                                 in  ( (\ls -> any ((toList cl ==) . toList) (toList ls)) $ CList ls cl rs )
+                                 in     ( (\ls -> any ((toList cl ==) . toList) (toList ls)) $ CList ls cl rs )
+                                    === ( any ((toList cl ==) . toList) (toList (CList ls cl rs)) )
+                                    === ( any ((toList cl ==) . toList) (rightElements (CList ls cl rs)) )
+                                          ? ( (\x-> toList cl == toList x) 
+                                          === (\x-> (toList cl ==) (toList x))
+                                          === ((toList cl ==) . toList)
+                                            )
+                                    === ( any (\x-> toList cl == toList x) (cl : (rs ++ (reverse ls))) )
                                )
                            ***Admit
 

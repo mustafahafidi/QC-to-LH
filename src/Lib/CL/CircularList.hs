@@ -237,10 +237,10 @@ removeR (CList l _ []) = let (f:rs) = reverse l
 allRotations :: CList a -> CList (CList a)
 allRotations Empty = singleton Empty
 allRotations cl = let 
-                    ls = --unfoldr (\x->(fmapLMaybe (join(,))) (mRotL x)) cl 
-                      unfoldr (fmapLMaybe (join (,)) . mRotL) cl
-                    rs = -- unfoldr (\x->(fmapLMaybe (join(,))) (mRotR x)) cl
-                      unfoldr (fmapLMaybe (join (,)) . mRotR) cl
+                    ls = unfoldr (\x->(fmapLMaybe (join(,))) (mRotL x)) cl 
+                    -- unfoldr (fmapLMaybe (join (,)) . mRotL) cl
+                    rs =  unfoldr (\x->(fmapLMaybe (join(,))) (mRotR x)) cl
+                      --unfoldr (fmapLMaybe (join (,)) . mRotR) cl
                   in CList ls cl rs
 
 
