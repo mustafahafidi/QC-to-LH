@@ -14,8 +14,10 @@ import Lib.CL.CircularList
 import Language.Haskell.Liquid.ProofCombinators
 
 {-@ LIQUID "--reflection"    @-}
-{-@ LIQUID "--higherorder"    @-}
+-- {-@ LIQUID "--higherorder"    @-}
+-- {-@ LIQUID "--exact-data-cons"    @-}
 -- {-@ LIQUID "--short-names"    @-}
+
 
 
 
@@ -92,11 +94,10 @@ lemma_refl cl@(CList l f r) = refl cl
                                  in     ( (\ls -> any ((toList cl ==) . toList) (toList ls)) $ CList ls cl rs )
                                     === ( any ((toList cl ==) . toList) (toList (CList ls cl rs)) )
                                     === ( any ((toList cl ==) . toList) (rightElements (CList ls cl rs)) )
-                                          ? ( (\x-> toList cl == toList x) 
-                                          === (\x-> (toList cl ==) (toList x))
-                                          === ((toList cl ==) . toList)
+                                          ? ( ((toList cl ==) . toList)
+                                          === (\x->((toList cl ==) (toList x)))
                                             )
-                                    === ( any (\x-> toList cl == toList x) (cl : (rs ++ (reverse ls))) )
+                                --     === ( any (\x-> toList cl == toList x) (cl : (rs ++ (reverse ls))) )
                                )
                            ***Admit
 
