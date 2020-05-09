@@ -33,6 +33,17 @@ p2  = (CList [] 0 [] =*= CList [] 0 [])
 p3  = (Empty =*= (Empty::CList Int))
 
 
+{-======================================================
+                        proving p2
+=======================================================-}
+{-@ p2_proof ::  {p2} @-}
+p2_proof ::  Proof
+p2_proof = p2
+        === (CList [] 0 [] =*= CList [] 0 [])
+        === ( any ((toList (CList [] 0 []) ==) . toList) . toList $ allRotations (CList [] 0 []) )
+        
+        ***Admit
+
 
 {-======================================================
                         proving p3
@@ -62,3 +73,21 @@ p3_proof = p3
        --   def. of any
         === (((toList Empty ==) . toList) (Empty :: CList Int) || any ((toList (Empty :: CList Int) ==) . toList) [])
         ***QED
+
+
+{-@ inline refl @-}
+refl cl = cl =*= cl
+{-@ lemma_refl ::  Eq a => cl:CList a -> { refl cl} @-}
+lemma_refl :: Eq a =>  CList a -> Proof
+lemma_refl Empty = p3_proof
+lemma_refl cl@(CList l f r) = refl cl 
+                           === cl =*= cl
+                           === ( any ((toList cl ==) . toList) . toList $ allRotations cl) -- def. allRotations
+                           === ( let  ls = unfoldr ((fmapLMaybe (join(,))) . mRotL) cl
+
+                                      rs = unfoldr ((fmapLMaybe (join(,))) . mRotR) cl
+
+                                 in  ( (\ls -> any ((toList cl ==) . toList) (toList ls)) $ CList ls cl rs )
+                               )
+                           ***Admit
+
