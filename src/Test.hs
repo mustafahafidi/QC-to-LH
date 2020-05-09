@@ -15,8 +15,6 @@ import Language.Haskell.Liquid.ProofCombinators
 
 {-@ LIQUID "--reflection"    @-}
 {-@ LIQUID "--short-names"    @-}
-{-@ LIQUID "--prune-unsorted"    @-}
--- {-@ LIQUID "--ple"    @-}
 
 
 {-@ reflect =*= @-}
@@ -39,18 +37,6 @@ p3  = (Empty =*= (Empty::CList Int))
 {-======================================================
                         proving p3
 =======================================================-}
-{-@ lemmaA :: {allRotations Empty == singleton Empty } @-}
-lemmaA ::  Proof
-lemmaA = (allRotations emptyB == singleton (emptyB))
-       === (allRotations emptyB == singleton emptyB)
-      ***QED
-
-{-@ emptyB :: {v:_ | v == Empty} @-}
-emptyB :: CList Int
-emptyB = Empty
-
-
-
 {-@ p3_proof ::  { p3 } @-}
 p3_proof ::  Proof
 p3_proof = p3
@@ -59,9 +45,9 @@ p3_proof = p3
         === ( (\ls -> any ((toList Empty ==) . toList) (toList ls)) $ allRotations (Empty::CList Int) )
         === ( (\ls -> any ((toList Empty ==) . toList) (toList ls)) (allRotations (Empty::CList Int)) )
         === ( any ((toList Empty ==) . toList) (toList (allRotations (Empty::CList Int))) )
-                                                       ?( allRotations (emptyB)
-                                                        === singleton (emptyB)
-                                                        )
+                                                      --  ?( allRotations (Empty)
+                                                      --   === singleton (emptyB)
+                                                      --   )
 
         ===  any ((toList Empty ==) . toList) (toList (singleton (Empty::CList Int))) 
         ===  any ((toList Empty ==) . toList) (toList ((CList [] (Empty::CList Int) []))) 
