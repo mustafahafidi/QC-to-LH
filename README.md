@@ -13,13 +13,13 @@ This project aims to facilitate the migration/conversion of QuickCheck propertie
 - :heavy_check_mark: Do the induction for the properties ignored
 - :heavy_check_mark: Apply everything on the examples of quickcheck (github)
 - :heavy_check_mark: Make a report/table on the proofs done until now
-
 - [..] Redefine Eq == and rewrite properties, then prove them
+  - [..] Create bug issues to show why reflecting mRotL,mRotR doesn't work
 - [..] Solve the Heap proofs (try the refined data-type to ease the proofs)
 
-- [..] Add more examples to try the tool on
-
 ### 2) Design the tool and implement it
+
+- [..] Check Template Haskell and GHC Plugin
 
 ### 3) Write paper/thesis describing the whole work (can happen in parallel to the work)
 

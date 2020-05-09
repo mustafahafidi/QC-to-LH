@@ -8,12 +8,14 @@ import Prelude  hiding (length,
                         splitAt,
                         any
                         )
+import Data.List (find)
 import Lib.LH.Prelude 
 import Lib.CL.CircularList
 import Language.Haskell.Liquid.ProofCombinators
 
 {-@ LIQUID "--reflection"    @-}
 {-@ LIQUID "--short-names"    @-}
+{-@ LIQUID "--prune-unsorted"    @-}
 -- {-@ LIQUID "--ple"    @-}
 
 
@@ -33,9 +35,21 @@ p2  = (CList [] 0 [] =*= CList [] 0 [])
 p3  = (Empty =*= (Empty::CList Int))
 
 
+
 {-======================================================
                         proving p3
 =======================================================-}
+{-@ lemmaA :: {allRotations Empty == singleton Empty } @-}
+lemmaA ::  Proof
+lemmaA = (allRotations emptyB == singleton (emptyB))
+       === (allRotations emptyB == singleton emptyB)
+      ***QED
+
+{-@ emptyB :: {v:_ | v == Empty} @-}
+emptyB :: CList Int
+emptyB = Empty
+
+
 
 {-@ p3_proof ::  { p3 } @-}
 p3_proof ::  Proof
@@ -45,8 +59,8 @@ p3_proof = p3
         === ( (\ls -> any ((toList Empty ==) . toList) (toList ls)) $ allRotations (Empty::CList Int) )
         === ( (\ls -> any ((toList Empty ==) . toList) (toList ls)) (allRotations (Empty::CList Int)) )
         === ( any ((toList Empty ==) . toList) (toList (allRotations (Empty::CList Int))) )
-                                                       ?( allRotations (Empty::CList Int)
-                                                        ==! singleton (Empty::CList Int)
+                                                       ?( allRotations (emptyB)
+                                                        === singleton (emptyB)
                                                         )
 
         ===  any ((toList Empty ==) . toList) (toList (singleton (Empty::CList Int))) 
@@ -62,17 +76,3 @@ p3_proof = p3
        --   def. of any
         === (((toList Empty ==) . toList) (Empty :: CList Int) || any ((toList (Empty :: CList Int) ==) . toList) [])
         ***QED
-
-
--- prop2 = liquidAssertB p3 -- doesn't work?
-
--- {-@ reflect asd @-} -- reflects (but mRotL no) why?
--- asd :: CList a -> LMaybe (CList a)
--- asd (CList (l:ls) f rs) = LJust $ CList ls l (f:rs)
--- asd _ = LNothing
-
--- {-@ pp ::  { asd Empty == LNothing} @-}
--- pp ::  Bool
--- pp = True
-
--- PLE crashes here

@@ -9,6 +9,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        lh-entry: [src/Test.hs, src/CList_Proofs.hs, src/Heap_Proofs.hs]
     steps:
       - name: Check out
         uses: actions/checkout@v2

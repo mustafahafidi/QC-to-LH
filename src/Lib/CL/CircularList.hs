@@ -59,7 +59,8 @@ module Lib.CL.CircularList (
     focus, insertL, insertR,
     removeL, removeR,
     -- ** Manipulation of Focus
-    allRotations, rotR, rotL, rotN, rotNR, rotNL,
+    allRotations, rotR, rotL, rotN, rotNR, rotNL, 
+    --mRotL, mRotR,
     rotateTo, findRotateTo,
     -- ** List-like functions
     filterR, filterL, foldrR, foldrL, foldlR, foldlL,
@@ -85,23 +86,6 @@ import Test.QuickCheck.Gen
 {-@ LIQUID "--reflection"    @-}
 {-@ LIQUID "--no-totality" @-}
 {-@ LIQUID "--no-termination-check" @-}
-{-@ measure size @-}
-{-@ reflect rightElements @-}
-{-@ reflect singleton @-}
-{-@ reflect empty @-}
-{-@ reflect isEmpty @-}
-{-@ reflect toList @-}
-{-@ reflect fromList @-}
-{-@ reflect focus @-}
-{-@ reflect insertR @-}
-{-@ reflect rotR @-}
-{-@ reflect rotL @-}
-{-@ reflect packL @-}
-{-@ reflect packR @-}
-{-@ reflect update @-}
-{-@ reflect focus @-}
-{-@ reflect reverseDirection @-}
-{-@ reflect removeR @-}
 
 -- To convince LH of the safety of this file
 {-@ ignore rotN @-}
@@ -114,6 +98,7 @@ data CList a = Empty
              deriving (Show)
 {- Creating CLists -}
 -- | An empty CList.
+{-@ reflect empty @-}
 {-@  empty :: {ls:CList a | ls==Empty && (size ls) == 0} @-}
 empty :: CList a
 empty = Empty -- ? (prop_empty Empty)
@@ -129,6 +114,8 @@ prop_empty cl = ()
 
 -- |Starting with the focus, go right and accumulate all
 -- elements of the CList in a list.
+
+{-@ reflect rightElements @-}
 {-@  rightElements::  cs:CList a -> {ls:[a] | (size cs) == (length ls)} @-}
 rightElements :: CList a -> [a]
 rightElements Empty = []
@@ -138,11 +125,13 @@ rightElements (CList l f r) = f : (r ++ (reverse l))
 
 
 -- |Make a list from a CList.  
+{-@ reflect toList @-}
 {-@  toList:: cs:CList a -> {ls:[a] | (size cs) == (length  ls) } @-}
 toList :: CList a -> [a]
 toList = rightElements
 
 -- |Make a (balanced) CList from a list.
+{-@ reflect fromList @-}
 {-@ fromList :: l:[a] -> { cl:CList a | (size cl) == (length l) } @-}
 fromList :: [a] -> CList a
 fromList [] = Empty
@@ -151,6 +140,8 @@ fromList a@(i:is) = let len = length a
                     in CList (reverse l) i r
 
 -- {-@ singleton :: e:a -> {cl:CList a | toList cl == [e]} @-}
+
+{-@ reflect singleton @-}
 singleton :: a -> CList a
 singleton e = CList [] e [] 
               -- ==. fromList [e]
@@ -158,6 +149,7 @@ singleton e = CList [] e []
 
 
 -- |Return the size of the CList.
+{-@ measure size @-}
 -- {-@ size :: cl:CList a -> {v:Int | length (toList cl) == v && v >= 0} @-}
 size :: CList a -> Int
 size Empty = 0
@@ -169,11 +161,13 @@ size (CList l _ r) = 1 + (length l) + (length r)
 {- Updating of CLists -}
 
 -- |Replaces the current focus with a new focus.
+{-@ reflect update @-}
 update :: a -> CList a -> CList a
 update v Empty = CList [] v []
 update v (CList l _ r) = CList l v r
 
 -- |Reverse the direction of rotation.
+{-@ reflect reverseDirection @-}
 {-@ reverseDirection :: cl:CList a -> {rcl:CList a | size rcl == size cl} @-}
 reverseDirection :: CList a -> CList a
 reverseDirection Empty = Empty
@@ -194,12 +188,14 @@ toInfList = cycle . toList
 {- Extraction and Accumulation -}
 
 -- |Return the focus of the CList.
+{-@ reflect focus @-}
 focus :: CList a -> Maybe a
 focus Empty = Nothing
 focus (CList _ f _) = Just f
 
 -- |Insert an element into the CList as the new focus. The
 -- old focus is now the next element to the right.
+{-@ reflect insertR @-}
 {-@ insertR :: i:a-> cl:CList a -> {rl: CList a | size rl == size cl + 1 } @-}
 insertR :: a -> CList a -> CList a
 insertR i Empty = CList [] i []
@@ -225,6 +221,7 @@ removeL (CList [] _ rs) = let (f:ls) = reverse rs
                             
 
 -- |Remove the focus from the CList.
+{-@ reflect removeR @-}
 removeR :: CList a -> CList a
 removeR Empty = Empty
 removeR (CList [] _ []) = Empty
@@ -245,6 +242,7 @@ allRotations cl = CList ls cl rs
     rs = unfoldr (fmapLMaybe (join (,)) . mRotR) cl
 
 
+{-@ reflect rotL @-}
 rotL :: CList a -> CList a
 rotL Empty = Empty
 rotL r@(CList [] _ []) = r
@@ -254,11 +252,13 @@ rotL (CList [] f rs) = let (l:ls) = reverse rs
 
 -- |A non-cyclic version of 'rotL'; that is, only rotate the focus if
 -- there is a previous (left) element to rotate to.
+{-@ reflect mRotL @-}
 mRotL :: CList a -> LMaybe (CList a)
 mRotL (CList (l:ls) f rs) = LJust $ CList ls l (f:rs)
 mRotL _ = LNothing
 
 -- |Rotate the focus to the next (right) element.
+{-@ reflect rotR @-}
 -- {-@ rotR :: cl:CList a -> {l:CList a | rotL l == cl} @-}
 rotR :: CList a -> CList a
 rotR Empty = Empty
@@ -269,6 +269,7 @@ rotR (CList ls f []) = let (r:rs) = reverse ls
 
 -- |A non-cyclic version of 'rotL'; that is, only rotate the focus if
 -- there is a previous (left) element to rotate to.
+{-@ reflect mRotR @-}
 mRotR :: CList a -> LMaybe (CList a)
 mRotR (CList ls f (r:rs)) = LJust $ CList (f:ls) r rs
 mRotR _ = LNothing
@@ -276,6 +277,7 @@ mRotR _ = LNothing
 -- |Rotate the focus the specified number of times; if the index is
 -- positive then it is rotated to the right; otherwise it is rotated
 -- to the left.
+{-@ ignore rotN @-}
 rotN :: Int -> CList a -> CList a
 rotN _ Empty = Empty
 rotN _ cl@(CList [] _ []) = cl
@@ -361,11 +363,13 @@ balance :: CList a -> CList a
 balance = fromList . toList
 
 -- |Move all elements to the left side of the CList.
+{-@ reflect packL @-}
 packL :: CList a -> CList a
 packL Empty = Empty
 packL (CList l f r) = CList (l ++ (reverse r)) f []
 
 -- |Move all elements to the right side of the CList.
+{-@ reflect packR @-}
 packR :: CList a -> CList a
 packR Empty = Empty
 packR (CList l f r) = CList [] f (r ++ (reverse l))
@@ -373,6 +377,7 @@ packR (CList l f r) = CList [] f (r ++ (reverse l))
 {- Information -}
 
 -- |Returns true if the CList is empty.
+{-@ reflect isEmpty @-}
 isEmpty :: CList a -> Bool
 isEmpty Empty = True
 isEmpty _ = False
