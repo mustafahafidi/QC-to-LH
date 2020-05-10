@@ -35,22 +35,22 @@ data Heap a
   | Empty
  deriving ( Eq, Ord, Show )
 
--- {-@ 
--- data Heap a = Node { 
---          k :: a
---         , left  :: Heap {v:a | k <= v}
---         , right :: Heap {v:a | k <= v} }
---         | Empty 
--- @-}
-
 {-@ 
 data Heap a = Node { 
-         k :: a,
-         left  :: {hl:Heap a|Lib.QC.Heap.invariant hl},
-         right :: {hr:Heap a|Lib.QC.Heap.invariant hr && Lib.QC.Heap.invariant (Node k left hr)} 
-        }
-        | Empty
+         k :: a
+        , left  :: Heap {v:a | k <= v}
+        , right :: Heap {v:a | k <= v} }
+        | Empty 
 @-}
+
+-- {-@ 
+-- data Heap a = Node { 
+--          k :: a,
+--          left  :: {hl:Heap a|Lib.QC.Heap.invariant hl},
+--          right :: {hr:Heap a|Lib.QC.Heap.invariant hr && Lib.QC.Heap.invariant (Node k left hr)} 
+--         }
+--         | Empty
+-- @-}
 
 
 {-@ reflect empty @-}
