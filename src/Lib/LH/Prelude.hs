@@ -98,6 +98,9 @@ any p (x:xs)    = p x || any p xs
 data LMaybe a = LNothing | LJust a
                 deriving (Show, Eq)
 
+{-@ data LMaybe a = LNothing | LJust a
+ @-}
+ 
 {-@ reflect unfoldr @-}
 unfoldr :: (b -> LMaybe (a, b)) -> b -> [a]
 unfoldr f b0 = case f b0 of
@@ -118,9 +121,9 @@ f >>*= k = \ r -> k (f r) r
 {-@ reflect id @-}
 id x = x
 
-{-@ reflect join @-}
-join ::  (e -> e -> a) -> e -> a
-join x            =  x >>*= id
+{-@ reflect joinTuple @-}
+joinTuple ::  e -> (e,e)
+joinTuple a     = (a,a)
  
 {-@ reflect comp @-}
 infixr 9 `comp`

@@ -48,6 +48,8 @@ the focus position.
 module Lib.CL.CircularList (
     -- * Data Types
     CList (..),
+    -- foo,
+    -- (=*=),
     -- * Functions
     -- ** Creation of CLists
     empty, toList, fromList, singleton,
@@ -86,6 +88,7 @@ import Test.QuickCheck.Gen
 {-@ LIQUID "--reflection"    @-}
 {-@ LIQUID "--no-totality" @-}
 {-@ LIQUID "--no-termination-check" @-}
+{-@ LIQUID "--higherorder" @-}
 
 -- To convince LH of the safety of this file
 {-@ ignore rotN @-}
@@ -96,6 +99,9 @@ import Test.QuickCheck.Gen
 data CList a = Empty
              | CList [a] a [a]
              deriving (Show)
+
+-- The same as Eq CList's (==)
+
 {- Creating CLists -}
 -- | An empty CList.
 {-@ reflect empty @-}
@@ -174,7 +180,6 @@ reverseDirection Empty = Empty
 reverseDirection (CList l f r) = CList r f l
 
 {- Creating Lists -}
-
 -- |Starting with the focus, go left and accumulate all
 -- elements of the CList in a list.
 leftElements :: CList a -> [a]
@@ -184,6 +189,7 @@ leftElements (CList l f r) = f : (l ++ (reverse r))
 -- |Make a CList into an infinite list.
 toInfList :: CList a -> [a]
 toInfList = cycle . toList
+
 
 {- Extraction and Accumulation -}
 
@@ -237,13 +243,17 @@ removeR (CList l _ []) = let (f:rs) = reverse l
 allRotations :: CList a -> CList (CList a)
 allRotations Empty = singleton Empty
 allRotations cl = let 
-                    ls = unfoldr (\x->(fmapLMaybe (join(,))) (mRotL x)) cl 
-                    -- unfoldr (fmapLMaybe (join (,)) . mRotL) cl
-                    rs =  unfoldr (\x->(fmapLMaybe (join(,))) (mRotR x)) cl
+                    ls = --unfoldr (\x->(fmapLMaybe joinTuple) (mRotL x)) cl 
+                      unfoldr (fmapLMaybe joinTuple . mRotL) cl
+                    rs = --unfoldr (\x->(fmapLMaybe joinTuple) (mRotR x)) cl
                       --unfoldr (fmapLMaybe (join (,)) . mRotR) cl
+                      unfoldr (fmapLMaybe joinTuple . mRotR) cl
+
                   in CList ls cl rs
 
-
+-- >>> (fmapLMaybe joinTuple . mRotL ) (CList [] 0 [])
+-- LNothing
+--
 {-@ reflect rotL @-}
 rotL :: CList a -> CList a
 rotL Empty = Empty
@@ -272,9 +282,18 @@ rotR (CList ls f []) = let (r:rs) = reverse ls
 -- |A non-cyclic version of 'rotL'; that is, only rotate the focus if
 -- there is a previous (left) element to rotate to.
 {-@ reflect mRotR @-}
+-- {-@ inline p @-}
+-- p cl cr = True -- cl =*= cr
+-- {-@ mRotR :: cr:CList a -> LMaybe {cl:(CList a) | p cl cr } @-}
 mRotR :: CList a -> LMaybe (CList a)
-mRotR (CList ls f (r:rs)) = LJust $ CList (f:ls) r rs
+mRotR (CList ls f (r:rs)) = LJust (CList (f:ls) r rs)
 mRotR _ = LNothing
+
+-- {-@ reflect foo @-}
+-- {-@ foo :: Maybe {v:Int | v == 1 }  @-}
+-- foo :: Maybe Int
+-- foo = Just 1
+
 
 -- |Rotate the focus the specified number of times; if the index is
 -- positive then it is rotated to the right; otherwise it is rotated
