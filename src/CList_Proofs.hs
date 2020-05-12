@@ -13,8 +13,6 @@ import Language.Haskell.Liquid.ProofCombinators
 import Prelude hiding (length, null, splitAt, (++), reverse,any)
 
 {-@ LIQUID "--reflection"    @-}
-{-@ LIQUID "--no-totality"    @-}
-{-@ LIQUID "--no-termination"    @-}
 {-@ LIQUID "--short-names"    @-}
 
 
@@ -245,7 +243,7 @@ prop_list c@Empty = (c =*= (fromList . toList $ c))
                 --       )
                 ==! c =*= Empty
                      ***Admit
-
+{- 
 prop_list c@(CList [] f []) = c 
                               === (CList [] f [])
                               === (CList (reverse (snd ([],[]))) f (fst ([],[]))) 
@@ -294,40 +292,86 @@ prop_list c@(CList l f r) = c
                               === (fromList (rightElements c))
                               === (fromList (toList c))
                             ***QED  
- 
+  -}
 {-======================================================
                         prop_rot
 =======================================================-}
-{-@  prop_rot :: c:CList Int -> {  c == (rotR  (rotL c)) } @-}
+ {-@ LIQUID "--no-totality" @-}
+ {-@ inline prop_rot_p @-}
+prop_rot_p c = c =*= (rotR  (rotL c))
+
+{-@  prop_rot :: c:CList Int -> { prop_rot_p c  } @-}
 prop_rot :: CList Int -> Proof
-prop_rot c@Empty = c 
-                  === (rotR (c))
-                  === (rotR (rotL c))
+prop_rot c@Empty = c =*= (rotR  (rotL c))
+                    ? (
+                         (rotR  (rotL c))
+                         ===  rotR  Empty
+                         ===   Empty
+                    )
+                    ? lemma_refl (Empty::CList Int)
+                  === c =*= Empty
                   ***QED 
-prop_rot c@(CList [] _ [])  = c 
-                            === (rotR (c))
-                            === (rotR (rotL c))
+
+                  
+prop_rot c@(CList [] _ [])  = c =*= (rotR  (rotL c))
+                                ? (
+                                    (rotR  (rotL c))
+                                    ===  rotR  c
+                                    ===   c
+                                )
+                                ? lemma_refl c
+                            === c =*= c
                             ***QED 
-prop_rot c@(CList (l:ls) f rs)  = c 
-                            === CList (l:ls) f rs
+
+                            
+prop_rot c@(CList (l:ls) f rs)  =  c =*= (rotR  (rotL c))
+                            ?( (rotR (rotL c))
                             === (rotR (CList ls l (f:rs)))
-                            === (rotR (rotL c))
+                            === CList (l:ls) f rs
+                            )
+                            ? lemma_refl (CList (l:ls) f rs)
+                            === c =*= CList (l:ls) f rs
                             ***QED  
 
-prop_rot c@(CList [] f rs)  = c 
-                            ==!  (CList (reverse rs) f [])
-                            === (let (l:ls) = reverse rs
-                                  in  (CList (l:ls) f [])
-                                )
+prop_rot c@(CList [] f rs)  =  c =*= (rotR  (rotL c))
+                            ? ((rotR (rotL c))
+                            === (rotR (let (l:ls) = reverse rs
+                                        in CList ls l [f]))
                             === (let (l:ls) = reverse rs
                                   in  rotR (CList ls l [f])
                                 )
-                            === (rotR (let (l:ls) = reverse rs
-                                        in CList ls l [f]))
-                            === (rotR (rotL c))
-                            ***QED  
+                            === (let (l:ls) = reverse rs
+                                  in  (CList (l:ls) f [])
+                                )
+                            ===  (CList (reverse rs) f [])
+                            )
+                            === c =*= (CList (reverse rs) f [])
+                            === (any ((toList c ==) . toList) . toList $ allRotations (CList (reverse rs) f [])) 
+                            -- def of allRotations
+                            === (let 
+                                    lls = unfoldr (fmapLMaybe joinTuple . mRotL) (CList (reverse rs) f [])
+                                    rrs = unfoldr (fmapLMaybe joinTuple . mRotR) (CList (reverse rs) f []) 
+                                in (any ((toList c ==) . toList) . toList $ CList lls (CList (reverse rs) f []) rrs )
+                                === (any ((toList c ==) . toList)  (toList (CList lls (CList (reverse rs) f []) rrs)))
+                                === (any ((toList c ==) . toList)  (rightElements (CList lls (CList (reverse rs) f []) rrs)))
+                                === (any ((toList c ==) . toList)  ((CList (reverse rs) f []): (rrs ++ reverse lls)))
+                                    -- def of any
+                                === ( ((toList c ==) . toList) (CList (reverse rs) f []) || (any ((toList c ==) . toList)  (rrs ++ reverse lls)))
+                                    ? (
+                                        ((toList c ==) . toList) (CList (reverse rs) f [])
+                                    === (toList c == toList (CList (reverse rs) f []))
+                                    === (rightElements c == rightElements (CList (reverse rs) f []))
+                                    === (f :( rs ++ reverse []) == f : ([] ++(reverse (reverse rs))))
+                                    === (f :( rs ++ []) == f : (reverse (reverse rs)))
+                                        ? involutionP rs
+                                        ? rightIdP rs
+                                    === (f : rs == f : rs)
+                                    )
+                                === ( (f : rs == f : rs) || (any ((toList c ==) . toList)  (rrs ++ reverse lls)))
+                                )
+                            ***QED
 
- 
+
 
 {-======================================================
                         prop_packL
