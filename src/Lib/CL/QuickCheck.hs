@@ -3,6 +3,7 @@ module Lib.CL.QuickCheck where
 
 import Test.QuickCheck
 import Lib.CL.CircularList 
+import CList_Proofs ((=*=))
 import Lib.LH.Prelude (reverse) -- needed because of https://github.com/ucsd-progsys/liquidhaskell/issues/1665 
 {-@ LIQUID "--reflection"    @-}
 
@@ -21,7 +22,7 @@ prop_focus :: CList Int -> Int -> Bool
 prop_focus c v = (Just v) == (focus $ insertR v c)
 
 prop_list :: CList Int -> Bool
-prop_list c = c == (fromList . toList $ c)
+prop_list c = c =*= (fromList . toList $ c)
 
 {-@ inline prop_rot @-}
 prop_rot :: CList Int -> Bool
@@ -69,9 +70,6 @@ prop_fromList_focus :: Bool
 prop_fromList_focus = focus (fromList ([1]::[Int])) == Just 1
 
 
-{- prop_fromList_toList :: Bool
-prop_fromList_toList = let l =
- -}
 main :: IO ()
 main = do
     putStrLn "prop_empty"

@@ -9,14 +9,189 @@ module CList_Proofs where
 import Lib.LH.Prelude
 -- import Lib.LH.Equational
 import Lib.CL.CircularList
-import qualified Lib.CL.QuickCheck as QC
 import Language.Haskell.Liquid.ProofCombinators
-import Prelude hiding (length, null, splitAt, (++), reverse)
+import Prelude hiding (length, null, splitAt, (++), reverse,any)
 
 {-@ LIQUID "--reflection"    @-}
 {-@ LIQUID "--no-totality"    @-}
 {-@ LIQUID "--no-termination"    @-}
 {-@ LIQUID "--short-names"    @-}
+
+
+
+
+
+{-@ reflect =*= @-}
+{-@ infix 4 =*= @-}
+(=*=) :: Eq a  => CList a -> CList a -> Bool
+a =*= b =  (any ((toList a ==) . toList) . toList $ allRotations b)
+
+{-======================================================
+               START LEMMAS
+=======================================================-}
+-- Distributivity of `any` over `++`
+{-@ inline lemma_any_p @-}
+lemma_any_p p ls rs = any p (ls++rs) == ((any p ls) || (any p rs))
+{-@ lemma_any :: p:(a->Bool) -> ls:[a] -> rs:[a] -> { lemma_any_p p ls rs } @-}
+lemma_any :: (a->Bool) -> [a] -> [a] -> Proof
+lemma_any p ls rs = True ***Admit
+
+
+{-@ inline prm2 @-}
+prm2 cl LNothing =  True
+prm2 cl (LJust cr) =  cl =*= cr
+
+-- CList semantic preserving for right rotation (mRotR)
+{-@ lemma_rotR :: cl:CList a -> { prm2 cl (mRotR cl) } @-}
+lemma_rotR :: Eq a => CList a -> Proof
+lemma_rotR cl@(CList ls f (r:rs)) =  prm2 cl (mRotR cl)
+                                === prm2 cl (LJust (CList (f:ls) r rs))
+                                === cl =*= (CList (f:ls) r rs)
+                                === (any ((toList cl ==) . toList) . toList $ allRotations (CList (f:ls) r rs))
+                                === ((\x-> any ((toList cl ==) . toList) (toList x)) $ allRotations (CList (f:ls) r rs))
+                                === (any ((toList cl ==) . toList) (toList  (allRotations (CList (f:ls) r rs))))
+                                -- def of allRotations
+                                === ( let   rls_x  = (CList ls f (r:rs))
+                                            rls_xs = unfoldr (fmapLMaybe joinTuple . mRotL) (CList ls f (r:rs))
+
+                                            rls =  unfoldr (fmapLMaybe joinTuple . mRotL) (CList (f:ls) r rs) -- def of unfoldr
+                                                ? (
+                                                    (fmapLMaybe joinTuple . mRotL)  (CList (f:ls) r rs)
+                                                === fmapLMaybe joinTuple (mRotL (CList (f:ls) r rs))
+                                                === fmapLMaybe joinTuple (LJust (CList ls f (r:rs)))
+                                                === (LJust (joinTuple (CList ls f (r:rs))))
+                                                === (LJust (rls_x,rls_x))
+                                                )
+                                             === (rls_x : rls_xs)
+                                        
+                                            rrs =  unfoldr (fmapLMaybe joinTuple . mRotR) (CList (f:ls) r rs)
+
+                                      in     (any ((toList cl ==) . toList) (toList (CList rls (CList (f:ls) r rs) rrs ) ))
+                                         === (any ((toList cl ==) . toList) (rightElements (CList rls (CList (f:ls) r rs) rrs ) ))
+                                         === (any ((toList cl ==) . toList) ((CList (f:ls) r rs) : (rrs ++ (reverse rls))) )
+                                          --  def of any
+                                         === ( let p = ((toList cl ==) . toList)
+                                                   first = (CList (f:ls) r rs)
+                                               in  (p first || any p (rrs ++ (reverse rls)))
+                                                --  def of reverse
+                                               === (p first || any p (rrs ++ (reverse rls_xs ++ [rls_x])))
+                                                              ? lemma_any p rrs  (reverse rls_xs ++ [rls_x])
+                                               === (p first || (any p rrs || any p (reverse rls_xs ++ [rls_x])))
+                                                                            ? lemma_any p (reverse rls_xs) [rls_x]
+                                               === (p first || (any p rrs || (any p (reverse rls_xs) || any p [rls_x])))
+                                                                                                    ? (
+                                                                                                        any p [rls_x]
+                                                                                                    === ( ((toList cl ==) . toList) rls_x || any p [] )
+                                                                                                    === ( (toList cl ==)  (toList rls_x) )
+                                                                                                    === ( toList cl == toList rls_x )
+                                                                                                    )
+                                             )
+                                     )
+                                ***QED
+ 
+lemma_rotR cl@_ =  prm2 cl (mRotR cl)
+            === prm2 cl (LNothing)
+             ***QED
+ 
+-- CList semantic preserving for left rotation (mRotL)
+{-@ lemma_rotL :: cl:CList a -> { prm2 cl (mRotL cl) } @-}
+lemma_rotL :: Eq a => CList a -> Proof
+lemma_rotL cl@(CList (l:ls) f rs) =  prm2 cl (mRotL cl)
+                                === prm2 cl (LJust (CList ls l (f:rs)))
+                                === cl =*= (CList ls l (f:rs))
+                                === (any ((toList cl ==) . toList) . toList $ allRotations  (CList ls l (f:rs)) )
+                                === ((\x-> any ((toList cl ==) . toList) (toList x)) $ allRotations (CList ls l (f:rs)) )
+                                === (any ((toList cl ==) . toList) (toList  (allRotations  (CList ls l (f:rs)))))
+                                -- def of allRotations
+                                === ( let  
+                                            rls =  unfoldr (fmapLMaybe joinTuple . mRotL) (CList ls l (f:rs))
+
+                                            rrs_x  = (CList (l:ls) f rs)
+                                            rrs_xs = unfoldr (fmapLMaybe joinTuple . mRotR) (CList (l:ls) f rs)
+                                            rrs =  unfoldr (fmapLMaybe joinTuple . mRotR) (CList ls l (f:rs)) -- def of unfoldr
+                                                ? (
+                                                    (fmapLMaybe joinTuple . mRotR)  (CList ls l (f:rs))
+                                                === fmapLMaybe joinTuple (mRotR  (CList ls l (f:rs)))
+                                                === fmapLMaybe joinTuple (LJust (CList (l:ls) f rs))
+                                                === (LJust (joinTuple (CList (l:ls) f rs)))
+                                                === (LJust (rrs_x,rrs_x))
+                                                )
+                                               === (rrs_x : rrs_xs)
+
+                                      in     (any ((toList cl ==) . toList) (toList (CList rls (CList ls l (f:rs)) rrs ) ))
+                                         === (any ((toList cl ==) . toList) (rightElements (CList rls (CList ls l (f:rs)) rrs ) ))
+                                         === (any ((toList cl ==) . toList) ((CList ls l (f:rs)) : (rrs ++ (reverse rls))) )
+                                          --  def of any
+                                         === ( let p = ((toList cl ==) . toList)
+                                                   first = (CList ls l (f:rs))
+                                               in  (p first || any p (rrs ++ (reverse rls)))
+                                                --  def of reverse
+                                               === (p first || any p (rrs ++ (reverse rls)))
+                                                              ? lemma_any p rrs  (reverse rls)
+                                               === (p first || (any p rrs || any p (reverse rls)))
+                                                                ? (
+                                                                    any p rrs
+                                                                === ( ((toList cl ==) . toList) rrs_x || any p rrs_xs )
+                                                                === ( ((toList cl ==) . toList) rrs_x || any p rrs_xs )
+                                                                === ( (toList cl ==)  (toList rrs_x) || any p rrs_xs )
+                                                                === ( toList cl == toList rrs_x || any p rrs_xs)
+                                                                )
+                                             )
+                                     )
+                                ***QED
+ 
+lemma_rotL cl@_ =  prm2 cl (mRotL cl)
+            === prm2 cl (LNothing)
+             ***QED
+ 
+ 
+
+---- Reflexivity of (=*=)
+{-@ inline refl @-}
+refl cl = cl =*= cl
+{-@ lemma_refl ::  Eq a => cl:CList a -> { refl cl} @-}
+lemma_refl :: Eq a =>  CList a -> Proof
+lemma_refl Empty = Empty =*= (Empty::CList Int)
+                === ( any ((toList Empty ==) . toList) . toList $ allRotations (Empty::CList Int) )
+                === ( (\ls -> any ((toList Empty ==) . toList) (toList ls)) $ allRotations (Empty::CList Int) )
+                === ( (\ls -> any ((toList Empty ==) . toList) (toList ls)) (allRotations (Empty::CList Int)) )
+                === ( any ((toList Empty ==) . toList) (toList (allRotations (Empty::CList Int))) ) -- def of allRotations
+                ===  any ((toList Empty ==) . toList) (toList (singleton (Empty::CList Int))) 
+                ===  any ((toList Empty ==) . toList) (toList ((CList [] (Empty::CList Int) []))) 
+                ===  any ((toList Empty ==) . toList) (rightElements (CList [] (Empty::CList Int) [])) 
+                ===  any ((toList Empty ==) . toList) ((Empty::CList Int) : ([] ++ (reverse [])))  -- expanding reverse
+                                                                        ? (([] ++ (reverse []))
+                                                                        === ([] ++ ([]))
+                                                                        === []
+                                                                        )
+                === any ((toList Empty ==) . toList) ((Empty::CList Int) : ([])) 
+                === any ((toList Empty ==) . toList) [Empty::CList Int]
+        --   def. of any
+                === (((toList Empty ==) . toList) (Empty :: CList Int) || any ((toList (Empty :: CList Int) ==) . toList) [])
+                ***QED
+lemma_refl cl@(CList l f r) = refl cl 
+                           === cl =*= cl
+                           === ( any ((toList cl ==) . toList) . toList $ allRotations cl) -- def. allRotations
+                           === ( let  ls =  unfoldr (fmapLMaybe joinTuple . mRotL) cl
+                                      rs =  unfoldr (fmapLMaybe joinTuple . mRotR) cl
+                                 in     ( (\ls -> any ((toList cl ==) . toList) (toList ls)) $ CList ls cl rs )
+                                    === ( any ((toList cl ==) . toList) (toList (CList ls cl rs)) )
+                                    === ( any ((toList cl ==) . toList) (rightElements (CList ls cl rs)) )
+                                    === ( any ((toList cl ==) . toList) (cl : (rs ++ (reverse ls))) ) 
+                                    -- def of any
+                                    === ( let p = (((toList cl ==) . toList))
+                                              (x:xs) = (cl : (rs ++ (reverse ls)))
+                                         in (p x || any p xs )
+                                          === (toList cl == toList x || any p xs )
+                                         )
+                               )
+                           ***QED
+
+{-======================================================
+                END LEMMAS
+=======================================================-}       
+
+
 
 {-======================================================
                         prop_empty
@@ -55,84 +230,22 @@ prop_focus c v = (Just v) === (focus $ insertR v c)
 {-======================================================
                         prop_list
 =======================================================-}
-{-@ lemma_fromList :: l:[a] -> { l == toList (fromList l)} @-}
-lemma_fromList ::  [a] -> Proof
-lemma_fromList l@[] = l
-                  === []
-                  === rightElements Empty
-                  === toList (Empty)
-                  === toList (fromList [])
-                  === toList (fromList l)
-                  ***QED
+{-@ inline prop_list_p@-}
+prop_list_p c = c =*= (fromList . toList $ c)
 
-lemma_fromList (x:xs) = (x:xs) ? lemma_fromList xs
-                        === x: (toList (fromList xs)) 
-                        === (case xs of
-                                  [] -> x: (toList (fromList []))
-                                        === x:  toList (Empty)
-                                        === x: rightElements Empty
-                                        === [x]
-                                        === x :[]
-                                        === x : ([] ++ [])
-                                        === x : ([] ++ (reverse []))
-                                        === rightElements (CList [] x [])
-                                        === toList (CList [] x [])
-                                        === toList (CList (reverse []) x [] )
-                                        === toList (CList (reverse (snd (([],[])))) x (fst (([],[]))) )
-                                        === toList (CList (reverse (snd (splitAt 0 []))) x (fst (splitAt 0 [])) )
-                                        === toList ( let len = length [x]
-                                                         (r,l) = splitAt (len `div` 2) []
-                                                      in CList (reverse l) x r)
-                                        === toList (fromList [x])
-
-                                  (m:ms) -> let len = length xs
-                                                (r,l) = splitAt (len `div` 2) ms
-                                            in (
-                                              x: toList (fromList xs)
-                                              === x: (toList (CList (reverse l) m r))
-                                              === x: (rightElements (CList (reverse l) m r))
-                                              === x: (m : (r ++ (reverse (reverse l))))
-                                              === x: ((m:r) ++ (reverse (reverse l)))
-                                              === rightElements (CList (reverse l) x (m:r))
-                                              === toList (CList (reverse l) x (m:r))
-                                              === toList (CList (reverse l) x (m:r)) 
-                                                 ? (let 
-                                                        n = (length (x:xs)) `div` 2
-                                                        (b1, b2) = splitAt (n - 1) xs
-                                                        (m1:_) = xs
-                                                    in  (l ==! b2 ***QED )        &&&
-                                                        ((m:r) ==! (m1:b1) ***QED) -- how to prove this?
-                                                       )
-                                              === toList (let len1 = length (x:xs)
-                                                              (m1:_) = xs
-                                                              n = len1 `div` 2
-                                                              (b1, b2) = splitAt (n - 1) xs
-                                                        in CList (reverse b2) x (m1:b1) )
-
-                                     
-                                              === toList (let len1 = length (x:xs)
-                                                              n = len1 `div` 2
-                                                              (m1:m1s) = xs
-                                                              (b1, b2) = let (c1, c2) = splitAt (n - 1) m1s in (m1:c1, c2)
-                                                        in CList (reverse b2) x b1)
-
-                                              === toList (let len1 = length (x:xs)
-                                                              (b1, b2) = splitAt (len1 `div` 2) xs
-                                                          in CList (reverse b2) x b1)
-
-                                              === toList (fromList (x:xs))
-                                            )
-                            )        
-                        ***QED
-
-{-@ prop_list :: c:CList Int -> {c == (fromList (toList  c))} @-}
+{-@ prop_list :: c:CList Int -> { prop_list_p c } @-}
 prop_list :: CList Int -> Proof
-prop_list c@Empty = c === Empty
-                      === (fromList [])
-                      === (fromList (rightElements Empty))
-                      === (fromList (toList Empty))
-                      === (fromList (toList  c))
-                     ***QED 
+prop_list c@Empty = (c =*= (fromList . toList $ c))
+                --       ? (
+                --       c === Empty
+                --       === (fromList [])
+                --       === (fromList (rightElements Empty))
+                --       === (fromList (toList Empty))
+                --       === (fromList (toList  c))
+                --       )
+                ==! c =*= Empty
+                     ***Admit
+
 prop_list c@(CList [] f []) = c 
                               === (CList [] f [])
                               === (CList (reverse (snd ([],[]))) f (fst ([],[]))) 
@@ -181,7 +294,7 @@ prop_list c@(CList l f r) = c
                               === (fromList (rightElements c))
                               === (fromList (toList c))
                             ***QED  
-
+ 
 {-======================================================
                         prop_rot
 =======================================================-}
@@ -215,27 +328,6 @@ prop_rot c@(CList [] f rs)  = c
                             ***QED  
 
  
-{- prop_rot c@(CList [] f rs)  = 
-                             (any ((toList c ==) . toList) . toList $ allRotations (CList (reverse rs) f []))
-                            === (c == (CList (reverse rs) f []))
-                            === (c == let (l:ls) = reverse rs
-                                  in  (CList (l:ls) f [])
-                                )
-                            === (c == let (l:ls) = reverse rs
-                                  in  rotR (CList ls l [f])
-                                )
-                            === (c == rotR (let (l:ls) = reverse rs
-                                        in CList ls l [f]))
-                            ==! (c == (rotR $ rotL c))
-                            ***QED
- -}
-{- 
-infixl 3 =*=
-{-@ (=*=)  :: x:CList a-> y:CList a
-          -> {c:CList a | any (compose (toList x ==)  toList) (toList (allRotations y)) } @-}
-(=*=) :: CList a -> CList a -> CList a
-_ =*= y  = y
- -}
 
 {-======================================================
                         prop_packL

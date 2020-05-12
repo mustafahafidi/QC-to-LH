@@ -1,4 +1,4 @@
-module Test where
+module Lib.CL.ExtraTheorems where
 import Language.Haskell.Liquid.Prelude
 import Prelude  hiding (length, 
                         (++), 
@@ -25,8 +25,7 @@ import Language.Haskell.Liquid.ProofCombinators
 {-@ reflect =*= @-}
 {-@ infix 4 =*= @-}
 (=*=) :: Eq a  => CList a -> CList a -> Bool
-a =*= b =  any ((toList a ==) . toList) . toList $ allRotations b
-
+a =*= b =  (any ((toList a ==) . toList) . toList $ allRotations b)
 
 {-======================================================
                START LEMMAS
@@ -38,7 +37,7 @@ lemma_any_p p ls rs = any p (ls++rs) == ((any p ls) || (any p rs))
 lemma_any :: (a->Bool) -> [a] -> [a] -> Proof
 lemma_any p ls rs = True ***Admit
 
-
+{- 
 {-@ inline prm2 @-}
 prm2 cl LNothing =  True
 prm2 cl (LJust cr) =  cl =*= cr
@@ -146,7 +145,7 @@ lemma_rotL cl@_ =  prm2 cl (mRotL cl)
             === prm2 cl (LNothing)
              ***QED
  
- 
+  -}
 
 ---- Reflexivity of (=*=)
 {-@ inline refl @-}
@@ -193,7 +192,7 @@ lemma_refl cl@(CList l f r) = refl cl
                 END LEMMAS
 =======================================================-}       
 
-
+{-
 
 {-@ inline p1 @-}
 p1 = (CList [] 0 [1] =*= CList [0] 1 [])
@@ -233,3 +232,76 @@ p2_proof = lemma_refl (CList [] 0 [])
 p3_proof ::  Proof
 p3_proof = lemma_refl (Empty::CList Int)
         
+ -}
+ {-@ LIQUID "--no-termination" @-}
+{- 
+ {-@ inline prop_list_p@-}
+prop_list_p c = c =*= (fromList . toList $ c)
+
+{-@ prop_list :: c:CList Int -> { prop_list_p c } @-}
+prop_list :: CList Int -> Proof
+prop_list c@Empty = (c =*= (fromList . toList $ c))
+                      ? (
+                      c === Empty
+                      === (fromList [])
+                      === (fromList (rightElements Empty))
+                      === (fromList (toList Empty))
+                      === (fromList (toList  c))
+                      )
+                      ? lemma_refl (Empty::CList Int)
+                === c =*= Empty
+                     ***QED
+
+prop_list c@(CList l f r) = c =*= (fromList . toList $ c)
+                                    ?( 
+                                        (fromList (toList c))
+                                        === (fromList (rightElements c))
+                                        === (fromList (f : (r ++ (reverse l))))
+                                    )
+                         ===  (let 
+                                a@(i:is) = f : (r ++ (reverse l))
+                                len = length a
+                                (sr,sl) = splitAt (len `div` 2) is -- is = sr++sl
+                            in    c =*= (CList (reverse sl) f sr)
+                              === (any ((toList c ==) . toList) . toList $ allRotations (CList (reverse sl) f sr))
+                            )
+                        ***Admit  
+  -}
+
+
+{-======================================================
+                        prop_rot
+=======================================================-}
+ {-@ inline prop_rot @-}
+prop_rot c = c =*= (rotR  (rotL c))
+
+{-@  prop_rot :: c:CList Int -> { prop_rot c  } @-}
+prop_rot :: CList Int -> Proof
+prop_rot c@Empty = c 
+                  === (rotR (c))
+                  === (rotR (rotL c))
+                  ***QED 
+prop_rot c@(CList [] _ [])  = c 
+                            === (rotR (c))
+                            === (rotR (rotL c))
+                            ***QED 
+prop_rot c@(CList (l:ls) f rs)  = c 
+                            === CList (l:ls) f rs
+                            === (rotR (CList ls l (f:rs)))
+                            === (rotR (rotL c))
+                            ***QED  
+
+prop_rot c@(CList [] f rs)  = c 
+                            ==!  (CList (reverse rs) f [])
+                            === (let (l:ls) = reverse rs
+                                  in  (CList (l:ls) f [])
+                                )
+                            === (let (l:ls) = reverse rs
+                                  in  rotR (CList ls l [f])
+                                )
+                            === (rotR (let (l:ls) = reverse rs
+                                        in CList ls l [f]))
+                            === (rotR (rotL c))
+                            ***QED  
+
+ 

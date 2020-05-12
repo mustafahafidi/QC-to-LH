@@ -98,7 +98,7 @@ import Test.QuickCheck.Gen
 -- | A functional ring type.
 data CList a = Empty
              | CList [a] a [a]
-             deriving (Show)
+             deriving (Eq, Show)
 
 -- The same as Eq CList's (==)
 
@@ -243,12 +243,8 @@ removeR (CList l _ []) = let (f:rs) = reverse l
 allRotations :: CList a -> CList (CList a)
 allRotations Empty = singleton Empty
 allRotations cl = let 
-                    ls = --unfoldr (\x->(fmapLMaybe joinTuple) (mRotL x)) cl 
-                      unfoldr (fmapLMaybe joinTuple . mRotL) cl
-                    rs = --unfoldr (\x->(fmapLMaybe joinTuple) (mRotR x)) cl
-                      --unfoldr (fmapLMaybe (join (,)) . mRotR) cl
-                      unfoldr (fmapLMaybe joinTuple . mRotR) cl
-
+                    ls = unfoldr (fmapLMaybe joinTuple . mRotL) cl
+                    rs = unfoldr (fmapLMaybe joinTuple . mRotR) cl
                   in CList ls cl rs
 
 -- >>> (fmapLMaybe joinTuple . mRotL ) (CList [] 0 [])
@@ -416,8 +412,8 @@ instance (Read a) => Read (CList a) where
    return (fromList xs,t)
 
 
-instance (Eq a) => Eq (CList a) where
-  a == b = any ((toList a ==) . toList) . toList $ allRotations b
+-- instance (Eq a) => Eq (CList a) where
+--   a == b = any ((toList a ==) . toList) . toList $ allRotations b
 
 instance (NFData a) => NFData (CList a) where
   rnf Empty         = ()
