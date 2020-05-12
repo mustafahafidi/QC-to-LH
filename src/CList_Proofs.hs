@@ -14,6 +14,7 @@ import Prelude hiding (length, null, splitAt, (++), reverse,any)
 
 {-@ LIQUID "--reflection"    @-}
 {-@ LIQUID "--short-names"    @-}
+{-@ LIQUID "--no-totality"    @-}
 
 
 
@@ -296,7 +297,6 @@ prop_list c@(CList l f r) = c
 {-======================================================
                         prop_rot
 =======================================================-}
- {-@ LIQUID "--no-totality" @-}
  {-@ inline prop_rot_p @-}
 prop_rot_p c = c =*= (rotR  (rotL c))
 

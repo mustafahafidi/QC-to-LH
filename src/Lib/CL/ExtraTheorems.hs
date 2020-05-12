@@ -271,7 +271,7 @@ prop_list c@(CList l f r) = c =*= (fromList . toList $ c)
 {-======================================================
                         prop_rot
 =======================================================-}
- {-@ LIQUID "--no-totality" @-}
+--  {-@ LIQUID "--no-totality" @-}
  {-@ inline prop_rot_p @-}
 prop_rot_p c = c =*= (rotR  (rotL c))
 
@@ -309,6 +309,7 @@ prop_rot c@(CList (l:ls) f rs)  =  c =*= (rotR  (rotL c))
                             ***QED  
 
 prop_rot c@(CList [] f rs)  =  c =*= (rotR  (rotL c))
+                            ? (length rs > 0 ***Admit)
                             ? ((rotR (rotL c))
                             === (rotR (let (l:ls) = reverse rs
                                         in CList ls l [f]))
