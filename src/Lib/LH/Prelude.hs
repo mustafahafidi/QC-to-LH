@@ -131,8 +131,9 @@ comp :: (b -> c) -> (a -> b) -> a -> c
 f `comp` g = \x -> f(g(x))
 
 
-
-{-    ==================== SOME PRELUDE PROOFS ====================  -}
+{-======================================================
+                         SOME PRELUDE Theorems
+=======================================================-}
 
 singletonP :: a -> Proof
 {-@ singletonP :: x:a -> { reverse [x] == [x] } @-}
@@ -207,3 +208,29 @@ rightIdP (x:xs)
 assocP :: [a] -> [a] -> [a] -> Proof
 assocP [] _ _       = trivial
 assocP (x:xs) ys zs = assocP xs ys zs
+
+
+
+{-@ inline splitAt_theorem_p @-}
+{-@ splitAt_theorem_p ::   n:Int -> a:{[t]| length a >= n} -> Bool @-}
+splitAt_theorem_p n as =  let (l,r) = splitAt n as
+                          in (l ++ r == as)
+{-@ splitAt_theorem ::   n:Int -> a:{[t]| length a >= n} -> { splitAt_theorem_p n a } @-}
+splitAt_theorem ::  Eq a => Int -> [a] ->  Proof
+splitAt_theorem 0 as = let (l,r) = splitAt 0 as
+                                === ([], as)
+                        in ((l ++ r) == as)
+                        ===([] ++ as == as)
+                        ===(as == as)
+                    ***QED
+
+splitAt_theorem n ls@(a:as) = let (b1, b2) = splitAt (n - 1) as
+                                  (l,r) = splitAt n ls
+                                        === (a:b1, b2)
+                              in (l ++ r == ls)
+                            ===  ((a:b1) ++ b2 == ls)
+                            ===  (a:(b1 ++ b2) == ls)
+                                ? splitAt_theorem (n-1) as
+                                ? (b1++b2 == as)
+                            ===  (a:as == ls)
+                    ***QED
