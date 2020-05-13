@@ -420,20 +420,46 @@ prop_packL c@(CList l f r) = c =*= (packL c)
                                 )
                             ***QED
 
+
 {-======================================================
                         prop_packR
 =======================================================-}
-{-@ prop_packR ::  c:CList Int -> { c == (packR c) } @-}
+{-@ inline prop_packR_p @-}
+prop_packR_p c = c =*= (packR c)
+{-@ prop_packR ::  c:CList Int -> { prop_packR_p c } @-}
 prop_packR ::  CList Int -> Proof
-prop_packR c@Empty = c === (packR c)
-                       === (Empty)
+prop_packR c@Empty =  c =*= (packR c)
+                  === c =*= Empty
+                    ? lemma_refl c
                        ***QED 
 
-prop_packR c@(CList l f r) = c 
-                            === CList l f r
-                            ==!  CList [] f (r ++ (reverse l))
-                            === (packR c)
-                            ***QED 
+prop_packR c@(CList l f r) = c =*= (packR c)
+                            === c =*= CList [] f (r ++ (reverse l))
+                            === (let cl = CList [] f (r ++ (reverse l)) in
+                                (any ((toList c ==) . toList) . toList $ allRotations cl)
+                            === ( let --def of allRotations
+                                    ls = unfoldr (fmapLMaybe joinTuple . mRotL) cl
+                                    rs = unfoldr (fmapLMaybe joinTuple . mRotR) cl
+                                in (any ((toList c ==) . toList) . toList $ CList ls cl rs)
+                                                                 ? (toList (CList ls cl rs)
+                                                                    === rightElements (CList ls cl rs)
+                                                                    === cl : (rs ++ (reverse ls))
+                                                                  )
+                                === ( any ((toList c ==) . toList) (cl : (rs ++ (reverse ls))) )
+                                === ( ((toList c ==) . toList) cl || any ((toList c ==) . toList)  (rs ++ (reverse ls)) )
+                                    ? (((toList c ==) . toList) cl
+                                    === (toList c == toList cl)
+                                    === (rightElements c == rightElements cl)
+                                    === (f : (r ++ (reverse l)) == f : ((r ++ (reverse l)) ++ (reverse [])))
+                                                                        ? ( ((r ++ (reverse l)) ++ (reverse []))
+                                                                        ===  ((r ++ (reverse l)) ++  [])
+                                                                            ? rightIdP (r ++ (reverse l))
+                                                                        ===  (r ++ (reverse l))
+                                                                        )
+                                    )
+                                )
+                            )
+                            ***QED
 
 
 
