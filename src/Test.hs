@@ -28,6 +28,49 @@ import Language.Haskell.Liquid.ProofCombinators
 a =*= b =  any ((toList a ==) . toList) . toList $ allRotations b
 
 
+
+
+{-@ inline p1 @-}
+p1 = (CList [] 0 [1] =*= CList [0] 1 [])
+
+{-@ inline p2 @-}
+p2  = (CList [] 0 [] =*= CList [] 0 [])
+
+{-@ inline p3 @-}
+p3  = (Empty =*= (Empty::CList Int))
+
+{-======================================================
+                        proving p1
+=======================================================-}
+{-@ p1_proof ::  {p1} @-}
+p1_proof ::  Proof
+p1_proof =  (CList [] 0 [1] =*= CList [0] 1 [])
+                ? (
+                    mRotR (CList [] 0 [1])
+                === LJust (CList [0] 1 [])
+                )
+                ? lemma_rotR (CList [] 0 [1])
+        ***QED
+        
+
+{-======================================================
+                        proving p2
+=======================================================-}
+{-@ p2_proof ::  {p2} @-}
+p2_proof ::  Proof
+p2_proof = lemma_refl (CList [] 0 [])
+        
+
+{-======================================================
+                        proving p3
+=======================================================-}
+{-@ p3_proof ::  { p3 } @-}
+p3_proof ::  Proof
+p3_proof = lemma_refl (Empty::CList Int)
+        
+
+
+
 {-======================================================
                START LEMMAS
 =======================================================-}
@@ -36,8 +79,18 @@ a =*= b =  any ((toList a ==) . toList) . toList $ allRotations b
 lemma_any_p p ls rs = any p (ls++rs) == ((any p ls) || (any p rs))
 {-@ lemma_any :: p:(a->Bool) -> ls:[a] -> rs:[a] -> { lemma_any_p p ls rs } @-}
 lemma_any :: (a->Bool) -> [a] -> [a] -> Proof
-lemma_any p ls rs = True ***Admit
+lemma_any p [] rs = ( any p ([]++rs))
+                === ( any p rs)
+                === ( any p [] || any p rs)
+                ***QED
 
+lemma_any p (l:ls) rs = ( any p ((l:ls)++rs))
+                    === ( any p (l:(ls++rs)))
+                    === ( p l || any p (ls++rs))
+                                    ? lemma_any p ls rs
+                    === ( p l || (any p ls) || (any p rs))
+                    === ( (any p (l:ls)) || (any p rs))
+                    ***QED
 
 {-@ inline prm2 @-}
 prm2 cl LNothing =  True
@@ -192,44 +245,3 @@ lemma_refl cl@(CList l f r) = refl cl
 {-======================================================
                 END LEMMAS
 =======================================================-}       
-
-
-
-{-@ inline p1 @-}
-p1 = (CList [] 0 [1] =*= CList [0] 1 [])
-
-{-@ inline p2 @-}
-p2  = (CList [] 0 [] =*= CList [] 0 [])
-
-{-@ inline p3 @-}
-p3  = (Empty =*= (Empty::CList Int))
-
-{-======================================================
-                        proving p1
-=======================================================-}
-{-@ p1_proof ::  {p1} @-}
-p1_proof ::  Proof
-p1_proof =  (CList [] 0 [1] =*= CList [0] 1 [])
-                ? (
-                    mRotR (CList [] 0 [1])
-                === LJust (CList [0] 1 [])
-                )
-                ? lemma_rotR (CList [] 0 [1])
-        ***QED
-        
-
-{-======================================================
-                        proving p2
-=======================================================-}
-{-@ p2_proof ::  {p2} @-}
-p2_proof ::  Proof
-p2_proof = lemma_refl (CList [] 0 [])
-        
-
-{-======================================================
-                        proving p3
-=======================================================-}
-{-@ p3_proof ::  { p3 } @-}
-p3_proof ::  Proof
-p3_proof = lemma_refl (Empty::CList Int)
-        

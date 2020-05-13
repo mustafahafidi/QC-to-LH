@@ -425,7 +425,6 @@ prop_removeR  cl@(CList l _ []) = size (removeR cl)
                START LEMMAS
 =======================================================-}
 -- Distributivity of `any` over `++`
-
 {-@ inline lemma_any_p @-}
 lemma_any_p p ls rs = any p (ls++rs) == ((any p ls) || (any p rs))
 {-@ lemma_any :: p:(a->Bool) -> ls:[a] -> rs:[a] -> { lemma_any_p p ls rs } @-}
