@@ -4,7 +4,15 @@ module Lib.CL.QuickCheck where
 import Test.QuickCheck
 import Lib.CL.CircularList 
 import CList_Proofs ((=*=))
-import Lib.LH.Prelude (reverse) -- needed because of https://github.com/ucsd-progsys/liquidhaskell/issues/1665 
+import Prelude  hiding (length, 
+                        (++), 
+                        reverse, 
+                        iterate, 
+                        null, 
+                        splitAt,
+                        any
+                        )
+import Lib.LH.Prelude 
 {-@ LIQUID "--reflection"    @-}
 
 
@@ -24,15 +32,15 @@ prop_focus c v = (Just v) == (focus $ insertR v c)
 prop_list :: CList Int -> Bool
 prop_list c = c =*= (fromList . toList $ c)
 
-{-@ inline prop_rot @-}
+-- {-@ inline prop_rot @-}
 prop_rot :: CList Int -> Bool
-prop_rot c = c == (rotR $ rotL c)
+prop_rot c = c =*= (rotR $ rotL c)
 
 prop_packL :: CList Int -> Bool
-prop_packL c = c == (packL c)
+prop_packL c = c =*= (packL c)
 
 prop_packR :: CList Int -> Bool
-prop_packR c = c == (packR c)
+prop_packR c = c =*= (packR c)
 
 -- ========================== Additional properties =====================
 
@@ -121,3 +129,4 @@ main = do
 
     putStrLn "prop_fromList_focus"
     quickCheck prop_fromList_focus
+

@@ -1,13 +1,14 @@
 module Test2 where
 import Lib.LH.Prelude 
-import Prelude hiding (any)
+import Prelude hiding (any, reverse, (++))
 import Lib.CL.CircularList
 import Language.Haskell.Liquid.ProofCombinators
 {-@ LIQUID "--reflection" @-}
-{-@ LIQUID "--ple" @-}
+{-@ LIQUID "--short-names" @-}
 
 
-{-@ reflect =*= @-}
-{-@ infix 4 =*= @-}
-(=*=) :: Eq a  => CList a -> CList a -> Bool
-a =*= b =  (any (\x->(toList a == toList x)) . toList $ allRotations b)
+asd :: Proof
+asd =  (reverse ( ([1]) ++ ([1,2])))
+        ? (distributivityP ([1]) ([1,2]) ***Admit)
+   === ((reverse [1]) ++ (reverse [1,2]))
+   ***QED
