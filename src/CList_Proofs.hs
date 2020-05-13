@@ -17,13 +17,13 @@ import Prelude hiding (length, null, splitAt, (++), reverse,any)
 {-@ LIQUID "--no-totality"    @-}
 
 
-
-
-
 {-@ reflect =*= @-}
 {-@ infix 4 =*= @-}
 (=*=) :: Eq a  => CList a -> CList a -> Bool
-a =*= b =  (any ((toList a ==) . toList) . toList $ allRotations b)
+a =*= b = (any ((toList a ==) . toList) . toList $ allRotations b)
+         -- (any (\x -> (toList a == toList x )) (toList (allRotations b)))
+          
+-- rewriting necessary because of https://github.com/ucsd-progsys/liquidhaskell/issues/1671
 
 {-======================================================
                START LEMMAS
@@ -376,17 +376,49 @@ prop_rot c@(CList [] f rs)  =  c =*= (rotR  (rotL c))
 {-======================================================
                         prop_packL
 =======================================================-}
-{-@ prop_packL ::  c:CList Int -> { c == (packL c) } @-}
+{-@ inline prop_packL_p @-}
+prop_packL_p c = c =*= (packL c)
+{-@ prop_packL ::  c:CList Int -> { prop_packL_p c } @-}
 prop_packL ::  CList Int -> Proof
-prop_packL c@Empty = c === (packL c)
-                       === (Empty)
-                       ***QED 
+prop_packL c@Empty =   c =*= (packL c)
+                  ===  c =*= (Empty)
+                     ? lemma_refl c
+                       ***QED
 
-prop_packL c@(CList l f r) = c 
-                            === CList l f r
-                            ==! (CList (l ++ (reverse r)) f [])
-                            === (packL c)
-                            ***QED 
+prop_packL c@(CList l f r) = c =*= (packL c)
+                            === c =*= (packL c)
+                            === c =*= (CList (l ++ (reverse r)) f [])
+                            === (any ((toList c ==) . toList) . toList $ allRotations (CList (l ++ (reverse r)) f []))
+                            === (any ((toList c ==) . toList) . toList $ (allRotations (CList (l ++ (reverse r)) f [])))
+                            === (
+                                let 
+                                    cl = (CList (l ++ (reverse r)) f [])
+                                    ls = unfoldr (fmapLMaybe joinTuple . mRotL) cl
+                                    rs = unfoldr (fmapLMaybe joinTuple . mRotR) cl
+                                in (any ((toList c ==) . toList) . toList $  (CList ls cl rs))
+                                    === (any ((toList c ==) . toList)  (toList (CList ls cl rs)))
+                                                                  ?(toList (CList ls cl rs)
+                                                                    === rightElements  (CList ls cl rs)
+                                                                    === cl : (rs ++ (reverse ls)))
+                                    === (any ((toList c ==) . toList) (cl : (rs ++ (reverse ls))))
+                                    === let p = (toList c ==) . toList in 
+                                         (((toList c ==) . toList) cl || any p (rs ++ (reverse ls)))
+                                         ? (
+                                             ((toList c ==) . toList) cl
+                                        ===  (toList c == toList cl)
+                                        ===  (rightElements c == rightElements cl)
+                                        ===  (f : (r ++ (reverse l)) == f : ([] ++ (reverse (l++(reverse r)))))
+                                                                           ?(([] ++ (reverse (l++(reverse r))))
+                                                                           === (reverse (l ++ (reverse r)))
+                                                                                ? (distributivityP l (reverse r) ***Admit)
+                                                                           === ((reverse l) ++ (reverse (reverse r)))
+                                                                                ? involutionP r
+                                                                           === ((reverse l)++ r)
+                                                                           === (r ++ (reverse l))
+                                                                           )
+                                         )
+                                )
+                            ***QED
 
 {-======================================================
                         prop_packR
@@ -528,3 +560,4 @@ prop_removeR  cl@(CList l _ []) = size (removeR cl)
                                 ***QED
 
 
+ 
