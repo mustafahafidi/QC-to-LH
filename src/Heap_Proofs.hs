@@ -90,9 +90,9 @@ prop_Unit x = (unit x ==? [x])
 {-======================================================
                         prop_Size
 =======================================================-}
+------ Distributivity of toList' over (++)
 {-@ inline disToList @-}
 disToList h1 h2 = toList' (h1++h2) == (toList' h1 ++ toList' h2)
-
 {-@ distProp ::  Eq a =>  h1:[Heap a] -> h2:[Heap a] -> { disToList h1 h2 } @-}
 distProp :: Eq a => [Heap a] -> [Heap a] -> Proof
 distProp [] h2 = ( toList' ([]++h2) == (toList' [] ++ toList' h2) )
@@ -102,34 +102,71 @@ distProp [] h2 = ( toList' ([]++h2) == (toList' [] ++ toList' h2) )
                                        )
              === ( toList' h2 == toList' h2 )
                   ***QED
-distProp (h:hs) h2 =    (toList' ((h:hs)++h2) == (toList' (h:hs) ++ toList' h2))
-                        ? (      (h:hs) ++ h2
-                              === (h:hs) ++ h2
-                              === h:([]++hs) ++ h2
-                              === ([h]++hs) ++ h2
-                                     ? assocP [h] hs h2
-                              === [h]++(hs++h2)
-                          )
-                        === (toList' ([h]++(hs++h2)) == (toList' (h:hs) ++ toList' h2))
-                              -- expand left handside
-                        ? (   toList' ([h]++(hs++h2))
-                                    ? distProp [h] (hs++h2)
-                          === toList' [h] ++ toList' (hs++h2)  
-                                    ? distProp hs h2
-                          === toList' [h] ++ (toList' hs ++ toList' h2) 
-                                    ? assocP (toList' [h]) (toList' hs ) (toList' h2)
-                          === (toList' [h] ++ toList' hs) ++ toList' h2 
-                                    ? distProp [h] hs
-                          === toList' ([h] ++ hs) ++ toList' h2
-                          === toList' (h:hs) ++ toList' h2
-                          )
-                        === (toList' (h:hs) ++ toList' h2 == toList' (h:hs) ++ toList' h2)
-                        ***QED
 
-{- 
-distProp (h:hs) h2 =  (toList' ((h:hs)++h2) == (toList' (h:hs) ++ toList' h2))
-                              ? distProp (h:hs) (h2)
-                        ***QED  -}
+distProp ((h@Empty):hs) h2 = (toList' ((h:hs)++h2) == (toList' (h:hs) ++ toList' h2))
+                    ?(
+                        toList' ((h:hs)++h2)
+                    === toList' (h:(hs++h2))
+                    === toList' (hs++h2)
+                    )
+                                                ?(toList' (h:hs)
+                                                === toList' hs
+                                                )
+                    === (toList' (hs++h2) == toList' hs ++ toList' h2)
+                       ? distProp hs h2 
+                      
+                 ***QED
+
+distProp (h@(Node x hl hr):hs) h2 =  
+            (toList' ((h:hs)++h2) == (toList' (h:hs) ++ toList' h2))
+            ?(
+                toList' ((h:hs)++h2)
+            === toList' (h:(hs++h2))
+                ? (  toList' (h:(hs++h2))
+                 ==! toList' [h] ++ toList' (hs++h2))
+            === toList' [h] ++ toList' (hs++h2)
+                ? distProp hs h2
+            === toList' [h] ++ (toList' hs ++ toList' h2)
+                ? assocP (toList' [h]) (toList' hs) (toList' h2)
+            === (toList' [h] ++ toList' hs) ++ toList' h2
+                ? (  toList' (h:hs)
+                 ==! toList' [h] ++ toList' hs)
+                 
+            === toList' (h:hs) ++ toList' h2
+            )
+            ***QED
+
+
+{-@ inline lemma_distProp_p @-}
+lemma_distProp_p h hs = toList' (h:hs) == toList' [h] ++ toList' hs
+{-@ lemma_distProp :: Eq a => h:Heap a -> hs:[Heap a] -> { lemma_distProp_p h hs } @-}
+lemma_distProp :: Eq a => Heap a -> [Heap a] -> Proof
+lemma_distProp h@Empty hs =  toList' [h] ++ toList' hs
+                    ? (
+                        toList' [h]
+                    === toList' []
+                    === []
+                    )
+                === [] ++ toList' hs
+                === toList' hs
+                === toList' (h:hs) 
+                ***QED
+lemma_distProp h@(Node x hl hr) hs = toList' (h:hs)
+                        === x: toList' (hl:hr:hs)
+                            ? lemma_distProp hl (hr:hs)
+                        === x: (toList' [hl] ++ toList' (hr:hs))
+                                                ? lemma_distProp hr hs
+                        === x: (toList' [hl] ++ (toList' [hr] ++ toList' hs))
+                                ? assocP (toList' [hl]) (toList' [hr]) (toList' hs)
+                        === x: ((toList' [hl] ++ toList' [hr]) ++ toList' hs)
+                            ? lemma_distProp hl [hr]
+                        === x: ((toList' (hl:[hr])) ++ toList' hs)
+                        === x: toList' (hl:hr:[]) ++ toList' hs
+                        === (x: toList' (hl:hr:[])) ++ toList' hs
+                        === (toList' ([h])) ++ toList' hs
+                ***QED
+------ End Distributivity of toList' over (++)
+
 
 {-@ prop_Size ::  h:Heap Int -> { Lib.QC.Heap.prop_Size h } @-}
 prop_Size ::  Heap Int -> Proof
