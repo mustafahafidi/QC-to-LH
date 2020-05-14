@@ -15,9 +15,7 @@ import Language.Haskell.Liquid.ProofCombinators
 import Prelude hiding (length, null, splitAt, (++), reverse)
 
 {-@ LIQUID "--reflection"    @-}
--- {-@ LIQUID "--no-totality"    @-}
 {-@ LIQUID "--short-names"    @-}
-{-@ LIQUID "--no-termination-check"    @-}
 
 
 
