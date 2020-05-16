@@ -10,6 +10,7 @@ module Heap_Proofs where
 import Lib.LH.Prelude
 -- import Lib.LH.Equational
 import Lib.QC.Heap -- hiding ( (==?))
+-- import Lib.QC.ExtraTheorems
 import Language.Haskell.Liquid.ProofCombinators
 -- import Language.Haskell.Liquid.Prelude
 import Prelude hiding (length, null, splitAt, (++), reverse)
@@ -196,102 +197,221 @@ prop_Size h@(Node v hl hr) =  (size h == length (toList h)) -- apply size
                         prop_Insert
 =======================================================-}
 
-
-{-@ lemma_invariant :: Ord a =>  h1:{ Heap a | Lib.QC.Heap.invariant h1 }
-                      -> h2:{ Heap a | Lib.QC.Heap.invariant h2 } 
-                      -> { Lib.QC.Heap.invariant (merge h1 h2) } @-}
-lemma_invariant ::  Ord a => Heap a -> Heap a -> Proof
-lemma_invariant h1 h2 = invariant (merge h1 h2)
-                    ***Admit
- 
- {- 
-{-@ prop_Insert_proof::  x:Int -> hp:Heap Int -> { Lib.QC.Heap.prop_Insert x hp } @-}
-prop_Insert_proof ::  Int -> Heap Int -> Proof
-prop_Insert_proof x Empty =   ( insert x Empty ==? (x : toList Empty) )
-                          === ( invariant (insert x Empty) && sort (toList (insert x Empty)) == sort (x : toList Empty) )
-                          === ( invariant ((unit x) `merge` Empty) && sort (toList (insert x Empty)) == sort (x : toList Empty) )
-                                ? (invariant (unit x)
-                                   ==! True)
-                                ? invariant (Empty::Heap Int)
-                                ? lemma_invariant (unit x) (Empty)
-                          === ( sort (toList (insert x Empty)) == sort (x : toList Empty) )
-                          === ( sort (toList (insert x Empty)) == sort (x : toList Empty) )
-                          === ( sort (toList ((Node x empty empty) `merge` Empty)) == sort (x : toList Empty) )
-                          === ( sort (toList (Node x empty empty)) == sort (x : toList Empty) )
-                          === ( sort (toList (Node x Empty Empty)) == sort (x : toList Empty) )
-                                                                    ?( sort (x : toList Empty)
-                                                                     === sort (x : toList' [Empty])
-                                                                     === sort (x : toList' [])
-                                                                     === sort (x : [])
-                                                                    )
-                            ?(
-                               sort (toList (Node x Empty Empty))
-                          ===  sort (toList' ([Node x Empty Empty]))
-                          ===  sort (x: toList' [Empty,Empty])
-                          ===  sort (x: toList' [Empty])
-                          ===  sort (x: toList' [])
-                          ===  sort (x: [])
-                              )
-                          === ( sort [x] == sort [x] )
-                      ***QED
-                     
- -}
 {-@ prop_Insert ::  x:Int -> hp:Heap Int -> { Lib.QC.Heap.prop_Insert x hp } @-}
 prop_Insert ::  Int -> Heap Int -> Proof
 prop_Insert x Empty =   ( insert x Empty ==? (x : toList Empty) )
-                ===  ( unit x `merge` Empty ==? (x : toList' [Empty]) )
-                ===  ( (Node x empty empty) `merge` Empty ==? (x : toList' [Empty]) )
-                ===  ( Node x empty empty ==? (x : toList' [Empty]) )
-                ===  ( Node x empty empty ==? (x : toList' []) )
-                ===  ( Node x empty empty ==? [x])
-                ===  ( Node x Empty Empty ==? [x])
-                ===  ( invariant (Node x Empty Empty) && sort (toList (Node x Empty Empty)) == sort [x])
-                  -- Def. of invariant
-                ===  ( let inv = (x <=? Empty && x <=? Empty && invariant (Empty::Heap Int) && invariant (Empty::Heap Int))
-                               === (x <=? Empty)
-                               === True
-                        in inv && sort (toList (Node x Empty Empty)) == sort [x])
-                ===  (sort (toList (Node x Empty Empty)) == sort [x])
-                ===  (sort (toList' [Node x Empty Empty]) == sort [x])
-                ===  (sort (x:toList' [Empty,Empty]) == sort [x])
-                ===  (sort (x:toList' []) == sort [x])
-                ===  (sort [x] == sort [x])
+                                            ? (
+                                                (x : toList' [Empty])
+                                            === x : toList' []
+                                            === [x]
+                                            )
+                    ===  ( insert x Empty ==? [x])
+                    === (let h = insert x Empty
+                        in (invariant h && sort (toList h) == sort [x])
+                        )
+                    === (sort (toList (insert x Empty)) == sort [x])
+                             ?(
+                                (toList (insert x Empty))
+                            === (toList ( unit x `merge` Empty))
+                            === (toList ( (Node x empty empty) `merge` Empty))
+                            === (toList (Node x empty empty))
+                            === (toList' [Node x Empty Empty])
+                            === (x : toList' (Empty:Empty:[]))
+                            === (x : toList' (Empty:[]))
+                            === (x : toList' ([]))
+                            === ([x]) 
+                             )
+                ***QED 
+
+prop_Insert x h@(Node y hl hr)
+            | x <= y    = let h= (Node y hl hr)
+                        in (insert x h ==? (x : toList h))
+                            ? (insert x h ==! Node x (Node y hl hr) Empty)
+                                                ? (x:toList h  ==! (x : y : toList' [hl,hr]))
+                        ===  ((Node x h Empty) ==? (x : y : toList' [hl,hr]))
+                        === (invariant (Node x h Empty) 
+                                && sort (toList (Node x h Empty)) == sort (x : y : toList' [hl,hr]))
+                        === sort (toList (Node x h Empty)) == sort (x : y : toList' [hl,hr])
+                                ?(
+                                  toList (Node x h Empty)
+                                === toList' ([Node x h Empty])
+                                === x:toList' ([h,Empty])
+                                === x:y:toList' ([hl,hr,Empty])
+                                                ?( [hl,hr,Empty]
+                                                === hl:hr:[Empty]
+                                                === hl:hr:([]++[Empty])
+                                                === hl:([hr]++[Empty])
+                                                === [hl,hr]++[Empty]
+                                                )
+                                    ? distProp [hl,hr]  [Empty]
+                                === x:y:( toList' [hl,hr] ++ toList' [Empty] )
+                                                            ?(
+                                                                toList' [Empty]
+                                                            === toList' []
+                                                            === []
+                                                            )
+                                                            ?rightIdP (toList' [hl,hr])
+                                === x:y:( toList' [hl,hr] )
+                                )
+                        ***QED
+ 
+            | otherwise = let h = (Node y hl hr)
+                        in (insert x h ==? (x : toList h))
+                            ? (insert x h 
+                             === (unit x) `merge` h
+                             === (Node x empty empty) `merge` h
+                             === ((Node x Empty Empty) `merge` (Node y hl hr))
+                            --  === (Node y (hr `merge` (Node x Empty Empty)) hl)
+                             )
+                            
+                                ? ( toList' [Node x empty empty, h]
+                                === x: toList' [empty,empty,h]
+                                === x: toList' [empty,h]
+                                === x: toList' [h]
+                                === x: toList h
+                                )
+                                ? lemma_sort_merge (Node x empty empty) h
+                            === (Node x empty empty) `merge` h ==? toList' [Node x empty empty, h]
+                        
                 ***QED
 
-prop_Insert x h@(Node y hl hr) 
-            | x <= y    =    ( insert x h ==? (x : toList h) )
-                        ===  ( unit x `merge` h ==? (x : toList' [h]) )
-                        ===  ( unit x `merge` h ==? (x : y : toList' [hl,hr]) )
-                        
-                        ===  ( (Node x empty empty) `merge` h ==? (x : y : toList' [hl,hr]) )
-                        ===  ( (Node x Empty Empty) `merge` h ==? (x : y : toList' [hl,hr]) )
-                        ===  ( Node x (Empty `merge` h) Empty ==? (x : y : toList' [hl,hr]) )
-                        ===  ( Node x h Empty ==? (x : y : toList' [hl,hr]) )
-                        ===  ( Node x h Empty ==? (x : y : toList' [hl,hr]) )
-                              ? (invariant (unit x) ==! True)
-                              -- ? (Heap_Proofs.prop_Insert x (Node y hr hl)
-                              --   === ( insert x (Node y hr hl) ==? (x : toList (Node y hr hl)) )
-                              --   === ( unit x `merge` (Node y hr hl) ==? (x : toList (Node y hr hl)) )
-                              --   )
-                              ? (invariant (h) ==! True)
-                              ? lemma_invariant (unit x) (h)
-                        === (True && sort (toList (Node x h Empty)) == sort (x : y : toList' [hl,hr]))
-                                                               ? ( (toList (Node x h Empty))
-                                                             === (toList' [Node x h Empty])
-                                                             === (x: toList' [h,Empty])
-                                                             === (x: y: toList' [hl,hr,Empty])
-                                                             ==! (x: y: toList' ([hl,hr]++[Empty]))
-                                                                        ? disToList [hl,hr] [Empty]
-                                                             ==! (x: y: ((toList' [hl,hr])++ (toList'[Empty])))
-                                                             === (x: y: ((toList' [hl,hr])++ (toList'[])))
-                                                             ==! (x: y: ((toList' [hl,hr])++ []))
-                                                             ==! (x: y: (toList' [hl,hr])) )
-                        === (sort (x: y: (toList' [hl,hr])) == sort (x : y : toList' [hl,hr]))
 
-                        ***QED                                               
+{-======================================================================================
+                        LEMMAS AND THEOREMS
+========================================================================================-}
 
-            | otherwise = True
-                  -- Node y (h22 `merge` h1) h21
+{-@ inline lemma_sort_merge_p @-}
+lemma_sort_merge_p hl hr = (hl `merge` hr) ==? toList' [hl,hr]
+{-@ lemma_sort_merge :: Ord a =>  hl:Heap a ->  hr:Heap a -> { lemma_sort_merge_p hl hr } @-}
+lemma_sort_merge :: Ord a => Heap a ->  Heap a -> Proof
+lemma_sort_merge hl@Empty hr  = (hl `merge` hr) ==? toList' [hl,hr]
+                            === hr ==? toList' [hr]
+                            === (invariant hr && sort (toList hr) == sort (toList' [hr]))
+                            === sort (toList hr) == sort (toList' [hr])
+                            === sort (toList' [hr]) == sort (toList' [hr])
+                            ***QED
 
-                ***Admit
- 
+lemma_sort_merge hl hr =
+                            (hl `merge` hr) ==? toList' [hl,hr]
+                            === (invariant (hl `merge` hr) && sort (toList (hl `merge` hr)) == sort (toList' [hl,hr]))
+                            === sort (toList (hl `merge` hr)) == sort (toList' [hl,hr])
+                                    ?(sort (toList (hl `merge` hr))
+                                    ==! sort (toList hl ++ toList hr)
+                                    === sort (toList' [hl] ++ toList' [hr])
+                                            ? lemma_distProp hl [hr]
+                                    === sort (toList' [hl,hr])
+                                    )
+                            ***QED
+
+
+
+-------------
+{-@ inline  th_sort_arg_rev_p @-}
+th_sort_arg_rev_p ls rs = sort (ls++rs) == sort (rs++ls)
+
+{-@ th_sort_arg_rev :: Ord a =>  ls:[a] -> rs:[a] -> {  th_sort_arg_rev_p ls rs } @-}
+th_sort_arg_rev ls rs =  sort (ls++rs)  ==! sort (rs++ls)
+                            ***Admit
+-------------
+{-@ inline  th_sort_arg_app_p @-}
+th_sort_arg_app_p ls rs = sort (ls++rs) == sort (sort ls++rs)
+
+{-@ th_sort_arg_app :: Ord a =>  ls:[a] -> rs:[a] -> {  th_sort_arg_app_p ls rs } @-}
+th_sort_arg_app ls rs =  sort (ls++rs)  ==! sort (sort ls++rs)
+                            ***Admit
+-------------
+{-@ inline  th_sort_arg_cons_p @-}
+th_sort_arg_cons_p l rs = sort (l:rs) == sort (l:sort rs)
+
+{-@ th_sort_arg_cons :: Ord a =>  l:a -> rs:[a] -> {  th_sort_arg_cons_p l rs } @-}
+th_sort_arg_cons l rs =  sort (l:rs) == sort (l:sort rs)
+                            ***Admit
+-------------
+
+
+{-@ LIQUID "--nototality" @-}
+{-@ inline  theorem_sort_tolist_merge_p @-}
+theorem_sort_tolist_merge_p hl hr = sort (toList (hl `merge` hr)) == sort (toList hl ++ toList hr)
+
+{-@ theorem_sort_tolist :: Ord a =>  hl:Heap a -> hr:Heap a -> {  theorem_sort_tolist_merge_p hl hr } @-}
+theorem_sort_tolist :: Ord a =>  Heap a -> Heap a -> Proof
+theorem_sort_tolist  hl@Empty hr = sort (toList (hl `merge` hr)) == sort (toList hl ++ toList hr)
+                                    ?(
+                                    sort (toList (hl `merge` hr))
+                                === sort (toList hr)
+                                    )
+                                                                    ?(
+                                                                    sort (toList hl ++ toList hr)
+                                                                === sort (toList' [hl] ++ toList hr)
+                                                                === sort (toList' [] ++ toList hr)
+                                                                === sort ([] ++ toList hr)
+                                                                === sort (toList hr)
+                                                                    )
+                                ***QED
+theorem_sort_tolist  hl@(Node x h11 h12) hr@(Node y h21 h22) 
+                | x<=y    = let hl=Node x h11 h12
+                                hr=Node y h21 h22
+                            in sort (toList (hl `merge` hr)) == sort (toList hl ++ toList hr)
+                                ?(sort (toList (hl `merge` hr))
+                                === sort (toList' [hl `merge` hr])
+                                === sort (toList' [Node x (h12 `merge` hr) h11])
+                                === sort (x:toList' [(h12 `merge` hr),h11])
+                                === sort (x:([] ++ toList' [(h12 `merge` hr),h11]))
+                                === sort ([x] ++ toList' [(h12 `merge` hr),h11])
+                                        ? th_sort_arg_rev [x] (toList' [(h12 `merge` hr),h11]) --reverse the ops of ++
+
+                                === sort ((toList' [(h12 `merge` hr),h11]) ++ [x])
+                                        ? th_sort_arg_app (toList' [(h12 `merge` hr),h11]) [x]
+                                === sort (sort (toList' [(h12 `merge` hr),h11]) ++ [x])
+                                        ? th_sort_arg_rev (sort (toList' [(h12 `merge` hr),h11])) [x]
+                                === sort ([x] ++ sort (toList' [(h12 `merge` hr),h11]))
+                                         ?(
+                                            [x] ++ sort (toList' [(h12 `merge` hr),h11])
+                                        === x: ([] ++ sort (toList' [(h12 `merge` hr),h11]))
+                                        === x: (sort (toList' [(h12 `merge` hr),h11]))
+                                         )
+                                === sort (x:sort (toList' [(h12 `merge` hr),h11]))
+                                            ?(x:sort (toList' [(h12 `merge` hr),h11])
+                                                  ? lemma_distProp (h12 `merge` hr) [h11]
+                                            === (x:sort (toList' [(h12 `merge` hr)] ++ toList' [h11]))
+                                                ? th_sort_arg_app (toList' [(h12 `merge` hr)]) (toList' [h11])
+                                            ===(x:sort (sort (toList' [(h12 `merge` hr)]) ++ toList' [h11]))
+                                            ===(x:sort (sort (toList (h12 `merge` hr)) ++ toList' [h11]))
+                                            )
+                                            ?((sort (toList (h12 `merge` hr)))
+                                                ? theorem_sort_tolist h12 hr
+                                            === sort (toList h12 ++ toList hr)
+                                            )
+                            --
+                                === sort (x:sort ( sort (toList h12 ++ toList hr) ++ toList' [h11]))
+                                                ? th_sort_arg_app (toList h12 ++ toList hr) (toList' [h11])
+
+                                === sort (x:sort ((toList h12 ++ toList hr) ++ toList' [h11]))
+                                                    ? th_sort_arg_rev (toList h12 ++ toList hr) (toList' [h11])
+
+                                === sort (x:sort (toList' [h11] ++ (toList h12 ++ toList hr)))
+                                        ?((toList' [h11] ++ (toList h12 ++ toList hr))
+                                            ? assocP (toList' [h11]) (toList h12 ) (toList hr)
+                                         === ((toList' [h11] ++ toList h12) ++ toList hr)
+                                         === ((toList' [h11] ++ toList' [h12]) ++ toList hr)
+                                                ? lemma_distProp h11 [h12]
+                                         === (toList' [h11,h12] ++ toList hr)
+                                         === (toList' [h11,h12] ++ toList' [hr])
+                                                ? distProp [h11,h12] [hr]
+                                        === (toList' ([h11,h12] ++ [hr]))
+                                                    ?(([h11,h12] ++ [hr])
+                                                    === h11:([h12] ++ [hr])
+                                                    === h11:h12:([] ++ [hr])
+                                                    === h11:h12:([hr])
+                                                    )
+                                        === (toList' [h11,h12,hr])
+                                        )
+                                        ? th_sort_arg_cons x (toList' [h11,h12,hr])
+                                ===  sort (x:(toList' [h11,h12,hr]))
+                                === sort (toList' [(Node x h11 h12),hr])
+                                === sort (toList' [hl,hr])
+                                        ? lemma_distProp hl [hr]
+                                === sort (toList' [hl] ++ toList' [hr])
+                                === sort (toList hl ++ toList hr)
+                                )
+                         ***Admit

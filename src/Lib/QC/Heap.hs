@@ -85,9 +85,9 @@ removeMin (Node x h1 h2) = Just (x, h1 `merge` h2)
 merge :: Ord a => Heap a -> Heap a -> Heap a
 h1    `merge` Empty = h1
 Empty `merge` h2    = h2
-h1@(Node x h11 h12) `merge` h2@(Node y h21 h22)
-  | x <= y    = Node x (h12 `merge` h2) h11
-  | otherwise = Node y (h22 `merge` h1) h21
+h1@(Node x h11  h12) `merge` h2@(Node y h21 h22)
+  | x <= y    = Node x (h12 `merge` Node y h21 h22) h11
+  | otherwise = Node y (h22 `merge` Node x h11  h12) h21
 
 fromList :: Ord a => [a] -> Heap a
 fromList xs = merging [ unit x | x <- xs ]
@@ -118,7 +118,7 @@ toSortedList (Node x h1 h2) = x : toList (h1 `merge` h2)
 -- specification
 
 {-@ reflect invariant @-}
-{-@  invariant ::  Ord a => Heap a -> {True } @-}
+{-@  invariant ::  Ord a => Heap a -> { v :Bool | v <=> true  } @-}
 invariant :: Ord a => Heap a -> Bool
 invariant Empty          = True
 invariant (Node x h1 h2) = x <=? h1 && x <=? h2 && invariant h1 && invariant h2
@@ -126,6 +126,7 @@ invariant (Node x h1 h2) = x <=? h1 && x <=? h2 && invariant h1 && invariant h2
 
 {-@ infix <=? @-}
 {-@ reflect <=? @-}
+{-@ (<=?) :: Ord a => x:a -> Heap {v:a | x <= v } -> {v:Bool | v <=> true } @-}
 (<=?) :: Ord a => a -> Heap a -> Bool
 x <=? Empty      = True
 x <=? Node y _ _ = x <= y
