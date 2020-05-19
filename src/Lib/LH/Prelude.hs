@@ -275,3 +275,8 @@ th_sort_arg_cons_p l rs = sort (l:rs) == sort (l:sort rs)
 th_sort_arg_cons l rs =  sort (l:rs) == sort (l:sort rs)
                             ***Admit
 -------------
+
+{-@ append_length ::  ls:[a] -> rs:[a] -> { length (ls ++ rs) == length ls + length rs} @-}
+append_length ::  [a] -> [a] -> Proof
+append_length ls rs = length (ls ++ rs) == length ls + length rs
+                    ***QED

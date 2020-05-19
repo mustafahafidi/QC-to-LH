@@ -23,8 +23,7 @@ import Language.Haskell.Liquid.ProofCombinators
 -- skew heaps
 
 {-@ LIQUID "--reflection"    @-}
-{-@ LIQUID "--no-totality"    @-}
-{-@ LIQUID "--no-termination"    @-}
+{-@ LIQUID "--no-termination"    @-} --needed only because of  sweep and toList' 
 {-@ LIQUID "--short-names"    @-}
 -- {-@ LIQUID "--prune-unsorted"    @-}
 
