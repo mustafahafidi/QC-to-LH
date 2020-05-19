@@ -85,6 +85,7 @@ insertSort y []                   = [y]
 insertSort y (x : xs) | y <= x    = y : x : xs 
                   | otherwise = x : insertSort y xs
 
+
 {-@ reflect minimum  @-}
 -- {-@ minimum :: Ord a => {ls:[a] | len ls >0} -> a @-}
 minimum :: Ord a => [a] -> a
@@ -100,7 +101,7 @@ ls \\ rs = ls --TODO
 
 
 {-======================================================
-                Lift Eq CList
+               Needed only to Lift Eq CList
 =======================================================-}
 
 {-@ reflect any @-}
@@ -146,7 +147,7 @@ f `comp` g = \x -> f(g(x))
 
 
 {-======================================================
-                         SOME PRELUDE Theorems
+            SOME PRELUDE Theorems
 =======================================================-}
 
 singletonP :: a -> Proof
@@ -248,3 +249,26 @@ splitAt_theorem n ls@(a:as) = let (b1, b2) = splitAt (n - 1) as
                                 ? (b1++b2 == as)
                             ===  (a:as == ls)
                     ***QED
+
+------- sort theorems
+{-@ inline  th_sort_arg_rev_p @-}
+th_sort_arg_rev_p ls rs = sort (ls++rs) == sort (rs++ls)
+
+{-@ th_sort_arg_rev :: Ord a =>  ls:[a] -> rs:[a] -> {  th_sort_arg_rev_p ls rs } @-}
+th_sort_arg_rev ls rs =  sort (ls++rs)  ==! sort (rs++ls)
+                            ***Admit
+-------------
+{-@ inline  th_sort_arg_app_p @-}
+th_sort_arg_app_p ls rs = sort (ls++rs) == sort (sort ls++rs)
+
+{-@ th_sort_arg_app :: Ord a =>  ls:[a] -> rs:[a] -> {  th_sort_arg_app_p ls rs } @-}
+th_sort_arg_app ls rs =  sort (ls++rs)  ==! sort (sort ls++rs)
+                            ***Admit
+-------------
+{-@ inline  th_sort_arg_cons_p @-}
+th_sort_arg_cons_p l rs = sort (l:rs) == sort (l:sort rs)
+
+{-@ th_sort_arg_cons :: Ord a =>  l:a -> rs:[a] -> {  th_sort_arg_cons_p l rs } @-}
+th_sort_arg_cons l rs =  sort (l:rs) == sort (l:sort rs)
+                            ***Admit
+-------------
