@@ -242,11 +242,10 @@ prop_packL c@(CList l f r) = c =*= (packL c)
                                         ===  (f : (r ++ (reverse l)) == f : ([] ++ (reverse (l++(reverse r)))))
                                                                            ?(([] ++ (reverse (l++(reverse r))))
                                                                            === (reverse (l ++ (reverse r)))
-                                                                                ? (distributivityP l (reverse r) ***Admit)
-                                                                           === ((reverse l) ++ (reverse (reverse r)))
+                                                                                ? (distributivityP l (reverse r))
+                                                                           === ((reverse (reverse r)) ++ (reverse l))
                                                                                 ? involutionP r
-                                                                           === ((reverse l)++ r)
-                                                                           === (r ++ (reverse l))
+                                                                           === ( r ++ (reverse l))
                                                                            )
                                          )
                                 )
@@ -416,14 +415,12 @@ prop_removeR  cl@(CList l _ []) = size (removeR cl)
                                      size(CList [] f rs)) 
                                 ===  (size cl)-1
                                 ***QED
-
-
  
 
  
-{-======================================================
-               START LEMMAS
-=======================================================-}
+{-===================================================================================
+                         START Theorems
+=====================================================================================-}
 -- Distributivity of `any` over `++`
 {-@ inline lemma_any_p @-}
 lemma_any_p p ls rs = any p (ls++rs) == ((any p ls) || (any p rs))
@@ -596,3 +593,4 @@ lemma_refl cl@(CList l f r) = refl cl
                 END LEMMAS
 =======================================================-}       
 
+ 

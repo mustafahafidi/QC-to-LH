@@ -5,6 +5,5 @@ import Test_Heap
 {-@ LIQUID "--reflection" @-}
 {-@ LIQUID "--higherorder" @-}
 
-{-@ test :: OList Int @-}
-test :: [Int]
+test :: OList Int
 test = [1,2,3]
