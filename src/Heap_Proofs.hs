@@ -332,18 +332,18 @@ prop_Merge hl@(Node x h11 h12) hr@(Node y h21 h22)
 
 
 
-
+------------------
 {-@ inline req_only_node @-}
 req_only_node ::  Heap Int -> Bool
 req_only_node h = case h of
                     Empty -> False
                     Node _ _ _ -> True
-
+------------------
 {-@ reflect req_order @-}
 req_order ::  Heap Int -> Heap Int -> Bool
 req_order  (Node x _ _) (Node y _ _) = x<=y
 req_order _ _  = False
-
+------------------
 -- subproof of case x<=y 
 {-@ prop_Merge_subProof :: hl:{Heap Int | req_only_node hl } -> 
                            hr:{Heap Int | req_only_node hr && req_order hl hr } -> { Lib.QC.Heap.prop_Merge hl hr } @-}
@@ -433,6 +433,57 @@ prop_Merge_subProof (Node x h11 h12) (Node y h21 h22) =
                             -- === sort (toList hl ++ toList hr)
                             --   )
                         ***Admit
+
+
+
+{-======================================================
+                        prop_ToSortedList
+=======================================================-}
+{-@ prop_ToSortedList :: h:Heap Int -> {Lib.QC.Heap.prop_ToSortedList h} @-}
+prop_ToSortedList :: Heap Int -> Proof
+prop_ToSortedList h@Empty = Lib.QC.Heap.prop_ToSortedList h
+                  ===  (h ==? (toSortedList h) && 
+                              (toSortedList h) == sort (toSortedList h))
+                        ? (
+                          h ==? []
+                        === (invariant h && sort (toList h) == sort ([]))
+                        === sort (toList h) == []
+                                  ?(toList h
+                                  === toList' [h]
+                                  === toList' []
+                                  === [])
+                        === sort ([]::[Int]) == sort []
+                        )
+                     ***QED
+
+prop_ToSortedList h@(Node x hl hr) = Lib.QC.Heap.prop_ToSortedList h
+                  ===  (h ==? (toSortedList h) && 
+                              (toSortedList h) == sort (toSortedList h))
+                        ? (
+                          h ==? (toSortedList h)
+                        === (invariant h && sort (toList h) == sort (toSortedList h))
+                        === sort (toList h) == sort (toSortedList h)
+                                ?(toList h
+                              === toList' [h]
+                              === x : toList' [hl,hr]
+                                      ? lemma_distProp hl [hr]
+                              === x : (toList' [hl] ++ toList' [hr])
+                              === x : (toList hl ++ toList hr))
+                        === sort (x : (toList hl ++ toList hr)) == sort (x : toList (hl `merge` hr))
+                                                                    ? th_sort_arg_cons x (toList (hl `merge` hr))
+                                    ? th_sort_arg_cons x (toList hl ++ toList hr)
+                        === sort (x : sort (toList hl ++ toList hr)) == sort (x : sort (toList (hl `merge` hr)))
+                              ? Heap_Proofs.prop_Merge hl hr
+                              ? (
+                                Lib.QC.Heap.prop_Merge hl hr
+                              ===  hl `merge` hr ==? (toList hl ++ toList hr)
+                              === (invariant (hl `merge` hr) && sort (toList (hl `merge` hr)) == sort (toList hl ++ toList hr))
+                              === sort (toList (hl `merge` hr)) == sort (toList hl ++ toList hr)
+                              )
+                        )
+                  === (toSortedList h) == sort (toSortedList h)
+                  === (x : toList (hl `merge` hr)) == sort (x : toList (hl `merge` hr))
+                  ***Admit
 
 {-======================================================
                         prop_RemoveMin

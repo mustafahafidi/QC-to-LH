@@ -108,16 +108,18 @@ sweep (h1:h2:hs) = (h1 `merge` h2) : sweep hs
 
 -- {-@ ignore toList @-}
 {-@ reflect toList @-}
--- {-@ toList :: h:Heap a -> { ls:[a]| length ls == size h} @-}
+{-@ toList :: h:Heap a -> [a] @-} --OList a @-}
 toList :: Heap a -> [a]
 toList h = toList' [h]
 
 {-@ reflect toList' @-}
+{-@ toList' :: [Heap a] -> [a] @-} --OList a @-}
 toList' :: [Heap a] -> [a]
 toList' []                  = []
 toList' (Empty        : hs) = toList' hs
 toList' (Node x h1 h2 : hs) = x : toList' (h1:h2:hs)
 
+{-@ reflect toSortedList @-}
 toSortedList :: Ord a => Heap a -> [a]
 toSortedList Empty          = []
 toSortedList (Node x h1 h2) = x : toList (h1 `merge` h2)
@@ -170,14 +172,17 @@ prop_Insert x (h :: Heap Int) =
 prop_Merge h1 (h2 :: Heap Int) =
   (h1 `merge` h2) ==? (toList h1 ++ toList h2)
 
-prop_FromList (xs :: [Int]) =
-  fromList xs ==? xs
 
+---
+{-@ reflect prop_ToSortedList @-}
 prop_ToSortedList (h :: Heap Int) =
   h ==? xs && xs == sort xs
  where
   xs = toSortedList h
   
+prop_FromList (xs :: [Int]) =
+  fromList xs ==? xs
+
 {-@ reflect prop_RemoveMin @-}
 prop_RemoveMin (h :: Heap Int) =
   -- cover 80 (size h > 1) "non-trivial" $

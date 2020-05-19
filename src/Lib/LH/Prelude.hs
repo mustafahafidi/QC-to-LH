@@ -73,13 +73,16 @@ splitAt n (a:as) = let (b1, b2) = splitAt (n - 1) as
 {-@ type OList a    = [a]<{\fld v -> (v >= fld)}> @-}
 
 {-@ reflect sort @-}
-{-@ sort :: (Ord a) => xs:[a] -> [a]@-} --OList a 
+{-@ sort :: (Ord a) => xs:[a] -> OList a @-} 
+                              -- [a]@-}
 sort            :: (Ord a) => [a] -> [a]
 sort []         = []
 sort (x:xs)     = insertSort x (sort xs) 
 
 {-@ reflect insertSort @-}
-{-@ insertSort :: Ord t => t -> [t]->[t] @-} --OList t -> OList t
+{-@ insertSort :: Ord t => t -> OList t -> OList t @-} 
+                                -- [t]->[t]
+                                --OList t -> OList t
 insertSort :: Ord t => t -> [t] -> [t]
 insertSort y []                   = [y]
 insertSort y (x : xs) | y <= x    = y : x : xs 
