@@ -13,7 +13,8 @@ import Lib.QC.Heap -- hiding ( (==?))
 -- import Lib.QC.ExtraTheorems
 import Language.Haskell.Liquid.ProofCombinators
 -- import Language.Haskell.Liquid.Prelude
-import Prelude hiding (length, null, splitAt, (++), reverse)
+import Prelude hiding (length, null, splitAt, (++), reverse, Maybe (..), minimum)
+
 
 {-@ LIQUID "--reflection"    @-}
 {-@ LIQUID "--short-names"    @-}
@@ -276,6 +277,38 @@ prop_Insert x h@(Node y hl hr)
                 ***QED
 
 
+{-======================================================
+                        prop_Merge
+=======================================================-}
+
+
+{-======================================================
+                        prop_RemoveMin
+=======================================================-}
+{-@ prop_RemoveMin :: h:Heap Int -> { Lib.QC.Heap.prop_RemoveMin h } @-}
+prop_RemoveMin :: Heap Int ->  Proof
+prop_RemoveMin h@Empty =  Lib.QC.Heap.prop_RemoveMin h
+                        ? (removeMin h === Nothing)
+                      === h ==? []
+                      === (invariant h && sort (toList h) == sort [])
+                          ? (invariant h === True)
+                          ? (sort (toList h)
+                          === sort (toList' [h])
+                          === sort (toList' [])
+                          === sort []
+                          )
+                      ***QED
+
+prop_RemoveMin h@(Node x h1 h2) =   Lib.QC.Heap.prop_RemoveMin h
+                                    ? (removeMin h === Just (x, h1 `merge` h2))
+                                === ( let  Just (x,h') = removeMin h
+                                    in (x == minimum (toList h) && h' ==? (toList h \\ [x]))
+                                      ?(toList h
+                                      === toList' [h]
+                                      === x:toList' [h1,h2]
+                                      )
+                                    )
+                                ***Admit
 {-======================================================================================
                         LEMMAS AND THEOREMS
 ========================================================================================-}
@@ -296,7 +329,7 @@ lemma_sort_merge hl hr =
                             === (invariant (hl `merge` hr) && sort (toList (hl `merge` hr)) == sort (toList' [hl,hr]))
                             === sort (toList (hl `merge` hr)) == sort (toList' [hl,hr])
                                     ?(sort (toList (hl `merge` hr))
-                                    ==! sort (toList hl ++ toList hr)
+                                    ==! sort (toList hl ++ toList hr) -- needs theorem
                                     === sort (toList' [hl] ++ toList' [hr])
                                             ? lemma_distProp hl [hr]
                                     === sort (toList' [hl,hr])
@@ -328,7 +361,7 @@ th_sort_arg_cons l rs =  sort (l:rs) == sort (l:sort rs)
                             ***Admit
 -------------
 
-
+{-----------------
 {-@ LIQUID "--nototality" @-}
 {-@ inline  theorem_sort_tolist_merge_p @-}
 theorem_sort_tolist_merge_p hl hr = sort (toList (hl `merge` hr)) == sort (toList hl ++ toList hr)
@@ -415,3 +448,7 @@ theorem_sort_tolist  hl@(Node x h11 h12) hr@(Node y h21 h22)
                                 === sort (toList hl ++ toList hr)
                                 )
                          ***Admit
+
+
+
+---------------------}

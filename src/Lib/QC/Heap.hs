@@ -6,18 +6,17 @@ module Lib.QC.Heap where
 
 import Test.QuickCheck hiding((===))
 
-import Data.List
-  ( --sort
- (\\)
-  )
+-- import Data.List
+--   ( --sort
+--  (\\)
+--   )
 
 import Control.Monad
   ( liftM
   , liftM2
   )
 
-
-import Prelude hiding (length, (++), reverse, iterate, null, splitAt)
+import Prelude hiding (length, (++), reverse, iterate, null, splitAt, Maybe(..), minimum)
 import Lib.LH.Prelude
 import Language.Haskell.Liquid.ProofCombinators
 --------------------------------------------------------------------------
@@ -30,6 +29,11 @@ import Language.Haskell.Liquid.ProofCombinators
 -- {-@ LIQUID "--prune-unsorted"    @-}
 
 
+data Maybe a = Nothing | Just a
+                deriving (Show, Eq)
+
+{-@ data Maybe a = Nothing | Just a @-}
+ 
 data Heap a
   = Node a (Heap a) (Heap a)
   | Empty
@@ -76,6 +80,7 @@ size (Node _ h1 h2) = 1 + size h1 + size h2
 insert :: Ord a => a -> Heap a -> Heap a
 insert x h = unit x `merge` h
 
+{-@ reflect removeMin @-}
 removeMin :: Ord a => Heap a -> Maybe (a, Heap a)
 removeMin Empty          = Nothing
 removeMin (Node x h1 h2) = Just (x, h1 `merge` h2)
@@ -87,20 +92,23 @@ h1    `merge` Empty = h1
 Empty `merge` h2    = h2
 h1@(Node x h11  h12) `merge` h2@(Node y h21 h22)
   | x <= y    = Node x (h12 `merge` Node y h21 h22) h11
-  | otherwise = Node y (h22 `merge` Node x h11  h12) h21
+  | otherwise = h2 `merge` h1-- Node y (h22 `merge` Node x h11  h12) h21
 
+-- {-@ reflect fromList @-}
 fromList :: Ord a => [a] -> Heap a
 fromList xs = merging [ unit x | x <- xs ]
- where
-  merging []  = empty
-  merging [h] = h
-  merging hs  = merging (sweep hs)
+{-@ reflect merging @-}
+merging []  = empty
+merging [h] = h
+merging hs  = merging (sweep hs)
+{-@ reflect sweep @-}
+sweep []         = []
+sweep [h]        = [h]
+sweep (h1:h2:hs) = (h1 `merge` h2) : sweep hs
 
-  sweep []         = []
-  sweep [h]        = [h]
-  sweep (h1:h2:hs) = (h1 `merge` h2) : sweep hs
-
+-- {-@ ignore toList @-}
 {-@ reflect toList @-}
+-- {-@ toList :: h:Heap a -> { ls:[a]| length ls == size h} @-}
 toList :: Heap a -> [a]
 toList h = toList' [h]
 
@@ -158,12 +166,7 @@ prop_Size (h :: Heap Int) =
 prop_Insert x (h :: Heap Int) =
   insert x h ==? (x : toList h)
 
-prop_RemoveMin (h :: Heap Int) =
-  cover 80 (size h > 1) "non-trivial" $
-  case removeMin h of
-    Nothing     -> h ==? []
-    Just (x,h') -> x == minimum (toList h) && h' ==? (toList h \\ [x])
-
+{-@ reflect prop_Merge @-}
 prop_Merge h1 (h2 :: Heap Int) =
   (h1 `merge` h2) ==? (toList h1 ++ toList h2)
 
@@ -174,6 +177,14 @@ prop_ToSortedList (h :: Heap Int) =
   h ==? xs && xs == sort xs
  where
   xs = toSortedList h
+  
+{-@ reflect prop_RemoveMin @-}
+prop_RemoveMin (h :: Heap Int) =
+  -- cover 80 (size h > 1) "non-trivial" $
+  case removeMin h of
+    Nothing     -> h ==? []
+    Just (x,h') -> x == minimum (toList h) && h' ==? (toList h \\ [x])
+                        
 
 --------------------------------------------------------------------------
 -- generators

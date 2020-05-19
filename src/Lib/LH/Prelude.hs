@@ -8,7 +8,8 @@ import Prelude hiding (length,
                         null, 
                         splitAt,
                         any,
-                        id
+                        id,
+                        minimum
                         )
 
 {-@ LIQUID "--no-totality" @-}
@@ -84,9 +85,22 @@ insertSort y []                   = [y]
 insertSort y (x : xs) | y <= x    = y : x : xs 
                   | otherwise = x : insertSort y xs
 
+{-@ reflect minimum  @-}
+-- {-@ minimum :: Ord a => {ls:[a] | len ls >0} -> a @-}
+minimum :: Ord a => [a] -> a
+minimum (x:y:xs) 
+ |x > y = minimum (y:xs)
+ |x <= y = minimum (x:xs)
+minimum (x:_) = x
+
+{-@ reflect \\  @-}
+infix \\
+(\\) :: Eq a => [a] -> [a] -> [a]
+ls \\ rs = ls --TODO
+
 
 {-======================================================
-                Trying to lift Eq CList
+                Lift Eq CList
 =======================================================-}
 
 {-@ reflect any @-}

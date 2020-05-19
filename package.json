@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "",
   "scripts": {
-    "liquid-spy": "sh -c 'spy run -n -g \"*$1\" \"yarn liquid $0\" src/'",
+    "liquid-spy": "bash -c 'spy run -n \"yarn liquid $0 $1 $2 $3\" src/'",
+    "liquid-spy-old": "sh -c 'spy run -n -g \"*$1\" \"yarn liquid $0\" src/'",
     "spy": "sh -c 'spy run -n \"yarn runghc $0\" src/'",
     "runghc": "stack exec -- runghc -isrc/ -i/home/mustafa/coding/liquidhaskell/include/ -i/home/mustafa/coding/liquidhaskell/src/ ",
     "ghci": "stack exec -- ghci -isrc/ -i/home/mustafa/coding/liquidhaskell/include/ -i/home/mustafa/coding/liquidhaskell/src/",
