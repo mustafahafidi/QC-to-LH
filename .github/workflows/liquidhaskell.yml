@@ -59,10 +59,11 @@ jobs:
           cd liquidhaskell
           # git checkout 6f29ece8f61483f0546d052308882c8abef6da78
           stack install
+          cd ~
+          stack --stack-yaml=/home/runner/liquidhaskell/stack.yaml install QuickCheck
 
       - name: Running LiquidHaskell
         run: |
-          stack --stack-yaml=/home/runner/liquidhaskell/stack.yaml install QuickCheck
           stack --stack-yaml=/home/runner/liquidhaskell/stack.yaml exec -- ~/.local/bin/liquid -isrc/ ${{matrix.lh-entry}}
     # - name: Free disk space
     #   run: |
