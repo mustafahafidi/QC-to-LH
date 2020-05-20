@@ -66,7 +66,7 @@ isEmpty Empty = True
 isEmpty _     = False
 
 -- {-@ ignore unit @-}
-{-@ inline unit @-}
+{-@ reflect unit @-}
 unit :: a -> Heap a
 unit x = Node x empty empty
 
@@ -127,7 +127,7 @@ toSortedList (Node x h1 h2) = x : toList (h1 `merge` h2)
 -- specification
 
 {-@ reflect invariant @-}
-{-@  invariant ::  Ord a => Heap a -> { v :Bool | v <=> true  } @-}
+{-@  invariant ::  Ord a => Heap a -> { v :Bool | v } @-}
 invariant :: Ord a => Heap a -> Bool
 invariant Empty          = True
 invariant (Node x h1 h2) = x <=? h1 && x <=? h2 && invariant h1 && invariant h2

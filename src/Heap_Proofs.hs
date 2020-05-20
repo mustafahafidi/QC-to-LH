@@ -19,6 +19,7 @@ import Prelude hiding (length, null, splitAt, (++), reverse, Maybe (..), minimum
 {-@ LIQUID "--reflection"    @-}
 {-@ LIQUID "--short-names"    @-}
 {-@ LIQUID "--ple-local" @-}
+{-@ LIQUID "--diff" @-}
 
 
 {-======================================================
@@ -107,7 +108,8 @@ distProp [] h2 = trivial
         --      === ( toList' h2 == toList' h2 )
         --           ***QED
 
-distProp ((h@Empty):hs) h2 = trivial ? distProp hs h2 
+distProp ((h@Empty):hs) h2 = ()
+                            ? distProp hs h2 
         -- (toList' ((h:hs)++h2) == (toList' (h:hs) ++ toList' h2))
         --             ?(
         --                 toList' ((h:hs)++h2)
@@ -119,14 +121,11 @@ distProp ((h@Empty):hs) h2 = trivial ? distProp hs h2
         --                                         )
         --             === (toList' (hs++h2) == toList' hs ++ toList' h2)
         --                ? distProp hs h2 
-                      
         --          ***QED
 
-distProp (h@(Node x hl hr):hs) h2 =  trivial
-                                        
+distProp (h@(Node x hl hr):hs) h2 =  ()
                                     ? lemma_distProp h (hs++h2)
                                     ? lemma_distProp h hs
-                                   
                                     ? distProp hs h2
                                     ? assocP (toList' [h]) (toList' hs) (toList' h2)
             -- (toList' ((h:hs)++h2) == (toList' (h:hs) ++ toList' h2))
@@ -163,7 +162,7 @@ lemma_distProp h@Empty hs =  trivial
             --     === toList' hs
             --     === toList' (h:hs) 
             --     ***QED
-lemma_distProp h@(Node x hl hr) hs = trivial
+lemma_distProp h@(Node x hl hr) hs = ()
                                      ? lemma_distProp hl (hr:hs)
                                      ? lemma_distProp hr hs
                                      ? assocP (toList' [hl]) (toList' [hr]) (toList' hs)
@@ -195,7 +194,7 @@ prop_Size Empty =  trivial
                 --   ***QED
 
 prop_Size h@(Node v hl hr) =  
-                            trivial
+                            ()
                             ? distProp [hl] [hr]
                             ? Heap_Proofs.prop_Size hl
                             ? Heap_Proofs.prop_Size hr
@@ -221,9 +220,11 @@ prop_Size h@(Node v hl hr) =
 {-======================================================
                         prop_Insert
 =======================================================-}
+{-@ ple prop_Insert @-}
 {-@ prop_Insert ::  x:Int -> hp:Heap Int -> { Lib.QC.Heap.prop_Insert x hp } @-}
 prop_Insert ::  Int -> Heap Int -> Proof
-prop_Insert x Empty =   ( insert x Empty ==? (x : toList Empty) )
+prop_Insert x Empty =  () ? invariant (insert x Empty)
+                    {- ( insert x Empty ==? (x : toList Empty) )
                                             ? (
                                                 (x : toList' [Empty])
                                             === x : toList' []
@@ -245,69 +246,80 @@ prop_Insert x Empty =   ( insert x Empty ==? (x : toList Empty) )
                             === (x : toList' ([]))
                             === ([x]) 
                              )
-                ***QED 
+                ***QED  -}
 
 prop_Insert x h@(Node y hl hr)
-            | x <= y    = let h= (Node y hl hr)
-                        in (insert x h ==? (x : toList h))
-                            ? (insert x h ==! Node x (Node y hl hr) Empty)
-                                                ? (x:toList h  ==! (x : y : toList' [hl,hr]))
-                        ===  ((Node x h Empty) ==? (x : y : toList' [hl,hr]))
-                        === (invariant (Node x h Empty) 
-                                && sort (toList (Node x h Empty)) == sort (x : y : toList' [hl,hr]))
-                        === sort (toList (Node x h Empty)) == sort (x : y : toList' [hl,hr])
-                                ?(
-                                  toList (Node x h Empty)
-                                === toList' ([Node x h Empty])
-                                === x:toList' ([h,Empty])
-                                === x:y:toList' ([hl,hr,Empty])
-                                                ?( [hl,hr,Empty]
-                                                === hl:hr:[Empty]
-                                                === hl:hr:([]++[Empty])
-                                                === hl:([hr]++[Empty])
-                                                === [hl,hr]++[Empty]
-                                                )
-                                    ? distProp [hl,hr]  [Empty]
-                                === x:y:( toList' [hl,hr] ++ toList' [Empty] )
-                                                            ?(
-                                                                toList' [Empty]
-                                                            === toList' []
-                                                            === []
-                                                            )
-                                                            ?rightIdP (toList' [hl,hr])
-                                === x:y:( toList' [hl,hr] )
-                                )
-                        ***QED
+            | x <= y    =   
+                            ()
+                            ? invariant (Node x (Node y hl hr) Empty) 
+                            ? distProp [hl,hr]  [Empty]
+                            ? rightIdP (toList' [hl,hr])
+                            ? (unit x === Node x empty empty)
+                        -- let h= (Node y hl hr)
+                        -- in (insert x h ==? (x : toList h))
+                        --     ? (insert x h ==! Node x (Node y hl hr) Empty)
+                        --                         ? (x:toList h  ==! (x : y : toList' [hl,hr]))
+                        -- ===  ((Node x h Empty) ==? (x : y : toList' [hl,hr]))
+                        -- === (invariant (Node x h Empty) 
+                        --         && sort (toList (Node x h Empty)) == sort (x : y : toList' [hl,hr]))
+                        -- === sort (toList (Node x h Empty)) == sort (x : y : toList' [hl,hr])
+                        --         ?(
+                        --           toList (Node x h Empty)
+                        --         === toList' ([Node x h Empty])
+                        --         === x:toList' ([h,Empty])
+                        --         === x:y:toList' ([hl,hr,Empty])
+                        --                         ?( [hl,hr,Empty]
+                        --                         === hl:hr:[Empty]
+                        --                         === hl:hr:([]++[Empty])
+                        --                         === hl:([hr]++[Empty])
+                        --                         === [hl,hr]++[Empty]
+                        --                         )
+                        --             ? distProp [hl,hr]  [Empty]
+                        --         === x:y:( toList' [hl,hr] ++ toList' [Empty] )
+                        --                                     ?(
+                        --                                         toList' [Empty]
+                        --                                     === toList' []
+                        --                                     === []
+                        --                                     )
+                        --                                     ?rightIdP (toList' [hl,hr])
+                        --         === x:y:( toList' [hl,hr] )
+                        --         )
+                        -- ***QED
  
-            | otherwise = let h = (Node y hl hr)
-                        in (insert x h ==? (x : toList h))
-                                ? (insert x h 
-                                === (unit x) `merge` h
-                                === (Node x empty empty) `merge` h
-                                )
-                                ? (x: toList h
-                                === x: toList' [h]
-                                === x: toList' [empty,h]
-                                === x: toList' [empty,empty,h]
-                                === toList' [Node x empty empty, h]
-                                    ? lemma_distProp (Node x empty empty) [h]
-                                === toList' [Node x empty empty] ++ toList' [h]
-                                === toList (Node x empty empty) ++ toList h
-                                )
-                            === (Node x empty empty) `merge` h ==? (toList (Node x empty empty) ++ toList h)
-                                ? Heap_Proofs.prop_Merge (Node x empty empty) h
-                                ? (Lib.QC.Heap.prop_Merge (Node x empty empty) h
-                                === (Node x empty empty) `merge` h ==? (toList (Node x empty empty) ++ toList h))
-                            === (Node x empty empty) `merge` h ==? toList' [Node x empty empty, h]
-                ***QED
+            | otherwise = ()
+                        ? invariant (insert x (Node y hl hr))
+                        ? Heap_Proofs.prop_Merge (Node x empty empty) h
+                        ? (Lib.QC.Heap.prop_Merge (Node x empty empty) h)
+                --         let h = (Node y hl hr)
+                --         in (insert x h ==? (x : toList h))
+                --                 ? (insert x h 
+                --                 === (unit x) `merge` h
+                --                 === (Node x empty empty) `merge` h
+                --                 )
+                --                 ? (x: toList h
+                --                 === x: toList' [h]
+                --                 === x: toList' [empty,h]
+                --                 === x: toList' [empty,empty,h]
+                --                 === toList' [Node x empty empty, h]
+                --                     ? lemma_distProp (Node x empty empty) [h]
+                --                 === toList' [Node x empty empty] ++ toList' [h]
+                --                 === toList (Node x empty empty) ++ toList h
+                --                 )
+                --             === (Node x empty empty) `merge` h ==? (toList (Node x empty empty) ++ toList h)
+                --                 ? Heap_Proofs.prop_Merge (Node x empty empty) h
+                --                 ? (Lib.QC.Heap.prop_Merge (Node x empty empty) h
+                --                 === (Node x empty empty) `merge` h ==? (toList (Node x empty empty) ++ toList h))
+                --             === (Node x empty empty) `merge` h ==? toList' [Node x empty empty, h]
+                -- ***QED
 
 {-======================================================
                         prop_Merge
 =======================================================-}
+{-@ ple prop_Merge @-}
 {-@ prop_Merge ::  h1:Heap Int -> h2:Heap Int -> { Lib.QC.Heap.prop_Merge h1 h2  } @-}
 prop_Merge :: Heap Int -> Heap Int -> Proof
-
-prop_Merge h1@Empty h2 =  Lib.QC.Heap.prop_Merge h1 h2 
+prop_Merge h1@Empty h2 =  () ? invariant h2
+                 {-    Lib.QC.Heap.prop_Merge h1 h2 
                       === (h1 `merge` h2) ==? (toList h1 ++ toList h2)
                                               ?(toList Empty
                                             === toList' [Empty]
@@ -315,9 +327,13 @@ prop_Merge h1@Empty h2 =  Lib.QC.Heap.prop_Merge h1 h2
                                             === [])
                       === (h2) ==? (toList h2)
                       === (invariant h2 && sort (toList h2) == sort (toList h2))
-              ***QED
+                    ***QED
+                -}
 
-prop_Merge h1 h2@Empty =  Lib.QC.Heap.prop_Merge h1 h2 
+prop_Merge h1 h2@Empty =  () 
+                            ? rightIdP (toList h1)
+                            ? invariant h1
+                      {-   Lib.QC.Heap.prop_Merge h1 h2 
                       === (h1 `merge` h2) ==? (toList h1 ++ toList h2)
                                               ?(toList Empty
                                             === toList' [Empty]
@@ -326,17 +342,23 @@ prop_Merge h1 h2@Empty =  Lib.QC.Heap.prop_Merge h1 h2
                                             ? rightIdP (toList h1)
                       === (h1) ==? (toList h1)
                       === (invariant h1 && sort (toList h1) == sort (toList h1))
-                      ***QED
+                      ***QED -}
 
 prop_Merge hl@(Node x h11 h12) hr@(Node y h21 h22) 
-  | x<=y    = Lib.QC.Heap.prop_Merge hl hr
+  | x<=y    = ()
+            ? req_order hl hr
+            ? prop_Merge_subProof hl hr
+            {- Lib.QC.Heap.prop_Merge hl hr
               ? req_order hl hr
               ? prop_Merge_subProof hl hr
-            ***QED
+            ***QED -}
 
 
-  | otherwise = 
-            Lib.QC.Heap.prop_Merge hl hr
+  | otherwise = ()
+                ? req_order hr hl
+                ? prop_Merge_subProof hr hl
+                ? th_sort_arg_rev (toList hl) (toList hr)
+           {-  Lib.QC.Heap.prop_Merge hl hr
           === (hl `merge` hr) ==? (toList hl ++ toList hr)
               -- def of merge
           === (hr `merge` hl) ==? (toList hl ++ toList hr)
@@ -350,10 +372,10 @@ prop_Merge hl@(Node x h11 h12) hr@(Node y h21 h22)
               ? req_order hr hl
               ? prop_Merge_subProof hr hl
           ***QED
+          -}
 
 
-
-
+{- 
 {-======================================================
                         prop_ToSortedList
 =======================================================-}
@@ -430,7 +452,7 @@ prop_RemoveMin h@(Node x h1 h2) =   Lib.QC.Heap.prop_RemoveMin h
                                       )
                                     )
                                 ***Admit
-
+ -}
 
 
 
