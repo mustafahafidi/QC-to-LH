@@ -1,3 +1,5 @@
+module Test2 where
+
 -- import Lib.QC.Heap (merge, Heap(..))
 -- import Prelude hiding (minimum)
 -- import Language.Haskell.Liquid.ProofCombinators hiding ((==.))

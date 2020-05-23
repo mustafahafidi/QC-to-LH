@@ -76,7 +76,7 @@ import Control.Applicative hiding (empty)
 import Prelude hiding ( length, (++), reverse, cycle, iterate,splitAt
                         ,any)
 import Data.List(find,foldl')
-import Control.DeepSeq(NFData(..))
+-- import Control.DeepSeq(NFData(..))
 -- import Control.Monad(join)
 import qualified Data.Traversable as T
 import qualified Data.Foldable as F
@@ -415,11 +415,11 @@ instance (Read a) => Read (CList a) where
 -- instance (Eq a) => Eq (CList a) where
 --   a == b = any ((toList a ==) . toList) . toList $ allRotations b
 
-instance (NFData a) => NFData (CList a) where
-  rnf Empty         = ()
-  rnf (CList l f r) = rnf f
-                      `seq` rnf l
-                      `seq` rnf r
+-- instance (NFData a) => NFData (CList a) where
+--   rnf Empty         = ()
+--   rnf (CList l f r) = rnf f
+--                       `seq` rnf l
+--                       `seq` rnf r
 
 instance Arbitrary a => Arbitrary (CList a) where
     arbitrary = frequency [(1, return Empty), (10, arbCList)]
