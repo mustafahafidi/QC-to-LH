@@ -2,23 +2,46 @@
 {-# LANGUAGE  TemplateHaskell #-}
 module TH.Main where
     
-import TH.Printf
+import Lib.LH.Prelude ((++))
+import Prelude hiding ((++))
+import Language.Haskell.TH
 import LiquidHaskell
 
-[lq| nats :: Int -> [{ v:Int | true }] |]
-nats 0 = [0]
-nats n = [0,1,2,3,4,5,6,7,8,9,10]
+[lq| LIQUID "--reflection" |]
+{-@ test :: { True } @-}
+
+{-@  type Unit = ()  @-}
+{-@  type Asd = {v:_ | true}  @-}
+[lq| type Unit1 = () |]
+[lq| type Asd1 = {v:Int | true} |]
+
+[lq| reflect test |]
+test = [1] ++ [] == [1]
 
 
-$(genDecls)
 
 
+-- ttt::Int
+-- ttt = 3
 
-main = do
-        putStrLn ( $(pr "Hello") )
-        putStrLn . show $ foo 2
-    
+{-======================================================
+                        Parse input
+=======================================================-}
+parsePropName :: String -> Q Info
+parsePropName pName = do
+                        Just nm <- lookupValueName pName
+                        reify nm
 
--- >>> main
--- %s
---
+{-======================================================
+                        entrypoint
+=======================================================-}
+generateProof :: Q Exp -> Q [Dec]
+generateProof exp =   do
+                        nmProof <- newName "proof"
+                        nmProof2 <- newName "proof"
+                        -- lhDecs <- [d| [lq| asd :: {v:Int | exp } |]  |]
+                        return [
+                                FunD nmProof [Clause [] (NormalB (LitE (IntegerL 4))) []],
+                                FunD nmProof2 [Clause [] (NormalB (LitE (IntegerL 4))) []]
+                                ]
+                                

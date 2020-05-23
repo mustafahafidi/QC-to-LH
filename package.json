@@ -4,11 +4,11 @@
   "main": "",
   "scripts": {
     "liquid-spy": "bash -c 'spy run -n \"yarn liquid $0 $1 $2 $3\" src/'",
-    "liquid-spy-old": "sh -c 'spy run -n -g \"*$1\" \"yarn liquid $0\" src/'",
+    "liquid-thdump-spy": "bash -c 'spy run -n -g=$1 \"yarn liquid --ghc-option=\"-dth-dec-file\" $0\" src/'",
     "spy": "sh -c 'spy run -n \"yarn runghc $0\" src/'",
-    "runghc": "stack exec -- runghc -isrc/ -i/home/mustafa/coding/liquidhaskell/include/ -i/home/mustafa/coding/liquidhaskell/src/ ",
-    "ghci": "stack exec -- ghci -isrc/ -i/home/mustafa/coding/liquidhaskell/include/ -i/home/mustafa/coding/liquidhaskell/src/",
-    "liquid": "stack --stack-yaml=/home/mustafa/coding/liquidhaskell/stack.yaml exec -- liquid -isrc/ "
+    "runghc": "stack exec -- runghc -isrc/",
+    "ghci": "stack exec -- ghci -isrc/",
+    "liquid": "stack exec -- liquid -isrc/ "
   },
   "repository": "git@github.com:mustafahafidi/QC-to-LH.git",
   "author": "Mustafa <mustafahafidi96@gmail.com>",
