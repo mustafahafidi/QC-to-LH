@@ -8,7 +8,7 @@ module TH.Printf where
 
 -- Import some Template Haskell syntax
 import Language.Haskell.TH
-
+{-@ LIQUID "--nototality" @-}
 -- Describe a format string
 data Format = D | S | L String
 
@@ -30,3 +30,9 @@ gen [L s] = stringE s
 -- from an input format string.
 pr :: String -> Q Exp
 pr s = gen (parse s)
+
+
+
+genDecls :: Q [Dec]
+genDecls = [d| foo :: Int -> Int
+               foo x = x + 1 |]

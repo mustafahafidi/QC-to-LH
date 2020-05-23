@@ -8,7 +8,7 @@
     "spy": "sh -c 'spy run -n \"yarn runghc $0\" src/'",
     "runghc": "stack exec -- runghc -isrc/ -i/home/mustafa/coding/liquidhaskell/include/ -i/home/mustafa/coding/liquidhaskell/src/ ",
     "ghci": "stack exec -- ghci -isrc/ -i/home/mustafa/coding/liquidhaskell/include/ -i/home/mustafa/coding/liquidhaskell/src/",
-    "liquid": "stack exec -- liquid -isrc/"
+    "liquid": "stack --stack-yaml=/home/mustafa/coding/liquidhaskell/stack.yaml exec -- liquid -isrc/ "
   },
   "repository": "git@github.com:mustafahafidi/QC-to-LH.git",
   "author": "Mustafa <mustafahafidi96@gmail.com>",
