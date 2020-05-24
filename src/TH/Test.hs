@@ -9,6 +9,7 @@ import Language.Haskell.Liquid.ProofCombinators
 import Language.Haskell.TH
 
 -- {-@ LIQUID "--diff" @-}
+{-@ LIQUID "--reflection" @-}
 
 
 ---------------------------------------------------------------
@@ -32,9 +33,9 @@ main = putStrLn $(do
 {-@ reflect testProp @-}
 testProp = True == True
 
-$(generateProof2 "True == True")
--- $(generateProof2 "testProp")
--- $(generateProof2 "False")
+$(generateProof "True == True")
+$(generateProof "testProp")
+$(generateProof "False")
 -- $(generateProof2 "var = 2")
 
 ----------------------------------------------------------------
