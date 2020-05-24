@@ -4,19 +4,22 @@ module TH.Test where
 import TH.Main
 import TH.TestProps
 
-
+import Language.Haskell.Liquid.ProofCombinators
 import Language.Haskell.TH
-
-
--- $(generateProof [|ttt|])
+---------------------------------------------------------------
+-- Can't get the body of `ttt` because not implemented by GHC
+-- http://hackage.haskell.org/package/template-haskell-2.16.0.0/docs/Language-Haskell-TH.html#t:Info
 main :: IO ()
 main = putStrLn $(do
         Just nm <- lookupValueName "ttt"
         info <- reify nm
         stringE . show $ info)
-
--- $(parsePropName "ttt")
-
 -- >>> main
--- VarI TH.Test_Proofs.ttt (ConT GHC.Types.Int) Nothing
+-- VarI TH.TestProps.ttt (ConT GHC.Types.Int) Nothing
+--
+----------------------------------------------------------------
+$(generateProof [| True == True |])
+----------------------------------------------------------------
+-- >>> pure (++) <*> [[2]] <*> [[3],[1]]
+-- [[2,3],[2,1]]
 --
