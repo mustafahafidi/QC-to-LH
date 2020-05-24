@@ -37,8 +37,8 @@ packages:
 # forks / in-progress versions pinned to a git hash. For example:
 #
 extra-deps:
-  - git: https://github.com/ucsd-progsys/liquidhaskell.git
-    commit: fa5270b1200b6785aeb67ecbd5d0db009a1d286f
+  - git: https://github.com/mustafahafidi/liquidhaskell.git
+    commit: 4d9554d88b38e986a9b020ce3f01dc554eb26fc7
     subdirs:
       - ./liquid-fixpoint
       - "."

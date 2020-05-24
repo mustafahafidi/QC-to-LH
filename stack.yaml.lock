@@ -11,15 +11,15 @@ packages:
       sha256: a9f1205a61626cc3073e6c97b9d08342bfa1b933edd44360c08b275b805742be
     name: liquid-fixpoint
     version: 0.8.0.2
-    git: https://github.com/ucsd-progsys/liquidhaskell.git
+    git: https://github.com/mustafahafidi/liquidhaskell.git
     pantry-tree:
       size: 19397
       sha256: 2680fc4f4d703718aeb3bcf7875b012c8bae0903d69a89d6eaeb6a412ffaec34
-    commit: fa5270b1200b6785aeb67ecbd5d0db009a1d286f
+    commit: 4d9554d88b38e986a9b020ce3f01dc554eb26fc7
   original:
     subdir: ./liquid-fixpoint
-    git: https://github.com/ucsd-progsys/liquidhaskell.git
-    commit: fa5270b1200b6785aeb67ecbd5d0db009a1d286f
+    git: https://github.com/mustafahafidi/liquidhaskell.git
+    commit: 4d9554d88b38e986a9b020ce3f01dc554eb26fc7
 - completed:
     subdir: .
     cabal-file:
@@ -27,15 +27,15 @@ packages:
       sha256: 7070235a50a4908b77cd4da00163adc37fe40a7245ebab75f669ac37940ad123
     name: liquidhaskell
     version: 0.8.6.0
-    git: https://github.com/ucsd-progsys/liquidhaskell.git
+    git: https://github.com/mustafahafidi/liquidhaskell.git
     pantry-tree:
       size: 257930
-      sha256: 3a520cbdaa1a9141f72e723cdfac3890ec030e24220a36835f017770d184e217
-    commit: fa5270b1200b6785aeb67ecbd5d0db009a1d286f
+      sha256: 6d1dd2ff5b033787dc947a5d9c71f000e6b8e39a813f9ac57a4556354c80ac9f
+    commit: 4d9554d88b38e986a9b020ce3f01dc554eb26fc7
   original:
     subdir: .
-    git: https://github.com/ucsd-progsys/liquidhaskell.git
-    commit: fa5270b1200b6785aeb67ecbd5d0db009a1d286f
+    git: https://github.com/mustafahafidi/liquidhaskell.git
+    commit: 4d9554d88b38e986a9b020ce3f01dc554eb26fc7
 - completed:
     hackage: tasty-rerun-1.1.14@sha256:ba9c19a281535bea566e1044bc02c36ef17abcb310af4b6a149ec11780c7ce35,3083
     pantry-tree:
