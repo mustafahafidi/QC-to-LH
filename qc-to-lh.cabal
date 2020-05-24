@@ -12,7 +12,7 @@ maintainer:          mustafahafidi96@gmail.com
 -- copyright:           
 category:            Text
 build-type:          Simple
-extra-source-files:  ChangeLog.md, README.md
+extra-source-files:  README.md
 cabal-version:       >= 1.22
 
 library
@@ -26,8 +26,11 @@ library
                     base >= 4.9.1.0 && < 5
                     , QuickCheck
                     , template-haskell
-                    , ghc
                     , liquidhaskell
+                    , ghc
+                    , text                 >= 1.2
+                    , parsec               >= 3.1
+                    , liquid-fixpoint      >= 0.8.0.0
   hs-source-dirs:      src
   default-language:    Haskell98
   ghc-options:        -W -threaded -fdefer-typed-holes

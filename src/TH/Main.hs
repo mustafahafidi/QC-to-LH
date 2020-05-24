@@ -5,7 +5,8 @@ module TH.Main where
 -- import Lib.LH.Prelude ((++))
 -- import Prelude hiding ((++))
 import Language.Haskell.TH
-import LiquidHaskell
+-- import LiquidHaskell
+import TH.CustomQQ
 import Language.Haskell.Liquid.ProofCombinators
 
 -- [lq| LIQUID "--reflection" |]
@@ -37,8 +38,7 @@ parsePropName pName = do
                         entrypoint
 =======================================================-}
 generateProof :: Q Exp -> Q [Dec]
-generateProof exp =  pure (++)
-                   <*>  [d| [lq| inline prop |]
-                            prop = $exp |]
-                   <*>  [d| [lq| prop_proof :: {v:()| prop } |]
-                            prop_proof = toProof $exp |]
+generateProof exp = do
+                        lhDec   <- (lqDec $ show (mkName "proof") ++ " :: " ++ "Proof")
+                        bodyDec <- [d| $(varP $ mkName "proof") = toProof $exp |]
+                        return $ lhDec ++ bodyDec
