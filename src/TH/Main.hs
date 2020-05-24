@@ -38,7 +38,9 @@ parsePropName pName = do
                         entrypoint
 =======================================================-}
 generateProof :: Q Exp -> Q [Dec]
-generateProof exp = do
+generateProof exp = do  
+                        exxp <- exp
+                        error $ show exxp
                         lhDec   <- (lqDec $ show (mkName "proof") ++ " :: " ++ "Proof")
                         bodyDec <- [d| $(varP $ mkName "proof") = toProof $exp |]
                         return $ lhDec ++ bodyDec

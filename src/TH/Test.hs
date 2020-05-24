@@ -18,7 +18,9 @@ main = putStrLn $(do
 -- VarI TH.TestProps.ttt (ConT GHC.Types.Int) Nothing
 --
 ----------------------------------------------------------------
-$(generateProof [| True == True |])
+$(generateProof [| True == True |]) 
+-- this comes as an Q Exp, I need a string to give to lhQQ, showing it gives
+-- InfixE (Just (ConE GHC.Types.True)) (VarE GHC.Classes.==) (Just (ConE GHC.Types.True))
 ----------------------------------------------------------------
 
 -- >>> runQ [|2|]
