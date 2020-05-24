@@ -37,5 +37,8 @@ parsePropName pName = do
                         entrypoint
 =======================================================-}
 generateProof :: Q Exp -> Q [Dec]
-generateProof exp =  [d| [lq| prop_proof :: {v:()| exp } |]
-                         prop_proof = toProof $(exp) |]
+generateProof exp =  pure (++)
+                   <*>  [d| [lq| inline prop |]
+                            prop = $exp |]
+                   <*>  [d| [lq| prop_proof :: {v:()| prop } |]
+                            prop_proof = toProof $exp |]
