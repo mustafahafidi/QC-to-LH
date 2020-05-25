@@ -124,6 +124,13 @@ packages:
     subdir: optics-th
     git: https://github.com/well-typed/optics.git
     commit: 0a4940cc927df3f50151692282f8b148bf326886
+- completed:
+    hackage: strings-1.1@sha256:0285dec4c8ab262359342b3e5ef1eb567074669461b9b38404f1cb870c881c5c,1617
+    pantry-tree:
+      size: 212
+      sha256: 876e5a679244143e2a7e74357427c7522a8d61f68a4cc3ae265fe4960b75a2e2
+  original:
+    hackage: strings-1.1@sha256:0285dec4c8ab262359342b3e5ef1eb567074669461b9b38404f1cb870c881c5c,1617
 snapshots:
 - completed:
     size: 491163

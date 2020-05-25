@@ -32,6 +32,8 @@ library
                     , parsec               >= 3.1
                     , liquid-fixpoint      >= 0.8.0.0
                     , haskell-src-meta
+                    , strings
+                    , neat-interpolation
   hs-source-dirs:      src
   default-language:    Haskell98
   ghc-options:        -W -threaded -fdefer-typed-holes
