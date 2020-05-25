@@ -2,7 +2,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 
 module TH.Test where
-import TH.Main
+import TH.ProofGenerator
 import TH.TestProps
 
 import Language.Haskell.Liquid.ProofCombinators
