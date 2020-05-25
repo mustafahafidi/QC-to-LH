@@ -1,0 +1,30 @@
+name: qc-to-lh
+version: "0.1.0.0"
+category: Testing
+author: Mustafa Hafidi
+maintainer: mustafahafidi96@gmail.com
+license: BSD3
+extra-source-files:
+  - README.md
+other-extensions:
+  - ScopedTypeVariables
+  - TemplateHaskell
+  - QuasiQuotes
+  - PatternGuards
+ghc-options:
+  - -W
+  - -threaded
+  - -fdefer-typed-holes
+dependencies:
+  - base >=4.9.1.0 && <5
+  - QuickCheck
+  - template-haskell
+  - liquidhaskell
+  - parsec >=3.1
+  - liquid-fixpoint >=0.8.0.0
+  - haskell-src-meta
+  - strings
+library:
+  source-dirs: src
+  exposed-modules:
+    - TH.ProofGenerator
