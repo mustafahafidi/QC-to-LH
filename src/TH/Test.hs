@@ -56,8 +56,10 @@ testProp = True == True
 asddd ::   Bool
 asddd  =  True
 
-generateProofFromDecl  "asddd :: Bool\n\
-                        \asddd = True"
+[lhp|
+asddd ::   Bool
+asddd  =  True
+|]
 -----------
 -- Multiple parameters test
 -----------
@@ -66,8 +68,10 @@ testProp1 ::  Bool -> Bool -> Bool
 testProp1 x y = True
 
 {-@ ple testProp1_proof  @-}
-$(generateProofFromDecl $ "testProp1 ::  Bool -> Bool -> Bool\n\
-                          \testProp1 x y = True")
+[lhp|
+testProp1 ::  Bool -> Bool -> Bool
+testProp1 x y = True
+|]
 
 -----------
 -- Multiple parameters using multiline QQ
@@ -96,7 +100,6 @@ testProp3 False = True
 
 {-@ ple testProp3_proof  @-}
 [lhp|
-
 testProp3 :: Bool -> Bool
 testProp3 True =  True
 testProp3 False = True
