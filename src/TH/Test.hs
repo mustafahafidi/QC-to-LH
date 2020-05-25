@@ -3,13 +3,8 @@
 
 module TH.Test where
 import TH.ProofGenerator
-import TH.TestProps
 
 import Language.Haskell.Liquid.ProofCombinators
-import Language.Haskell.TH
-import LiquidHaskell
-import NeatInterpolation
-import Data.Text
 
 -- {-@ LIQUID "--diff" @-}
 {-@ LIQUID "--reflection" @-}
@@ -84,12 +79,12 @@ testProp2 x y = (case x of
                     _    -> False) == (x && y)
 
 {-@ ple testProp2_proof  @-}
-generateProofFromDecl $ unpack [text| 
-                                        testProp2 ::  Bool -> Bool -> Bool
-                                        testProp2 x y = (case x of
-                                                            True -> y
-                                                            _    -> False) == (x && y)
-                               |]
+[lhp|
+testProp2 ::  Bool -> Bool -> Bool
+testProp2 x y = (case x of
+                True -> y
+                _    -> False) == (x && y)
+|]
 
 -----------
 -- Multiple clauses
@@ -100,11 +95,13 @@ testProp3 True =  True
 testProp3 False = True
 
 {-@ ple testProp3_proof  @-}
-generateProofFromDecl $ unpack [text| 
-                                testProp3 :: Bool -> Bool
-                                testProp3 True =  True
-                                testProp3 False = True
-                               |]
+[lhp|
+
+testProp3 :: Bool -> Bool
+testProp3 True =  True
+testProp3 False = True
+
+|]
  
 
 -----------
@@ -117,18 +114,43 @@ testProp4 x
     | otherwise = True
 
 {-@ ple testProp4_proof  @-}
-generateProofFromDecl $ unpack [text| 
+[lhp|
 
 testProp4 :: Int -> Bool
 testProp4 x
         | x==0 = True
         | otherwise = True 
-                               |]
+|]
 
 
-{-@ ttt ::  f:(Bool->Bool) -> {v:_ | f True == f True} @-}
-ttt ::  (Bool->Bool) -> Bool
-ttt f = True
+
+
+
+
+---------
+-- Syntactic sugar quasiquoter
+---------
+{-@ reflect testProp5 @-}
+testProp5 ::  Bool -> Bool -> Bool
+testProp5 x y = True
+
+{-@ ple testProp5_proof @-}
+[lhp|
+
+testProp5 :: Bool -> Bool -> Bool
+testProp5 x y = True
+                
+|]
+
+
+
+
+
+
+
+
+
+
 
 ---------
 -- Not supported yet
@@ -138,35 +160,12 @@ testFunctPar ::  (Bool -> Bool) -> Bool
 testFunctPar f = f True == f True
 
 -- {-@ ple testFunctPar_proof  @-}
--- generateProofFromDecl $ unpack [text| 
+-- [lhp|
 
 -- testFunctPar ::  (Bool -> Bool) -> Bool
 -- testFunctPar f = f True == f True
 
 --                                |]
-
-
-{- 
-Current usage:
-  - Parsing signature supports only normal currying (no functions as arguments (e.g. (a->b) -> c))
-  - It's possible to refer to the proof name as propertyName_proof. To use local PLE it's possible to use the propertyName_proof
--}
-
-
-
--- {-@ ple testProp1_proof  @-}
--- testlq x = [lq| testProp1_proof :: x:Bool -> y:Bool -> {v:Proof| $x } |]
--- testProp1_proof x y = (True) *** QED
-
-
-
-
-
-
-
-
-
-
 
 
 --------------------------------------------------------
