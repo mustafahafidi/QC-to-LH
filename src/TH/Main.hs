@@ -11,6 +11,7 @@ import Control.Monad
 import Data.List
 import Data.Strings
 
+debug = True
 
 {-======================================================
                         entrypoint String
@@ -56,7 +57,7 @@ generateProofFromDecl decs =
                     -- getting the signature
                     let (sd:(bodyDs@(bd:bs))) = parsedDecls
                     let (SigD nm sigType) = sd
-                    -- reportError $ show $ bodyDs
+                    -- reportWarning $ show $ bodyDs
                     -- generate name for the proof
                     let proofName = show nm ++"_proof"
                     -- let sigTypes = strSplitAll "->" $ pprint (SigD (mkName proofName) sigType)
@@ -68,16 +69,26 @@ generateProofFromDecl decs =
                           -- (SigD (mkName proofName) sigType)
                                 -- add parameters to signature
                                     (typeWP, pr) <- addParamsToType sigType []
-                                    -- reportError $ show typeWP ++ show pr
-                                    let sigTypesWP = strSplitAll "->" $ pprint typeWP
-
+                                    -- reportWarning $ show typeWP ++ show pr
+                                    let sigTypesWP = strSplitAll "->" $ case typeWP of
+                                                                          (ForallT tvb ctx tp) -> pprint tp
+                                                                          v -> pprint v
+                                    -- reportWarning $ show sigTypesWP
                                 -- replace return type with refinement type
-                                    let (fr,_) = splitAt (length sigTypesWP - 1) sigTypesWP
-                                    let (params,_) = splitAt (length pr - 1) pr
-                                    let finalRefType = (show $ mkName proofName) ++ " :: " ++ (strJoin " -> " $
-                                                      fr ++ ["{v:Proof | "++show nm++" "++(strJoin " " (map (\p->show p) params))++"}"])
-                                    -- reportErrorToUser $ finalRefType
-                                    lhDec <- (lqDec finalRefType)
+                                    let fr = init sigTypesWP --splitAt (length sigTypesWP - 1) sigTypesWP
+                                    let params = init pr --splitAt (length pr - 1) pr
+                                    let replacedRetTypeSig = (strJoin " -> " $
+                                                                    fr ++ ["{v:Proof | "++show nm++" "++(strJoin " " (map (\p->show p) params))++"}"])
+                                -- Put back `for all` and context if there was
+                                    wildT <- wildCardT
+                                    let forAllSig =    (case typeWP of
+                                                              ForallT tvb ctx _ -> init $ pprint (ForallT tvb ctx wildT)
+                                                              _ -> "")
+                                    let finalRefSign = (show $ mkName proofName) ++ " :: "
+                                                        ++ forAllSig
+                                                        ++ replacedRetTypeSig
+                                    when debug $ reportWarning $ "[qc-to-lh]: "++finalRefSign
+                                    lhDec <- lqDec finalRefSign
                                 -- generate the body
                                     -- add the ***QED to the body for each clause
 
@@ -101,15 +112,11 @@ findSignature decs =  case maybeFound of
                                                 (SigD _ _) -> True
                                                 _ -> False) decs
 
--- |Given a signature adds parameters and returns them
--- addParamsToSignature :: Dec -> Q (Dec, [Name])
--- addParamsToSignature (SigD nm sigType) =  do (typeWithParams, params) <-  addParamsToType sigType []
---                                              return ((SigD  nm typeWithParams), params)
---       where
+-- |Given a type adds parameters (LH way) and returns the type and the parameters it added
 addParamsToType :: Type -> [Name] -> Q (Type, [Name])
 addParamsToType (ForallT tvb ctx tp) acc = do (rect, params) <- addParamsToType tp acc
                                               return ((ForallT tvb ctx rect), acc++params)
-
+           
 addParamsToType (AppT t1 t2) acc = do (rect1,p1) <- addParamsToType t1 []
                                       (rect2,p2) <- addParamsToType t2 []
                                       return ((AppT rect1 rect2),acc++p1++p2)
@@ -128,13 +135,13 @@ wrapBodyWithProof oldBody@(NormalB bodyExp) = case parseExp $ "(" ++ pprint body
                                         Left err -> oldBody
 
 wrapBodyWithProof (GuardedB gds) = GuardedB guards
-                                            where
-                                                transformBody oldBody = 
-                                                  case parseExp $ "(" ++ pprint oldBody ++ ")***QED" of
-                                                    Right newBody ->  newBody
-                                                    Left err -> oldBody
-                                                    
-                                                guards = map (\(g, bodyExp) -> (g, transformBody bodyExp)) gds
+          where
+              transformBody oldBody = 
+                case parseExp $ "(" ++ pprint oldBody ++ ")***QED" of
+                  Right newBody ->  newBody
+                  Left err -> oldBody
+                  
+              guards = map (\(g, bodyExp) -> (g, transformBody bodyExp)) gds
 
 
 reportErrorToUser:: MonadFail m => String -> m a

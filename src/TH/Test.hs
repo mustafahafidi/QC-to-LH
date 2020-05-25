@@ -54,7 +54,7 @@ testProp = True == True
 -- data TestType = Asd
 -- $(generateProofFromVar $ lookupValueName "Asd") --no
 
-----------------------------------------------------------------
+---------------------------------------------------------------
 -- Going the string way
 -----------
 {-@ reflect asddd @-}
@@ -92,7 +92,7 @@ generateProofFromDecl $ unpack [text|
                                |]
 
 -----------
--- Multiple declarations
+-- Multiple clauses
 -----------
 {-@ reflect testProp3 @-}
 testProp3 ::  Bool -> Bool
@@ -114,7 +114,7 @@ generateProofFromDecl $ unpack [text|
 testProp4 ::  Int -> Bool
 testProp4 x
     | x==0 = True
-    | otherwise = False
+    | otherwise = True
 
 {-@ ple testProp4_proof  @-}
 generateProofFromDecl $ unpack [text| 
@@ -122,12 +122,17 @@ generateProofFromDecl $ unpack [text|
 testProp4 :: Int -> Bool
 testProp4 x
         | x==0 = True
-        | otherwise = False 
+        | otherwise = True 
                                |]
 
------------
+
+{-@ ttt ::  f:(Bool->Bool) -> {v:_ | f True == f True} @-}
+ttt ::  (Bool->Bool) -> Bool
+ttt f = True
+
+---------
 -- Not supported yet
------------
+---------
 {-@ reflect testFunctPar @-}
 testFunctPar ::  (Bool -> Bool) -> Bool
 testFunctPar f = f True == f True
@@ -135,8 +140,8 @@ testFunctPar f = f True == f True
 {-@ ple testFunctPar_proof  @-}
 generateProofFromDecl $ unpack [text| 
 
-testFunctPar ::  (Bool -> Bool) -> Bool
-testFunctPar f = f True == f True
+testFunctPar ::  Bool
+testFunctPar =  True
 
                                |]
 {- 
