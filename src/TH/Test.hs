@@ -137,13 +137,15 @@ ttt f = True
 testFunctPar ::  (Bool -> Bool) -> Bool
 testFunctPar f = f True == f True
 
-{-@ ple testFunctPar_proof  @-}
-generateProofFromDecl $ unpack [text| 
+-- {-@ ple testFunctPar_proof  @-}
+-- generateProofFromDecl $ unpack [text| 
 
-testFunctPar ::  Bool
-testFunctPar =  True
+-- testFunctPar ::  (Bool -> Bool) -> Bool
+-- testFunctPar f = f True == f True
 
-                               |]
+--                                |]
+
+
 {- 
 Current usage:
   - Parsing signature supports only normal currying (no functions as arguments (e.g. (a->b) -> c))

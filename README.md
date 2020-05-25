@@ -13,19 +13,29 @@ This project aims to facilitate the migration/conversion of QuickCheck propertie
 - :heavy_check_mark: Do the induction for the properties ignored
 - :heavy_check_mark: Apply everything on the examples of quickcheck (github)
 - :heavy_check_mark: Make a report/table on the proofs done until now
-- [..] Redefine Eq == and rewrite properties, then prove them
-  - [..] Create bug issues to show why reflecting mRotL,mRotR doesn't work
-- [..] Solve the Heap proofs (try the refined data-type to ease the proofs)
+- :heavy_check_mark: Redefine Eq == and rewrite properties, then prove them
+  - :heavy_check_mark: Create bug issues to show why reflecting mRotL,mRotR doesn't work
+- :heavy_check_mark: Solve the Heap proofs (try the refined data-type to ease the proofs)
 
 ### 2) Design the tool and implement it
 
-- [..] Check Template Haskell and GHC Plugin
+- :heavy_check_mark: Check Template Haskell and GHC Plugin
+- :heavy_check_mark: Parse property declaration as a String
+- :heavy_check_mark: Build refinement type and body of the proof of the parsed property
+- [..] Build a syntactic sugar quasiquoter
 
 ### 3) Write paper/thesis describing the whole work (can happen in parallel to the work)
 
 ### 4) Defend thesis (17 July 2020)
 
 ## Usage
+
+#### Proof Generator
+
+- For now parsing supports only normal currying (no functions as arguments (e.g. (a->b) -> c))
+- It's possible to refer to the proof name as propertyName_proof. e.g. it's possible to call the proof using that name from other proofs, or in liquid options (such as `{-@ ple propertyName_proof @-}`)
+
+#### CList and Skew Heap Proofs
 
 - To run liquid `stack exec -- liquid -isrc/ src/Main.hs`
 
