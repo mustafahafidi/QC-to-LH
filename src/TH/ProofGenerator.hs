@@ -108,18 +108,16 @@ generateProofFromDecl decs opts =
                                 -- add parameters to signature
                                     (typeWP, pr) <- addParamsToType sigType []
                                     -- reportWarningToUser $ show typeWP ++ show pr
-                                    let sigTypesWP = strSplitAll "->" $ case typeWP of
-                                                                          (ForallT tvb ctx tp) -> pprint tp
-                                                                          v -> pprint v
                                     -- reportWarningToUser $ show sigTypesWP
                                 -- replace return type with refinement type
+                                    let sigTypesWP = strSplitAll "->" typeWP
                                     let fr = init sigTypesWP --splitAt (length sigTypesWP - 1) sigTypesWP
                                     let params = init pr --splitAt (length pr - 1) pr
                                     let replacedRetTypeSig = (strJoin " -> " $
                                                                     fr ++ ["{v:Proof | "++show nm++" "++(strJoin " " (map (\p->show p) params))++"}"])
                                 -- Put back `for all` and context if there was
                                     wildT <- wildCardT
-                                    let forAllSig =    (case typeWP of
+                                    let forAllSig =    (case sigType of
                                                               ForallT tvb ctx _ -> init $ pprint (ForallT tvb ctx wildT)
                                                               _ -> "")
                                     let finalRefSign = (show $ mkName proofName) ++ " :: "
@@ -165,38 +163,46 @@ boilerplate pn pd os refTypeStr = do
                                     return  (lhdec ++ rest)
     
 
-
--- ======================================================
--- |Find a signature in a list of given declarations    
--- ======================================================
-findSignature :: [Dec] -> Q Dec
-findSignature decs =  case maybeFound of
-                            Nothing -> failWith "Cannot find the signature of the function declaration given"
-                            Just dec -> return dec
-                where maybeFound = find (\d -> case d of
-                                                (SigD _ _) -> True
-                                                _ -> False) decs
-
-
-
 -- ======================================================
 -- |Given a type adds parameters (LH way) and returns the
 --  type and the parameters it added
 -- ======================================================
-addParamsToType :: Type -> [Name] -> Q (Type, [Name])
-addParamsToType (ForallT tvb ctx tp) acc = do (rect, params) <- addParamsToType tp acc
-                                              return ((ForallT tvb ctx rect), acc++params)
-           
-addParamsToType (AppT t1 t2) acc = do (rect1,p1) <- addParamsToType t1 []
-                                      (rect2,p2) <- addParamsToType t2 []
-                                      return ((AppT rect1 rect2),acc++p1++p2)
+addParamsToType :: Type -> [Name] -> Q (String, [Name])
+-- better implementation
 
-addParamsToType (VarT nm) acc = do nName <- newName "p"
-                                   return ((VarT (mkName $ show nName++":"++show nm)), [nName])
-addParamsToType (ConT nm) acc = do nName <- newName "p"
-                                   return ((ConT (mkName $ show nName++":"++show nm)), [nName])
-addParamsToType v acc = return (v, acc)
--- addParamsToType v        = failWith $ "Cannot parse the signature to add LH parameters in it:"++" don't konw how to treat " ++ (show v)
+
+addParamsToType (ForallT tvb ctx tp) acc =  addParamsToTypeStr (pprint tp) []
+addParamsToType (tp) acc =  addParamsToTypeStr (pprint tp) []
+-- addParamsToType (AppT t1 t2) acc = addParamsToTypeStr (pprint tp) []
+--                 do (rect1,p1) <- addParamsToType t1 []
+--                                       (rect2,p2) <- addParamsToType t2 []
+--                                       return ((AppT rect1 rect2),acc++p1++p2)
+-- addParamsToType _ acc =  return ("",[]) -- add parameters only to the first layer
+
+addParamsToTypeStr :: String -> [Name] -> Q (String, [Name])
+addParamsToTypeStr [] _ = return ("",[])
+addParamsToTypeStr tp acc = do let (p,ps) = strSplit "->" tp
+                               nName <- newName "p"
+                               (restWP,addedNames) <- addParamsToTypeStr ps []
+                               let finalParts = (show nName ++ ':':p) : filter (not . strNull) [restWP]
+                               return (strJoin "->" finalParts,nName:addedNames)
+
+-- ===================
+
+           
+-- addParamsToType (ForallT tvb ctx tp) acc = do (rect, params) <- addParamsToType tp acc
+--                                               return ((ForallT tvb ctx rect), acc++params)
+           
+-- addParamsToType (AppT t1 t2) acc = do (rect1,p1) <- addParamsToType t1 []
+--                                       (rect2,p2) <- addParamsToType t2 []
+--                                       return ((AppT rect1 rect2),acc++p1++p2)
+
+-- addParamsToType (VarT nm) acc = do nName <- newName "p"
+--                                    return ((VarT (mkName $ show nName++":"++show nm)), [nName])
+-- addParamsToType (ConT nm) acc = do nName <- newName "p"
+--                                    return ((ConT (mkName $ show nName++":"++show nm)), [nName])
+-- addParamsToType v acc = return (v, acc)
+-- -- addParamsToType v        = failWith $ "Cannot parse the signature to add LH parameters in it:"++" don't konw how to treat " ++ (show v)
 
 
 -- ======================================================
@@ -262,6 +268,18 @@ generateProofFromVar varName =
 
 
 -- ====================================UTILITIES=================================
+
+-- ======================================================
+-- |Find a signature in a list of given declarations    
+-- ======================================================
+findSignature :: [Dec] -> Q Dec
+findSignature decs =  case maybeFound of
+                            Nothing -> failWith "Cannot find the signature of the function declaration given"
+                            Just dec -> return dec
+                where maybeFound = find (\d -> case d of
+                                                (SigD _ _) -> True
+                                                _ -> False) decs
+
 
 -- ======================================================
 -- |Report errors  with prefix
