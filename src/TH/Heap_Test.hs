@@ -52,6 +52,26 @@ prop_Unit x = unit x ==? [x]
 [lhp|genProp|reflect|ple
 
 prop_Size :: Heap Int -> Bool
-prop_Size h  = size h == length (toList h)
+prop_Size h@Empty  = size h == length (toList h)
+prop_Size h@(Node v hl hr)  = size h == length (toList h)
+                ? toList_distProp_proof [hl] [hr]
+               ? prop_Size_proof hl
+                ? prop_Size_proof hr
+                ? length_append_dist_proof (toList' [hl]) (toList' [hr])
+
+|]
+
+
+[lhp|genProp|reflect|ple|ignore
+
+toList_distProp :: Eq a => [Heap a] -> [Heap a] -> Bool
+toList_distProp h1 h2 = toList' (h1++h2) == (toList' h1 ++ toList' h2)
+
+|]
+
+[lhp|genProp|reflect|admit
+
+length_append_dist ::  [a] -> [a] -> Bool
+length_append_dist ls rs = length (ls ++ rs) == length ls + length rs
 
 |]

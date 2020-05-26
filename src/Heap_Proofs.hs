@@ -48,21 +48,21 @@ prop_Empty = ()
 {-@ prop_IsEmpty ::  h:Heap Int -> { Lib.QC.Heap.prop_IsEmpty h } @-}
 prop_IsEmpty ::  Heap Int -> Proof
 prop_IsEmpty h@Empty =  trivial
-        -- (isEmpty h == null (toList h))
+    {-     -- (isEmpty h == null (toList h))
         -- -- === (True == null (toList h))
         -- -- === (null (toList h))
         -- -- === (null (toList' [h]))
         -- -- === (null (toList' []))
         -- -- === (null [])
         -- ***QED 
-
+ -}
 prop_IsEmpty h@(Node v hl hr) =  trivial
-        -- (isEmpty h == null (toList h))
+       {-  -- (isEmpty h == null (toList h))
         -- -- === (False == null (toList h))
         -- -- === not (null (toList' [h]))
         -- -- === not (null (v: (toList' (hl:hr:[]))))
         -- -- === not (null (v: (toList' (hl:hr:[])))) 
-        -- ***QED
+        -- ***QED -}
 
 -- {-======================================================
 --                         prop_Unit
@@ -71,7 +71,7 @@ prop_IsEmpty h@(Node v hl hr) =  trivial
 {-@ prop_Unit ::  x:Int -> { Lib.QC.Heap.prop_Unit x } @-}
 prop_Unit ::  Int -> Proof
 prop_Unit x = trivial
-            -- (unit x ==? [x])
+         {-    -- (unit x ==? [x])
             -- === -- definition of ==?
             --   (let h = Node x empty empty in 
             --         (invariant h && sort (toList h) == sort [x])
@@ -86,7 +86,7 @@ prop_Unit x = trivial
             --     -- def. of invariant
             --     === (x <=? Empty && x <=? Empty && invariant (Empty::Heap Int) && invariant (Empty::Heap Int))
             -- --  === (True && True && True && True)
-            -- ***QED
+            -- ***QED -}
 
 
 
@@ -128,7 +128,7 @@ distProp (h@(Node x hl hr):hs) h2 =  ()
                                     ? lemma_distProp h hs
                                     ? distProp hs h2
                                     ? assocP (toList' [h]) (toList' hs) (toList' h2)
-            -- (toList' ((h:hs)++h2) == (toList' (h:hs) ++ toList' h2))
+            {- -- (toList' ((h:hs)++h2) == (toList' (h:hs) ++ toList' h2))
             -- ?(
             --     toList' ((h:hs)++h2)
             -- === toList' (h:(hs++h2))
@@ -144,7 +144,7 @@ distProp (h@(Node x hl hr):hs) h2 =  ()
                  
             -- === toList' (h:hs) ++ toList' h2
             -- )
-            -- ***QED
+            -- ***QED -}
 
 {-@ ple lemma_distProp @-}
 {-@ inline lemma_distProp_p @-}
@@ -167,7 +167,7 @@ lemma_distProp h@(Node x hl hr) hs = ()
                                      ? lemma_distProp hr hs
                                      ? assocP (toList' [hl]) (toList' [hr]) (toList' hs)
                                      ? lemma_distProp hl [hr]
-                --         toList' (h:hs)
+                {- --         toList' (h:hs)
                 --         === x: toList' (hl:hr:hs)
                 --             ? lemma_distProp hl (hr:hs)
                 --         === x: (toList' [hl] ++ toList' (hr:hs))
@@ -180,7 +180,7 @@ lemma_distProp h@(Node x hl hr) hs = ()
                 --         === x: toList' (hl:hr:[]) ++ toList' hs
                 --         === (x: toList' (hl:hr:[])) ++ toList' hs
                 --         === (toList' ([h])) ++ toList' hs
-                -- ***QED
+                -- ***QED -}
 ------ End Distributivity of toList' over (++)
 
 {-@ ple prop_Size @-}
@@ -199,7 +199,7 @@ prop_Size h@(Node v hl hr) =
                             ? Heap_Proofs.prop_Size hl
                             ? Heap_Proofs.prop_Size hr
                             ? append_length (toList' [hl]) (toList' [hr])
-            -- (size h == length (toList h)) -- apply size
+           {-  -- (size h == length (toList h)) -- apply size
             -- ===  (1 + size hl + size hr == length (toList' [h]))  -- apply toList'
             -- ===  (1 + size hl + size hr == length (v:toList' [hl,hr])) 
             --                 ? (    [hl]++[hr]
@@ -214,7 +214,7 @@ prop_Size h@(Node v hl hr) =
             --       ? Heap_Proofs.prop_Size hl
             --       ? Heap_Proofs.prop_Size hr
             -- === (size h == length (toList h)) 
-            -- ***QED
+            -- ***QED -}
 
 
 {-======================================================
@@ -255,7 +255,7 @@ prop_Insert x h@(Node y hl hr)
                             ? distProp [hl,hr]  [Empty]
                             ? rightIdP (toList' [hl,hr])
                             ? (unit x === Node x empty empty)
-                        -- let h= (Node y hl hr)
+                        {- -- let h= (Node y hl hr)
                         -- in (insert x h ==? (x : toList h))
                         --     ? (insert x h ==! Node x (Node y hl hr) Empty)
                         --                         ? (x:toList h  ==! (x : y : toList' [hl,hr]))
@@ -284,13 +284,13 @@ prop_Insert x h@(Node y hl hr)
                         --                                     ?rightIdP (toList' [hl,hr])
                         --         === x:y:( toList' [hl,hr] )
                         --         )
-                        -- ***QED
+                        -- ***QED -}
  
             | otherwise = ()
                         ? invariant (insert x (Node y hl hr))
                         ? Heap_Proofs.prop_Merge (Node x empty empty) h
                         ? (Lib.QC.Heap.prop_Merge (Node x empty empty) h)
-                --         let h = (Node y hl hr)
+                {- --         let h = (Node y hl hr)
                 --         in (insert x h ==? (x : toList h))
                 --                 ? (insert x h 
                 --                 === (unit x) `merge` h
@@ -310,7 +310,7 @@ prop_Insert x h@(Node y hl hr)
                 --                 ? (Lib.QC.Heap.prop_Merge (Node x empty empty) h
                 --                 === (Node x empty empty) `merge` h ==? (toList (Node x empty empty) ++ toList h))
                 --             === (Node x empty empty) `merge` h ==? toList' [Node x empty empty, h]
-                -- ***QED
+                -- ***QED -}
 
 {-======================================================
                         prop_Merge
