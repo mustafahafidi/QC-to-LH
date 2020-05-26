@@ -134,6 +134,12 @@ prop_fromList_focus = focus (fromList ([1]::[Int])) == Just 1
 
 -- Deep properties 
 
+{-@ reflect =*= @-}
+{-@ infix 4 =*= @-}
+(=*=) :: Eq a  => CList a -> CList a -> Bool
+a =*= b = (any ((toList a ==) . toList) . toList $ allRotations b)
+
+
 -- prop_list :: CList Int -> Bool
 -- prop_list c = c =*= (fromList . toList $ c)
 
@@ -144,5 +150,7 @@ prop_fromList_focus = focus (fromList ([1]::[Int])) == Just 1
 -- prop_packL :: CList Int -> Bool
 -- prop_packL c = c =*= (packL c)
 
--- prop_packR :: CList Int -> Bool
--- prop_packR c = c =*= (packR c)
+[lhp|genProp|reflect|ple
+prop_packR :: CList Int -> Bool
+prop_packR c = c =*= (packR c)
+|]
