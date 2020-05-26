@@ -151,16 +151,20 @@ a =*= b = (any ((toList a ==) . toList) . toList $ allRotations b)
 -- prop_packL c = c =*= (packL c)
 
 [lhp|genProp|reflect|ple
+
 prop_packR :: CList Int -> Bool
 prop_packR c@Empty = c =*= (packR c)
-                ?(True***Admit)
+                ?(()***Admit)
 prop_packR c = c =*= (packR c)
-                ?(True***Admit)
+                ?(()***Admit)
+
 |]
 
 
+-- ple crashes here (SMTLIB)
+[lhp|genProp|reflect|admit
 
-[lhp|genProp|reflect|ple
-lemma_refl :: Eq a =>  CList a -> Bool
+lemma_refl :: Eq a => CList a -> Bool
 lemma_refl cl = cl =*= cl
+
 |]
