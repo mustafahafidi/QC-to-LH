@@ -1,9 +1,9 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE  TemplateHaskell #-}
 module TH.ProofGenerator (
-    generateProofFromDecl,
-    generateProofFromExp,
-    generateProofFromVar,
+    -- generateProofFromDecl,
+    -- generateProofFromExp,
+    -- generateProofFromVar,
     lhp
 ) where
     
@@ -12,7 +12,9 @@ import Language.Haskell.Liquid.UX.QuasiQuoter
 import Language.Haskell.Liquid.ProofCombinators
 import Language.Haskell.Meta.Parse
 import Language.Haskell.TH.Quote
+
 import Control.Monad
+import Text.Read
 
 import Data.List
 import Data.Strings
@@ -22,52 +24,65 @@ import Data.Strings
 {-@ ignore generateProofFromExp @-}
 {-@ ignore generateProofFromDecl @-}
 {-@ ignore generateProofFromVar @-}
-{-@ ignore generateProofFromVar @-}
+{-@ ignore generateFromOptions @-}
+{-@ ignore parseOptions @-}
 {-@ LIQUID "--max-case-expand=0" @-}
-{-@ LIQUID "--diff" @-}
+-- {-@ LIQUID "--diff" @-}
 -- {-@ ignore TH.ProofGenerator @-}
 
-debug = False
+proof_suffix = "_proof"
 
--- |
--- A QuasiQuoter that takes the declaration of a 
+
+-- ======================================================
+-- |A QuasiQuoter that takes the declaration of a 
 -- property and generates a proof obligation for it
+-- It accepts the following options:
+--   - `ple` generates the ple annotation for *the proof*
+--   - `ignore` generates the `ignore` annotation for *the proof*
+--   - `reflect` generates the `reflect` annotation for *the property*, works only in conjunction of `genProp`
+--   - `genProp` generates the propery along with the proof
+--   - `debug` generates a warning containing the generated refinement types & LH annotations
+--------------------------------------------------------------
 lhp :: QuasiQuoter
 lhp = QuasiQuoter {
     
     quoteExp = bad,
     quotePat = bad,
     quoteType = bad,
-    quoteDec = generateProofFromDecl
+    quoteDec = parseOptions
     }
     where
         bad = error "`lhq` quasiquoter can only be used as a top-level declaration"
 
 
+data Option = Ple | Reflect | Ignore | GenProp | Debug
+            deriving (Eq, Read, Show)
 
+parseOptions :: String -> Q [Dec]
+parseOptions str = do
+        let (os:bs) = lines $ str
+        let body      = strJoin "\n" bs
+        opts <- parseGivenOptions (filter (\s->not $ strNull s) (strSplitAll "|" os ))
+        when (not (elem GenProp opts) &&
+              elem Reflect opts ) $ failWith "you cannot use `reflect` without `genProp`"
+        generateProofFromDecl body opts
 
--- ======================================================
--- |Given an expression as String, it parses it and 
---  generates a simple proof obligation
--- ======================================================
-generateProofFromExp :: String -> Q [Dec]
-generateProofFromExp exp = case parseExp exp of
-                            Left err -> failWith $ "The given expression cannot be parsed"
-                            Right parsedExp -> do
-                                pName <- newName "proof"
-                                lhDec   <- (lqDec $ show (pName) ++ " :: {v:()| " ++ exp ++"}")
-                                bodyDec <- [d| $(varP $ mkName (show pName)) = $(pure parsedExp) ***QED |]
-                                return $ lhDec ++ bodyDec
+    where
+    parseGivenOptions :: MonadFail m => [String] -> m [Option]
+    parseGivenOptions [] = return []
+    parseGivenOptions (opt:os) =  case (readMaybe . strCapitalize) opt of
+                                    Nothing -> failWith $ "Uknown given option `"++opt++"`"
+                                    Just opt -> do
+                                                rest <- parseGivenOptions os
+                                                return (opt:rest)
 
 
 -- ======================================================
 -- |Given a function declaration as String, parses it 
 -- and generates a proof for it.
--- 
--- If debug=True it will generate warnings with generated refinement types
 -- ======================================================
-generateProofFromDecl :: String -> Q [Dec]
-generateProofFromDecl decs = 
+generateProofFromDecl :: String -> [Option] ->  Q [Dec]
+generateProofFromDecl decs opts = 
             case parseDecs decs of
                 Left err -> failWith $ "The given declaration cannot be parsed: " ++ decs++err
                 Right parsedDecls -> do
@@ -78,14 +93,18 @@ generateProofFromDecl decs =
                     let (SigD nm sigType) = sd
                     -- reportWarningToUser $ show $ bodyDs
                     -- generate name for the proof
-                    let proofName = show nm ++"_proof"
+                    let proofName = show nm ++proof_suffix
                     -- let sigTypes = strSplitAll "->" $ pprint (SigD (mkName proofName) sigType)
                     -- check that it returns a boolean
                     case isSuffixOf "Bool" (pprint sd) of
                         False -> failWith "The given declaration must return a boolean to be transformed to a LiquidHaskell proof"
                        
                         True  -> do
-                          -- (SigD (mkName proofName) sigType)
+
+                                -- handle options
+                                    let debug = elem Debug opts
+                                    optionDecs <- generateFromOptions (show nm) parsedDecls opts 
+
                                 -- add parameters to signature
                                     (typeWP, pr) <- addParamsToType sigType []
                                     -- reportWarningToUser $ show typeWP ++ show pr
@@ -106,7 +125,7 @@ generateProofFromDecl decs =
                                     let finalRefSign = (show $ mkName proofName) ++ " :: "
                                                         ++ forAllSig
                                                         ++ replacedRetTypeSig
-                                    when debug $ reportWarningToUser $ "[qc-to-lh]: "++finalRefSign
+                                    when debug $ reportWarningToUser $ finalRefSign
                                     lhDec <- lqDec finalRefSign
                                 -- generate the body
                                     -- add the ***QED to the body for each clause
@@ -118,31 +137,35 @@ generateProofFromDecl decs =
                                                                 in FunD (mkName proofName) proofClss
                                                       ValD _ body decs  -> ValD (VarP (mkName proofName)) (wrapBodyWithProof body) decs
                                     
-
-                                                        
-                                    return $ lhDec ++ [finalBody]
+                                    return $ optionDecs ++ lhDec ++ [finalBody]
 
 
 
 
 -- ======================================================
--- |Given a variable name, tries to lookup its info (using `reify`) 
--- and generate a proof for it
+-- |Generates declarations that depend on the options 
+-- passed to the quasiquoter
 -- ======================================================
-generateProofFromVar :: Q (Maybe Name) -> Q [Dec]
-generateProofFromVar varName = 
-        do
-            mName <- varName
-            case mName of
-                Just name -> do
-                    info <- reify name
-                    case info of
-                        VarI nm tp mdecl -> fail $ pprint $ tp
+generateFromOptions :: String -> [Dec] -> [Option] -> Q [Dec]
+generateFromOptions _  _  [] = return []
+generateFromOptions _  _  [Debug] = return []
+generateFromOptions pn pd (Debug:os:oss)   = generateFromOptions pn pd (os:Debug:oss) --need to preserve it
+generateFromOptions pn pd (GenProp:os)   = return pd
+generateFromOptions pn pd (Ple:os) =  boilerplate pn pd os ("ple " ++ pn++proof_suffix)
 
-                        _                -> fail $ "[qc-to-lh] error: given binder doesn't represent a value variable (" ++ (show name) ++")"
-                Nothing -> fail "[qc-to-lh] Cannot find given property name" 
+generateFromOptions pn pd (Ignore:os) = boilerplate pn pd os ("ignore " ++ pn++proof_suffix)
+                                            
+
+generateFromOptions pn pd (opt:os) =  boilerplate pn pd os ((strToLower $ show opt) ++ " " ++ pn)
+
+boilerplate pn pd os refTypeStr = do
+                                    when (elem Debug os) (reportWarningToUser refTypeStr)
+                                    lhdec <- lqDec refTypeStr
+                                    rest <- generateFromOptions pn pd os
+                                    return  (lhdec ++ rest)
     
-    
+
+
 -- ======================================================
 -- |Find a signature in a list of given declarations    
 -- ======================================================
@@ -153,6 +176,8 @@ findSignature decs =  case maybeFound of
                 where maybeFound = find (\d -> case d of
                                                 (SigD _ _) -> True
                                                 _ -> False) decs
+
+
 
 -- ======================================================
 -- |Given a type adds parameters (LH way) and returns the
@@ -173,6 +198,7 @@ addParamsToType (ConT nm) acc = do nName <- newName "p"
 addParamsToType v acc = return (v, acc)
 -- addParamsToType v        = failWith $ "Cannot parse the signature to add LH parameters in it:"++" don't konw how to treat " ++ (show v)
 
+
 -- ======================================================
 -- |Given a function `Body` wraps it to `(Body)***QED`
 -- ======================================================
@@ -189,6 +215,53 @@ wrapBodyWithProof (GuardedB gds) = GuardedB guards
                   Left err -> oldBody
                   
               guards = map (\(g, bodyExp) -> (g, transformBody bodyExp)) gds
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- ======================================================
+-- |Given an expression as String, it parses it and 
+--  generates a simple proof obligation
+-- ======================================================
+generateProofFromExp :: String -> Q [Dec]
+generateProofFromExp exp = case parseExp exp of
+                            Left err -> failWith $ "The given expression cannot be parsed"
+                            Right parsedExp -> do
+                                pName <- newName "proof"
+                                lhDec   <- (lqDec $ show (pName) ++ " :: {v:()| " ++ exp ++"}")
+                                bodyDec <- [d| $(varP $ mkName (show pName)) = $(pure parsedExp) ***QED |]
+                                return $ lhDec ++ bodyDec
+
+                                        
+-- ======================================================
+-- |Given a variable name, tries to lookup its info (using `reify`) 
+-- and generate a proof for it
+-- ======================================================
+generateProofFromVar :: Q (Maybe Name) -> Q [Dec]
+generateProofFromVar varName = 
+        do
+            mName <- varName
+            case mName of
+                Just name -> do
+                    info <- reify name
+                    case info of
+                        VarI nm tp mdecl -> fail $ pprint $ tp
+
+                        _                -> fail $ "[qc-to-lh] error: given binder doesn't represent a value variable (" ++ (show name) ++")"
+                Nothing -> fail "[qc-to-lh] Cannot find given property name" 
+
+
+-- ====================================UTILITIES=================================
 
 -- ======================================================
 -- |Report errors  with prefix

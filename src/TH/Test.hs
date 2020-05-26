@@ -147,6 +147,30 @@ testProp5 x y = True
 
 
 
+---------
+-- Pass options to `lhp`
+---------
+
+[lhp|ignore|ple|reflect|genProp|debug
+
+testProp6 :: Bool -> Bool -> Bool
+testProp6 x y = True
+               
+|]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
