@@ -25,7 +25,8 @@ This project aims to facilitate the migration/conversion of QuickCheck propertie
 - :heavy_check_mark: Build a syntactic sugar quasiquoter
 - :heavy_check_mark: Possibility to pass options to the custom quasiquoter
 - :heavy_check_mark: Parse options to automatically generate ple annotation, ignore, reflect
-- [..] Add an option `debug` for debugging to view generated ref. type and body
+- [..] Give it a try on CList
+- [..] Give it a try on Heap
 
 ### 3) Write paper/thesis describing the whole work (can happen in parallel to the work)
 

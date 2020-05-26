@@ -5,4 +5,4 @@ out
 .directory
 test-plugin
 *.th.hs
-.cabal
+*.cabal
