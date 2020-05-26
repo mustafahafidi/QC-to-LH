@@ -150,11 +150,11 @@ generateFromOptions :: String -> [Dec] -> [Option] -> Q [Dec]
 generateFromOptions _  _  [] = return []
 generateFromOptions _  _  [Debug] = return []
 generateFromOptions pn pd (Debug:os:oss)   = generateFromOptions pn pd (os:Debug:oss) --need to preserve it
-generateFromOptions pn pd (GenProp:os)   = return pd
 generateFromOptions pn pd (Ple:os) =  boilerplate pn pd os ("ple " ++ pn++proof_suffix)
-
 generateFromOptions pn pd (Ignore:os) = boilerplate pn pd os ("ignore " ++ pn++proof_suffix)
-                                            
+
+generateFromOptions pn pd (GenProp:os)   = do restDecs <- generateFromOptions pn pd os
+                                              return (restDecs++pd)
 
 generateFromOptions pn pd (opt:os) =  boilerplate pn pd os ((strToLower $ show opt) ++ " " ++ pn)
 
