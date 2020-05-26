@@ -152,5 +152,8 @@ a =*= b = (any ((toList a ==) . toList) . toList $ allRotations b)
 
 [lhp|genProp|reflect|ple
 prop_packR :: CList Int -> Bool
+prop_packR c@Empty = c =*= (packR c)
+                ?(True***Admit)
 prop_packR c = c =*= (packR c)
+                ?(True***Admit)
 |]
