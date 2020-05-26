@@ -41,6 +41,7 @@ proof_suffix = "_proof"
 --   - `ignore` generates the `ignore` annotation for *the proof*
 --   - `reflect` generates the `reflect` annotation for *the property*, works only in conjunction of `genProp`
 --   - `genProp` generates the propery along with the proof
+--   - `admit` to wrap the proof with "***Admit"
 --   - `debug` generates a warning containing the generated refinement types & LH annotations
 --------------------------------------------------------------
 lhp :: QuasiQuoter

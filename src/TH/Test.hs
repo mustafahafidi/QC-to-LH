@@ -151,7 +151,7 @@ testProp5 x y = True
 -- Pass options to `lhp`
 ---------
 
-[lhp|ple|reflect|genProp|debug
+[lhp|ple|reflect|genProp|debug|admit
 
 testProp6 :: Bool -> Bool -> Bool
 testProp6 x y = True

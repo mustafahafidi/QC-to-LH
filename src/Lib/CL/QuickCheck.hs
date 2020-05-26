@@ -16,7 +16,6 @@ import Lib.LH.Prelude
 {-@ LIQUID "--reflection"    @-}
 
 
--- Make sure empty really is empty.
 prop_empty :: Bool
 prop_empty = length (toList empty) == 0
 
@@ -29,20 +28,8 @@ prop_size l = (length l) == (size . fromList $ l)
 prop_focus :: CList Int -> Int -> Bool
 prop_focus c v = (Just v) == (focus $ insertR v c)
 
-prop_list :: CList Int -> Bool
-prop_list c = c =*= (fromList . toList $ c)
 
--- {-@ inline prop_rot @-}
-prop_rot :: CList Int -> Bool
-prop_rot c = c =*= (rotR $ rotL c)
-
-prop_packL :: CList Int -> Bool
-prop_packL c = c =*= (packL c)
-
-prop_packR :: CList Int -> Bool
-prop_packR c = c =*= (packR c)
-
--- ========================== Additional properties =====================
+--  Additional properties
 
 prop_singleton :: Int -> Bool
 prop_singleton i = toList (singleton i) == [i]
@@ -76,6 +63,25 @@ prop_insertR_removeR v cl = removeR (insertR v cl) == cl
 
 prop_fromList_focus :: Bool
 prop_fromList_focus = focus (fromList ([1]::[Int])) == Just 1
+
+-- Deep properties 
+
+prop_list :: CList Int -> Bool
+prop_list c = c =*= (fromList . toList $ c)
+
+-- {-@ inline prop_rot @-}
+prop_rot :: CList Int -> Bool
+prop_rot c = c =*= (rotR $ rotL c)
+
+prop_packL :: CList Int -> Bool
+prop_packL c = c =*= (packL c)
+
+prop_packR :: CList Int -> Bool
+prop_packR c = c =*= (packR c)
+
+
+
+
 
 
 main :: IO ()
