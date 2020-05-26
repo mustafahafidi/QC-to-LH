@@ -154,15 +154,15 @@ a =*= b = (any ((toList a ==) . toList) . toList $ allRotations b)
 
 prop_packR :: CList Int -> Bool
 prop_packR c@Empty = c =*= (packR c)
-                ?(()***Admit)
+                ? lemma_refl c
 prop_packR c = c =*= (packR c)
                 ?(()***Admit)
 
 |]
 
 
--- ple crashes here (SMTLIB)
-[lhp|genProp|reflect|admit
+-- ple crashes here (SMTLIB) thus can't use it in prop_packR
+[lhp|genProp|reflect|ignore
 
 lemma_refl :: Eq a => CList a -> Bool
 lemma_refl cl = cl =*= cl
