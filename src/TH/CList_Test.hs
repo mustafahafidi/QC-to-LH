@@ -157,3 +157,10 @@ prop_packR c@Empty = c =*= (packR c)
 prop_packR c = c =*= (packR c)
                 ?(True***Admit)
 |]
+
+
+
+[lhp|genProp|reflect|ple
+lemma_refl :: Eq a =>  CList a -> Bool
+lemma_refl cl = cl =*= cl
+|]
