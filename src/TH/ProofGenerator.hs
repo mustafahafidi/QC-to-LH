@@ -55,7 +55,7 @@ lhp = QuasiQuoter {
         bad = error "`lhq` quasiquoter can only be used as a top-level declaration"
 
 
-data Option = Ple | Reflect | Ignore | GenProp | Debug
+data Option = Ple | Reflect | Ignore | GenProp | Debug | Admit
             deriving (Eq, Read, Show)
 
 parseOptions :: String -> Q [Dec]
@@ -102,7 +102,8 @@ generateProofFromDecl decs opts =
                         True  -> do
 
                                 -- handle options
-                                    let debug = elem Debug opts
+                                    let isDebug = elem Debug opts
+                                    let isAdmit = elem Debug opts
                                     optionDecs <- generateFromOptions (show nm) parsedDecls opts 
 
                                 -- add parameters to signature
@@ -123,17 +124,18 @@ generateProofFromDecl decs opts =
                                     let finalRefSign = (show $ mkName proofName) ++ " :: "
                                                         ++ forAllSig
                                                         ++ replacedRetTypeSig
-                                    when debug $ reportWarningToUser $ finalRefSign
+                                    when isDebug $ reportWarningToUser $ finalRefSign
                                     lhDec <- lqDec finalRefSign
                                 -- generate the body
                                     -- add the ***QED to the body for each clause
 
                                     -- (FunD nm clss)
+                                    let isAdmit = elem TH.ProofGenerator.Admit opts
                                     let finalBody = case bd of
                                                       FunD _ clss -> 
-                                                                let proofClss = map  (\(Clause pns body decs) -> (Clause pns (wrapBodyWithProof body) decs)) clss
+                                                                let proofClss = map  (\(Clause pns body decs) -> (Clause pns (wrapBodyWithProof isAdmit body) decs)) clss
                                                                 in FunD (mkName proofName) proofClss
-                                                      ValD _ body decs  -> ValD (VarP (mkName proofName)) (wrapBodyWithProof body) decs
+                                                      ValD _ body decs  -> ValD (VarP (mkName proofName)) (wrapBodyWithProof isAdmit body) decs
                                     
                                     return $ optionDecs ++ lhDec ++ [finalBody]
 
@@ -141,7 +143,7 @@ generateProofFromDecl decs opts =
 
 
 -- ======================================================
--- |Generates declarations that depend on the options 
+-- |Given the property declaration, generates additional declarations/annotations that depend on the options 
 -- passed to the quasiquoter
 -- ======================================================
 generateFromOptions :: String -> [Dec] -> [Option] -> Q [Dec]
@@ -150,11 +152,13 @@ generateFromOptions _  _  [Debug] = return []
 generateFromOptions pn pd (Debug:os:oss)   = generateFromOptions pn pd (os:Debug:oss) --need to preserve it
 generateFromOptions pn pd (Ple:os) =  boilerplate pn pd os ("ple " ++ pn++proof_suffix)
 generateFromOptions pn pd (Ignore:os) = boilerplate pn pd os ("ignore " ++ pn++proof_suffix)
+generateFromOptions pn pd (Reflect:os) = boilerplate pn pd os ("reflect " ++ pn)
 
 generateFromOptions pn pd (GenProp:os)   = do restDecs <- generateFromOptions pn pd os
                                               return (restDecs++pd)
 
-generateFromOptions pn pd (opt:os) =  boilerplate pn pd os ((strToLower $ show opt) ++ " " ++ pn)
+generateFromOptions pn pd (opt:os) =  generateFromOptions pn pd os
+                                    -- boilerplate pn pd os ((strToLower $ show opt) ++ " " ++ pn)
 
 boilerplate pn pd os refTypeStr = do
                                     when (elem Debug os) (reportWarningToUser refTypeStr)
@@ -206,17 +210,19 @@ addParamsToTypeStr tp acc = do let (p,ps) = strSplit "->" tp
 
 
 -- ======================================================
--- |Given a function `Body` wraps it to `(Body)***QED`
+-- |Given a Bool `isAdmit` function's `Body` wraps it to `(Body)***QED`
+--  or `(Body)***Admit` depending on `isAdmit`
 -- ======================================================
-wrapBodyWithProof :: Body -> Body
-wrapBodyWithProof oldBody@(NormalB bodyExp) = case parseExp $ "(" ++ pprint bodyExp ++ ")***QED" of
+wrapBodyWithProof :: Bool -> Body -> Body
+wrapBodyWithProof isAdmit oldBody@(NormalB bodyExp) = case parseExp $ "(" ++ pprint bodyExp ++ ")***"++(if isAdmit then "Admit" else "QED") 
+                                        of
                                         Right newBody -> NormalB newBody
                                         Left err -> oldBody
 
-wrapBodyWithProof (GuardedB gds) = GuardedB guards
+wrapBodyWithProof isAdmit (GuardedB gds) = GuardedB guards
           where
               transformBody oldBody = 
-                case parseExp $ "(" ++ pprint oldBody ++ ")***QED" of
+                case parseExp $ "(" ++ pprint oldBody ++ ")***"++(if isAdmit then "Admit" else "QED") of
                   Right newBody ->  newBody
                   Left err -> oldBody
                   
