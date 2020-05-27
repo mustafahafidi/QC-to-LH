@@ -1,9 +1,9 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE  TemplateHaskell #-}
 module TH.ProofGenerator (
-    -- generateProofFromDecl,
-    -- generateProofFromExp,
-    -- generateProofFromVar,
+    generateProofFromDecl,
+    generateProofFromExp,
+    generateProofFromVar,
     lhp
 ) where
     
@@ -87,6 +87,7 @@ generateProofFromDecl decs opts =
             case parseDecs decs of
                 Left err -> failWith $ "The given declaration cannot be parsed: " ++ decs++err
                 Right parsedDecls -> do
+
                     -- checking declarations
                     when (length parsedDecls < 2) (failWith $ "Please provide both type signature and body of the function.")
                     -- getting the signature
@@ -132,12 +133,13 @@ generateProofFromDecl decs opts =
 
                                     -- (FunD nm clss)
                                     let isAdmit = elem TH.ProofGenerator.Admit opts
+                                    -- failWith $ show bd
+
                                     let finalBody = case bd of
                                                       FunD _ clss -> 
                                                                 let proofClss = map  (\(Clause pns body decs) -> (Clause pns (wrapBodyWithProof isAdmit body) decs)) clss
                                                                 in FunD (mkName proofName) proofClss
                                                       ValD _ body decs  -> ValD (VarP (mkName proofName)) (wrapBodyWithProof isAdmit body) decs
-                                    
                                     return $ optionDecs ++ lhDec ++ [finalBody]
 
 
@@ -215,22 +217,13 @@ addParamsToTypeStr tp acc = do let (p,ps) = strSplit "->" tp
 --  or `(Body)***Admit` depending on `isAdmit`
 -- ======================================================
 wrapBodyWithProof :: Bool -> Body -> Body
-wrapBodyWithProof isAdmit oldBody@(NormalB bodyExp) = case parseExp $ "(" ++ pprint bodyExp ++ ")***"++(if isAdmit then "Admit" else "QED") 
-                                        of
-                                        Right newBody -> NormalB newBody
-                                        Left err -> oldBody
-
-wrapBodyWithProof isAdmit (GuardedB gds) = GuardedB guards
-          where
-              transformBody oldBody = 
-                case parseExp $ "(" ++ pprint oldBody ++ ")***"++(if isAdmit then "Admit" else "QED") of
-                  Right newBody ->  newBody
-                  Left err -> oldBody
-                  
-              guards = map (\(g, bodyExp) -> (g, transformBody bodyExp)) gds
-
-
-
+wrapBodyWithProof isAdmit oldBody = case oldBody of
+                                        NormalB bodyExp -> NormalB $ transformBody bodyExp
+                                        GuardedB gds    -> GuardedB (mapGuards gds)
+            where
+              typeProof = (if isAdmit then "Admit" else "QED")
+              transformBody oldBody = (UInfixE (ParensE (oldBody)) (VarE $ mkName "***") (ConE $ mkName typeProof))
+              mapGuards gds = map (\(g, bodyExp) -> (g, transformBody bodyExp)) gds
 
 
 

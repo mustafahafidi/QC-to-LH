@@ -1,3 +1,4 @@
+{-# LANGUAGE  QuasiQuotes #-}
 {- |
 A simple purely functional circular list, or ring, data type.
 
@@ -71,6 +72,8 @@ module Lib.CL.CircularList (
     -- ** Information
     isEmpty, size, 
 ) where
+import TH.ProofGenerator
+import Language.Haskell.Liquid.ProofCombinators
 
 import Control.Applicative hiding (empty)
 import Prelude hiding ( length, (++), reverse, cycle, iterate,splitAt
@@ -447,3 +450,36 @@ instance T.Traversable CList where
                                                            <*> T.traverse g r
                                                            <*> T.traverse g l
  
+
+
+
+{-@ reflect =*= @-}
+{-@ infix 4 =*= @-}
+(=*=) :: Eq a  => CList a -> CList a -> Bool
+a =*= b = (any ((toList a ==) . toList) . toList $ allRotations b)
+
+
+[lhp|genProp|reflect|ple
+
+lemma_refl :: Eq a => CList a -> Bool
+lemma_refl cl@Empty =  Empty =*= (Empty::CList Int)
+                === ( any ((toList Empty ==) . toList) . toList $ allRotations (Empty::CList Int) )
+                === ( (\ls -> any ((toList Empty ==) . toList) (toList ls)) $ allRotations (Empty::CList Int) )
+                === ( (\ls -> any ((toList Empty ==) . toList) (toList ls)) (allRotations (Empty::CList Int)) )
+                === ( any ((toList Empty ==) . toList) (toList (allRotations (Empty::CList Int))) ) -- def of allRotations
+                ===  any ((toList Empty ==) . toList) (toList (singleton (Empty::CList Int))) 
+                ===  any ((toList Empty ==) . toList) (toList ((CList [] (Empty::CList Int) []))) 
+                ===  any ((toList Empty ==) . toList) (rightElements (CList [] (Empty::CList Int) [])) 
+        --         ===  any ((toList Empty ==) . toList) ((Empty::CList Int) : ([] ++ (reverse [])))  -- expanding reverse
+        --                                                                 ? (([] ++ (reverse []))
+        --                                                                 === ([] ++ ([]))
+        --                                                                 === []
+        --                                                                 )
+        --         === any ((toList Empty ==) . toList) ((Empty::CList Int) : ([])) 
+        --         === any ((toList Empty ==) . toList) [Empty::CList Int]
+        -- --   def. of any
+        --         === (((toList Empty ==) . toList) (Empty :: CList Int) || any ((toList (Empty :: CList Int) ==) . toList) [])
+lemma_refl cl = cl =*= cl
+                ?(()***Admit)
+
+|]
