@@ -24,6 +24,8 @@ dependencies:
   - liquid-fixpoint >=0.8.0.0
   - haskell-src-meta
   - strings
+  - io-capture
+  - bytestring
 library:
   source-dirs: src
   exposed-modules:

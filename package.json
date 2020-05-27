@@ -4,7 +4,7 @@
   "main": "",
   "scripts": {
     "liquid-spy": "bash -c 'spy run -n \"yarn liquid $0 $1 $2 $3\" src/'",
-    "liquid-thdump-spy": "bash -c 'spy run -n -g=$1 \"yarn liquid --ghc-option=\"-dth-dec-file\" $0 $2 $3\" src/'",
+    "liquid-th-spy": "bash -c 'spy run -n -g=$1 \"yarn liquid --ghc-option=\"-dth-dec-file\" $0 $2 $3\" src/'",
     "spy": "sh -c 'spy run -n \"yarn runghc $0\" src/'",
     "runghc": "stack exec -- runghc -isrc/",
     "ghci": "stack exec -- ghci -isrc/",

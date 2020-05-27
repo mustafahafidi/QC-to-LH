@@ -131,6 +131,13 @@ packages:
       sha256: 876e5a679244143e2a7e74357427c7522a8d61f68a4cc3ae265fe4960b75a2e2
   original:
     hackage: strings-1.1@sha256:0285dec4c8ab262359342b3e5ef1eb567074669461b9b38404f1cb870c881c5c,1617
+- completed:
+    hackage: io-capture-1.0.0@sha256:52fcd84902340df8e860a70bb646503cf3dcd11b4f43e9659ef38e341f68e909,1233
+    pantry-tree:
+      size: 273
+      sha256: 65849cbd4749744033f0e23c317a4cb12b7a24eb0ca9d2610c95b6dc72b3f470
+  original:
+    hackage: io-capture-1.0.0
 snapshots:
 - completed:
     size: 491163

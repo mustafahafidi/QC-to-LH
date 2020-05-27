@@ -8,16 +8,24 @@ module TH.ProofGenerator (
 ) where
     
 import Language.Haskell.TH
+import Language.Haskell.TH.Syntax
 import Language.Haskell.Liquid.UX.QuasiQuoter
 import Language.Haskell.Liquid.ProofCombinators
+import Language.Haskell.Liquid.Liquid
+
 import Language.Haskell.Meta.Parse
 import Language.Haskell.TH.Quote
 
 import Control.Monad
+import System.IO.Capture
+import qualified Data.ByteString.Lazy.Char8 as Char8
 import Text.Read
 
 import Data.List
 import Data.Strings
+
+
+import System.Environment
 
 -- Needed ignores because LH fails with "elaborate elabToInt" on this module
 {-@ ignore lhp @-}
@@ -29,6 +37,16 @@ import Data.Strings
 {-@ LIQUID "--max-case-expand=0" @-}
 -- {-@ LIQUID "--diff" @-}
 -- {-@ ignore TH.ProofGenerator @-}
+
+
+data Option = Ple 
+            | Reflect 
+            | Ignore 
+            | GenProp 
+            | Debug 
+            | Admit 
+            | RunLiquid
+            deriving (Eq, Read, Show)
 
 proof_suffix = "_proof"
 
@@ -56,14 +74,24 @@ lhp = QuasiQuoter {
         bad = error "`lhq` quasiquoter can only be used as a top-level declaration"
 
 
-data Option = Ple | Reflect | Ignore | GenProp | Debug | Admit
-            deriving (Eq, Read, Show)
-
 parseOptions :: String -> Q [Dec]
 parseOptions str = do
         let (os:bs) = lines $ str
         let body      = strJoin "\n" bs
         opts <- parseGivenOptions (filter (\s->not $ strNull s) (strSplitAll "|" os ))
+
+        lenv <- runIO $ lookupEnv "lh-proofgenerator-running"
+        let isRunning = case lenv of
+                            Just "True" -> True
+                            _     -> False
+        -- failWith $ show isRunning
+        
+        when (not isRunning) $ 
+            do result <-runIO $ (do setEnv "lh-proofgenerator-running" "True"
+                                    (result,err,_,_) <- capture (liquid ["-isrc/", "--check-var","asdd","src/Test2.hs","--no-check-imports"]) {- (\e -> return $ "error"++show (e::SomeException)) -}
+                                    setEnv "lh-proofgenerator-running" "False"
+                                    return result)
+               reportWarningToUser $ Char8.unpack result
         when (not (elem GenProp opts) &&
               elem Reflect opts ) $ failWith "you cannot use `reflect` without `genProp`"
         generateProofFromDecl body opts
@@ -140,6 +168,12 @@ generateProofFromDecl decs opts =
                                                                 let proofClss = map  (\(Clause pns body decs) -> (Clause pns (wrapBodyWithProof isAdmit body) decs)) clss
                                                                 in FunD (mkName proofName) proofClss
                                                       ValD _ body decs  -> ValD (VarP (mkName proofName)) (wrapBodyWithProof isAdmit body) decs
+
+                                    reportWarningToUser $ pprint finalBody
+                                    tm <- thisModule
+                                    let (Module pkgName modName) = tm
+                                    reportWarningToUser $ show modName
+                                    
                                     return $ optionDecs ++ lhDec ++ [finalBody]
 
 
@@ -268,6 +302,8 @@ generateProofFromVar varName =
 
 
 -- ====================================UTILITIES=================================
+                  
+-- runLiquid = liquid ["-isrc/","src/Test2.hs"]
 
 -- ======================================================
 -- |Find a signature in a list of given declarations    

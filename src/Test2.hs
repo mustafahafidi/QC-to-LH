@@ -1,3 +1,4 @@
+{-# LANGUAGE  TemplateHaskell #-}
 {-# LANGUAGE  QuasiQuotes #-}
 
 module Test2 where
@@ -21,6 +22,8 @@ import Prelude  hiding (length,
 
 import TH.ProofGenerator
 import Language.Haskell.Liquid.ProofCombinators
+import System.Environment
+import Language.Haskell.TH.Syntax
 
 {-@ LIQUID "--reflection" @-}
 {-@ LIQUID "--ple-local" @-}
@@ -44,9 +47,23 @@ lemma_refl cl@Empty = cl =*= cl
 
 |]
  -}
-[lhp|ple|admit
+
+-- [lhp|runLiquid|]
+
+
+[lhp|ple|admit|debug
 
 testProp7 :: Bool -> [Bool] -> Bool
 testProp7 x (y:ys) = y:[y]==[True]
 
-|]      
+|]   
+
+
+{-@ proof_name ::  {False} @-}
+proof_name ::  Proof
+proof_name = True ***QED
+
+
+{-@ proof2  ::  {True} @-}
+proof2  ::  Proof
+proof2  = True ***QED

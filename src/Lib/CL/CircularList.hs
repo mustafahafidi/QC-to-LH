@@ -458,11 +458,12 @@ instance T.Traversable CList where
 (=*=) :: Eq a  => CList a -> CList a -> Bool
 a =*= b = (any ((toList a ==) . toList) . toList $ allRotations b)
 
-
+{- 
 [lhp|genProp|reflect|ple
 
 lemma_refl :: Eq a => CList a -> Bool
-lemma_refl cl@Empty =  Empty =*= (Empty::CList Int)
+lemma_refl cl@Empty =  cl =*= cl
+                ?(Empty =*= (Empty::CList Int) 
                 === ( any ((toList Empty ==) . toList) . toList $ allRotations (Empty::CList Int) )
                 === ( (\ls -> any ((toList Empty ==) . toList) (toList ls)) $ allRotations (Empty::CList Int) )
                 === ( (\ls -> any ((toList Empty ==) . toList) (toList ls)) (allRotations (Empty::CList Int)) )
@@ -470,16 +471,63 @@ lemma_refl cl@Empty =  Empty =*= (Empty::CList Int)
                 ===  any ((toList Empty ==) . toList) (toList (singleton (Empty::CList Int))) 
                 ===  any ((toList Empty ==) . toList) (toList ((CList [] (Empty::CList Int) []))) 
                 ===  any ((toList Empty ==) . toList) (rightElements (CList [] (Empty::CList Int) [])) 
-        --         ===  any ((toList Empty ==) . toList) ((Empty::CList Int) : ([] ++ (reverse [])))  -- expanding reverse
-        --                                                                 ? (([] ++ (reverse []))
-        --                                                                 === ([] ++ ([]))
-        --                                                                 === []
-        --                                                                 )
-        --         === any ((toList Empty ==) . toList) ((Empty::CList Int) : ([])) 
-        --         === any ((toList Empty ==) . toList) [Empty::CList Int]
-        -- --   def. of any
-        --         === (((toList Empty ==) . toList) (Empty :: CList Int) || any ((toList (Empty :: CList Int) ==) . toList) [])
+                ===  any ((toList Empty ==) . toList) ((Empty::CList Int) : ([] ++ (reverse [])))  -- expanding reverse
+                                                                        ? (([] ++ (reverse []))
+                                                                        === ([] ++ ([]))
+                                                                        === []
+                                                                        )
+                === any ((toList Empty ==) . toList) ((Empty::CList Int) : ([])) 
+                === any ((toList Empty ==) . toList) [Empty::CList Int]
+        --   def. of any
+                === (((toList Empty ==) . toList) (Empty :: CList Int) || any ((toList (Empty :: CList Int) ==) . toList) [])
+                ==! True)
 lemma_refl cl = cl =*= cl
                 ?(()***Admit)
 
 |]
+ -}
+{-@ reflect lemma_refl @-}
+lemma_refl :: Eq a => CList a -> Bool
+lemma_refl cl = cl =*= cl
+
+{-@ ple  lemma_refl_proof @-}
+{-@ lemma_refl_proof :: Eq a => cl:CList a -> { lemma_refl cl } @-}
+lemma_refl_proof :: Eq a => CList a -> Proof
+lemma_refl_proof cl@Empty
+  = (cl =*= cl
+       ? (lemma_refl cl 
+       ===Empty =*= (Empty :: CList Int)
+            -- ===
+            --   ((any ((toList Empty ==) . toList)) . toList
+            --      $ allRotations (Empty :: CList Int))
+            -- ===
+            --   ((\ ls -> (any ((toList Empty ==) . toList)) (toList ls))
+            --      $ allRotations (Empty :: CList Int))
+            -- ===
+            --   ((\ ls -> (any ((toList Empty ==) . toList)) (toList ls))
+            --      (allRotations (Empty :: CList Int)))
+            -- ===
+            --   ((any ((toList Empty ==) . toList))
+            --      (toList (allRotations (Empty :: CList Int))))
+            -- ===
+            --   (any ((toList Empty ==) . toList))
+            --     (toList (singleton (Empty :: CList Int)))
+            -- ===
+            --   (any ((toList Empty ==) . toList))
+            --     (toList ((((CList []) (Empty :: CList Int)) [])))
+            -- ===
+            --   (any ((toList Empty ==) . toList))
+            --     (rightElements (((CList []) (Empty :: CList Int)) []))
+            ===
+              (any ((toList Empty ==) . toList))
+                ((Empty :: CList Int) : ([] ++ (reverse [])))
+            ? (([] ++ (reverse [])) === ([] ++ ([])) === [])
+            ===
+              (any ((toList Empty ==) . toList)) ((Empty :: CList Int) : ([]))
+            === (any ((toList Empty ==) . toList)) [Empty :: CList Int]
+            ===
+              ((((toList Empty ==) . toList) (Empty :: CList Int))
+                 || (any ((toList (Empty :: CList Int) ==) . toList)) [])
+            ))
+      *** QED
+lemma_refl_proof cl = (cl =*= cl ? (() *** Admit)) *** QED
