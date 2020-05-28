@@ -1,0 +1,10 @@
+:set -fno-diagnostics-show-caret -fdiagnostics-color=never -ferror-spans -fno-warn-incomplete-patterns
+:set -fdefer-type-errors -fdefer-typed-holes -fdefer-out-of-scope-variables -fno-warn-unused-binds -fno-warn-unused-matches
+:seti -fno-defer-type-errors -fno-defer-typed-holes -fno-defer-out-of-scope-variables
+:set -fno-hide-source-paths
+:set -fno-warn-missing-signatures
+:set -Wno-unused-imports
+:set -Wno-error=missing-home-modules
+-- :set -package ghc
+-- :set -package Cabal
+:set -XTemplateHaskell

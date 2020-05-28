@@ -26,6 +26,10 @@ dependencies:
   - strings
   - io-capture
   - bytestring
+  # - text
+  # - shelly
+  - process
+  # - async
 library:
   source-dirs: src
   exposed-modules:

@@ -6,3 +6,4 @@ out
 test-plugin
 *.th.hs
 *.cabal
+.ghcid

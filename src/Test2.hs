@@ -1,5 +1,4 @@
-{-# LANGUAGE  TemplateHaskell #-}
-{-# LANGUAGE  QuasiQuotes #-}
+{-# LANGUAGE QuasiQuotes #-}
 
 module Test2 where
 
@@ -7,27 +6,25 @@ module Test2 where
 -- import Prelude hiding (minimum)
 -- import Language.Haskell.Liquid.ProofCombinators hiding ((==.))
 -- import Test_Heap
-import Lib.LH.Prelude
+import           Lib.LH.Prelude
 
-import Prelude  hiding (length, 
-                        (++), 
-                        reverse, 
-                        iterate, 
-                        null, 
-                        splitAt,
-                        any
-                        )
+import           Prelude                                  hiding (any, iterate,
+                                                           length, null,
+                                                           reverse, splitAt,
+                                                           (++))
 -- import Lib.QC.Heap (unit, empty, (==?),  toList,toList', invariant, Heap(..), (<=?))
 -- import Lib.CL.CircularList
 
-import TH.ProofGenerator
-import Language.Haskell.Liquid.ProofCombinators
-import System.Environment
-import Language.Haskell.TH.Syntax
+import           Language.Haskell.Liquid.ProofCombinators
+import           Language.Haskell.TH.Syntax
+import           System.Environment
+import           TH.ProofGenerator
 
 {-@ LIQUID "--reflection" @-}
 {-@ LIQUID "--ple-local" @-}
-{- 
+-- {-@ LIQUID "--diff" @-}
+
+{-
 
 data CList a = Empty
              | CList [a] a [a]
@@ -49,14 +46,22 @@ lemma_refl cl@Empty = cl =*= cl
  -}
 
 -- [lhp|runLiquid|]
+-- gdfgfd
 
-
-[lhp|ple|admit|debug
+[lhp|ple|reflect|genProp|runLiquid
 
 testProp7 :: Bool -> [Bool] -> Bool
-testProp7 x (y:ys) = y:[y]==[True]
+testProp7 x y = False
+|]
 
-|]   
+-- [lhp|ple|genProp|runLiquid
+
+-- testProp8 :: Bool -> [Bool] -> Bool
+-- testProp8 x (y:ys) = y:[y]==[True]
+
+{- -- |] -}
+
+{- 
 
 
 {-@ proof_name ::  {False} @-}
@@ -67,3 +72,6 @@ proof_name = True ***QED
 {-@ proof2  ::  {True} @-}
 proof2  ::  Proof
 proof2  = True ***QED
+ -}
+{- 
+main = putStr "helloworld" -}

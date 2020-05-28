@@ -24,7 +24,8 @@ This project aims to facilitate the migration/conversion of QuickCheck propertie
 - :heavy_check_mark: Build refinement type and proof body of the parsed property
 - :heavy_check_mark: Build a syntactic sugar quasiquoter
 - :heavy_check_mark: Possibility to pass options to the custom quasiquoter
-- :heavy_check_mark: Parse options to automatically generate ple annotation, ignore, reflect
+- :heavy_check_mark: Parse options to automatically generate ple, ignore, reflect annotations
+- :heavy_check_mark: Added option to run LH on a single proof
 - [..] Give it a try on CList
 - [..] Give it a try on Heap
 
@@ -36,8 +37,7 @@ This project aims to facilitate the migration/conversion of QuickCheck propertie
 
 #### Proof Generator
 
-- For now parsing supports only normal currying (no functions as arguments (e.g. (a->b) -> c))
-- It's possible to refer to the proof name as propertyName_proof. e.g. it's possible to call the proof using that name from other proofs, or in liquid options (such as `{-@ ple propertyName_proof @-}`)
+- TODO: write something here
 
 #### CList and Skew Heap Proofs
 

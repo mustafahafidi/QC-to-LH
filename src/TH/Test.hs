@@ -151,7 +151,7 @@ testProp5 x y = True
 -- Pass options to `lhp`
 ---------
 
-[lhp|ple|reflect|genProp|admit
+[lhp|ple|reflect|genProp|admit|runLiquid
 
 testProp6 :: Bool -> Bool -> Bool
 testProp6 x y = True
@@ -159,15 +159,14 @@ testProp6 x y = True
 |]
 
 
-testProp7 :: Bool -> Bool -> Bool
-testProp7 x y = True:[]==[True]
 
-[lhp|ple|admit
+
+[lhp|ple|reflect|genProp|runLiquid
 
 testProp7 :: Bool -> [Bool] -> Bool
-testProp7 x (y:ys) = y:[y]==[True]
+testProp7 x y = y == [True]
 
-|]      
+|]
 
 
 
