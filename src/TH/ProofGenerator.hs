@@ -20,6 +20,7 @@ import Control.Monad
 import Control.Exception
 import System.IO
 import System.Process
+import Text.Regex
 
 import qualified Data.ByteString.Lazy.Char8 as Char8
 import Text.Read
@@ -49,6 +50,7 @@ data Option = Ple
             | Debug 
             | Admit 
             | RunLiquid
+            | RunLiquidW
             deriving (Eq, Read, Show)
 
 proof_suffix = "_proof"
@@ -167,16 +169,18 @@ generateProofFromDecl decs opts =
                                                 Just "True" -> True
                                                 _           -> False   
                                 
-                            runIO $ putStrLn $ "LIQUID IS RUNNING: " ++ show isRunning
-                            when (elem RunLiquid opts && not isRunning) $  
+                            -- runIO $ putStrLn $ "LIQUID IS RUNNING: " ++ show isRunning
+                            let shouldRunLiquid = elem RunLiquid opts
+                            let shouldRunLiquidWarnings = elem RunLiquidW opts
+                            when ((shouldRunLiquid || shouldRunLiquidWarnings) &&
+                                  not isRunning) $  
                                     do  res <- runIO $ 
                                             (do setEnv "lhp-running" "True"
 
                                                 argss <- getArgs
                                                 let includeArgs = filter (\s->strStartsWith s "-i") argss
                                                 -- putStrLn $ "argsssss"++show includeArgs
-                                                    -- "-isrc/","src/Test2.hs"
-
+                                                
                                                 -- RUNNING through CLI
                                                 (_, output, _) <- readProcessWithExitCode "liquid" 
                                                                 (includeArgs++[
@@ -193,11 +197,20 @@ generateProofFromDecl decs opts =
 
                                                 setEnv "lhp-running" "False"
                                                 -- indent the output
-                                                let finOutput = strJoin "\n " $ lines output
-                                                return finOutput
+                                                let substituteRanges = \s -> subRegex (mkRegex "^[ ]*[0-9]+ [|] .*") s ""
+                                                let finOutput = -- ("   "++) $ show $
+                                                            strJoin "  \n   " $ 
+                                                            -- filter (not . strNull) $ 
+                                                            -- map (substituteRanges) $ 
+                                                            lines  $
+                                                            last $ strSplitAll "RESULT:" $
+                                                            output
+                                                return  finOutput
                                             )
-                                        reportWarningToUser $  "Running liquidhaskell on: "++ proofName ++ "\n "++ res
-                            -- failWith "Test\n Testnewline"
+                                        when (shouldRunLiquidWarnings) $ reportWarningToUser $  "Result liquidhaskell on: "++ proofName ++  res ++ " \n  "
+                            -- failWith $ "Result liquidhaskell on: "++ proofName ++ "\n \n "
+                            
+
 
                             return $ optionDecs ++ lhDec ++ [finalBody]
 

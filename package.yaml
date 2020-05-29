@@ -26,6 +26,7 @@ dependencies:
   - strings
   - io-capture
   - bytestring
+  - regex-compat
   # - text
   # - shelly
   - process

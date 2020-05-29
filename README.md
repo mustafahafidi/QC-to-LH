@@ -39,7 +39,7 @@ This project aims to facilitate the migration/conversion of QuickCheck propertie
 
 - TODO: write something here
 
-#### CList and Skew Heap Proofs
+#### CList and Skew Heap Proofs Case study
 
 - To run liquid `stack exec -- liquid -isrc/ src/Main.hs`
 

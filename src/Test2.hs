@@ -48,18 +48,24 @@ lemma_refl cl@Empty = cl =*= cl
 -- [lhp|runLiquid|]
 -- gdfgfd
 
-[lhp|ple|reflect|genProp|runLiquid
+-- [lhp|ple|reflect|genProp|runLiquid
 
-testProp7 :: Bool -> [Bool] -> Bool
-testProp7 x y = False
+-- testProp7 :: Bool
+-- testProp7 = True
+
+-- |]
+
+
+[lhp|reflect|ple|genProp
+testProp8 :: Bool -> Bool
+testProp8 b  = False
 |]
 
--- [lhp|ple|genProp|runLiquid
 
--- testProp8 :: Bool -> [Bool] -> Bool
--- testProp8 x (y:ys) = y:[y]==[True]
-
-{- -- |] -}
+[lhp|ple|reflect|genProp|runLiquid
+testProp9 :: Bool -> [Bool] -> Bool
+testProp9 x ls = True
+|]
 
 {- 
 
