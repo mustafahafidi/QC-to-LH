@@ -62,9 +62,9 @@ testProp8 b  = False
 |]
 
 
-[lhp|ple|reflect|genProp|runLiquid
-testProp9 :: Bool -> [Bool] -> Bool
-testProp9 x ls = True
+[lhp|ple|reflect|genProp|debug
+property :: Bool -> [Bool] -> Bool
+property x ls = SOMETHING
 |]
 
 {- 

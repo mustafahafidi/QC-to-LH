@@ -35,14 +35,110 @@ This project aims to facilitate the migration/conversion of QuickCheck propertie
 
 ## Usage
 
-#### Proof Generator
+This repository provides the `lhp` QuasiQuoter that generates boilerplate code to write proofs in liquidhaskell, and possibly tries to help in proving them.
+Take this as an example:
 
-- TODO: write something here
+```haskell
+[lhp|
+property :: Bool -> [Bool] -> Bool
+property x ls = SOMETHING
+|]
+```
 
-#### CList and Skew Heap Proofs Case study
+Will generate a proof like this:
 
-- To run liquid `stack exec -- liquid -isrc/ src/Main.hs`
+```haskell
+{-@ property_proof :: p1:Bool -> p2:[Bool] -> { property p1 p2 } @-}
+property_proof :: Bool -> [Bool] -> Bool
+property_proof x ls = SOMETHING
+                    ***QED
+```
 
-- To run liquid continously by watching file changes, run `spy run -n "stack exec -- liquid -isrc/ src/Main.hs" src/`
+The `lhp` QQ used like this, generates only `property_proof` but not the declaration of `property` passed in to it. That's why, to avoid duplicating the code, you can give the option `genProp` to `lhp` to do this for you:
+
+```haskell
+[lhp|genProp
+property :: Bool -> [Bool] -> Bool
+property x ls = SOMETHING
+|]
+```
+
+Will generate both the proof and the property.
+
+```haskell
+property :: Bool -> [Bool] -> Bool
+property x ls = SOMETHING
+
+{-@ property_proof :: p1:Bool -> p2:[Bool] -> { property p1 p2 } @-}
+property_proof :: Bool -> [Bool] -> Bool
+property_proof x ls = SOMETHING
+                    ***QED
+```
+
+You might want to use reflection on `property` and PLE on `propert_proof`, so you can either use `lhp` options:
+
+```haskell
+[lhp|genProp|reflect|ple
+property :: Bool -> [Bool] -> Bool
+property x ls = SOMETHING
+|]
+```
+
+Or, manually add LH annotations as:
+
+```haskell
+{-@ reflect property @-}
+{-@ ple property_proof @-}
+[lhp|genProp
+property :: Bool -> [Bool] -> Bool
+property x ls = SOMETHING
+|]
+```
+
+#### Running LiquidHaskell locally to a proof
+
+Since, for now, Liquidhaskell is a build dependency of this package, you could use `runLiquidW` option to run liquidhaskell locally on a proof and see its result as a warning:
+
+```haskell
+[lhp|ple|reflect|genProp|runLiquidW
+property :: Bool -> [Bool] -> Bool
+property x ls = SOMETHING
+|]
+```
+
+Will show `LH`'s result on the binders `property` and `property_proof` as a warning. Why? This is useful for IDE integration, because those warnings will automatically show in your IDE without you having to integrate liquidhaskell.
+
+If you don't like/want the warnings, and you have an extension that reads `.liquid` files to show you the errors ([like this one for vscode](https://marketplace.visualstudio.com/items?itemName=MustafaHafidi.liquidhaskell-diagnostics)), you can use the option `runLiquid` instead, which will run silently liquid on the proof.
+
+#### Debugging
+
+To see what `lhp` has generated, you can run ghci/ghc/liquidhaskell with the ghc option `"-dth-dec-file"` which will generate "\*.th.hs" files for each module where you Template Haskell (including the QQ `lhp`).
+If you don't want to see all of that, and you want to see only the LH annotations that `lhp` has generated, you can use the option `debug`:
+
+```haskell
+[lhp|ple|reflect|genProp|debug
+property :: Bool -> [Bool] -> Bool
+property x ls = SOMETHING
+|]
+```
+
+Will show you this warnings in your IDE/ghci/ghc:
+
+```haskell
+    [qc-to-lh]: ple property_proof
+
+    [qc-to-lh]: reflect property
+
+    [qc-to-lh]: property_proof :: p_0:Bool  -> p_1: [Bool]  -> {v:Proof | property p_2 p_3}
+```
+
+## CList and Skew Heap Proofs Case studies
+
+- `src/CList_Proofs.hs` contains the formal proofs of the QuickCheck properties in `src/Lib/CL/QuickCheck.hs`
+- `src/Heap_Proofs.hs` contains the formal proofs of the QuickCheck properties in `src/Lib/QC/Heap.hs`
+
+- To run LH on them: `stack exec -- liquid -isrc/ {target_file}`
+
+- To run LH continously by watching file changes, run `spy run -n "stack exec -- liquid -isrc/ {target_file}" src/`
 
 In `package.json` are provided some other commands that run liquidhaskell with `stack` which you can either copy paste in your terminal, or run using `yarn` or `npm`
