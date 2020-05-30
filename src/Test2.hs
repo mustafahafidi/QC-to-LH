@@ -22,16 +22,17 @@ import           System.Environment
 import           TH.ProofGenerator
 import Language.Haskell.Liquid.ProofCombinators
 import LiquidHaskell
+import Test3
+-- import           Lib.CL.CircularList (CList(..))
+
 
 {-@ LIQUID "--ple-local" @-}
 {-@ LIQUID "--reflection" @-}
+{-@ LIQUID "--no-adt" @-}
 
-data CList a = Empty
-             | CList [a] a [a]
 
-{-@ reflect singleton @-}
-singleton :: a -> CList a
-singleton e = CList [] e [] 
+-- data CList a = Empty
+--              | CList [a] a [a]
 
 {-@ reflect toList @-}
 toList :: CList a -> [a]
@@ -57,3 +58,9 @@ lemma_refl = Empty =*= Empty
 lemma_refl_proof :: Proof
 lemma_refl_proof = lemma_refl
                 *** QED
+
+
+-- {-@ reflect update @-}
+-- update :: a -> CList a -> CList a
+-- update v Empty = CList [] v []
+-- update v (CList l _ r) = CList l v r

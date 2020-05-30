@@ -7,3 +7,4 @@ test-plugin
 *.th.hs
 *.cabal
 .ghcid
+lh-pocs/

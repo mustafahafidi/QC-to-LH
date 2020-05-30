@@ -17,12 +17,12 @@ import Prelude  hiding (length,
 import Lib.LH.Prelude 
 import Language.Haskell.Liquid.ProofCombinators
 
-
+{-@ LIQUID "--no-adt" @-}
 {-@ LIQUID "--short-names"    @-}
 {-@ LIQUID "--reflection"    @-}
 {-@ LIQUID "--ple-local"    @-}
 -- {-@ LIQUID "--diff"    @-}
-
+{- 
 
 
 [lhp|genProp|reflect|ple
@@ -131,6 +131,7 @@ prop_fromList_focus :: Bool
 prop_fromList_focus = focus (fromList ([1]::[Int])) == Just 1
 
 |]
+ -}
 ------- Deep properties 
 
 
@@ -159,6 +160,31 @@ prop_fromList_focus = focus (fromList ([1]::[Int])) == Just 1
 --                 ?(()***Admit)
 
 -- |]
+
+-- {-@ data CList a = Empty
+--              | CList [a] a [a]
+--              deriving (Eq, Show) @-}
+
+{-@ reflect eqf @-}
+eqf ::  CList Int -> CList Int -> Bool
+eqf a b = toList a == toList b
+
+{-@ reflect =*= @-}
+{-@ infix 4 =*= @-}
+(=*=) :: CList Int -> CList Int -> Bool
+x =*= y = (any (eqf x) (toList (allRotations y)))
+
+
+{-@ reflect lemma_refl @-}
+lemma_refl :: CList Int -> Bool
+lemma_refl cl = cl =*= cl
+
+{-@ ple lemma_refl_proof @-}
+{-@ lemma_refl_proof ::  cl:CList Int -> { lemma_refl cl } @-}
+lemma_refl_proof cl@Empty = lemma_refl cl
+                *** QED 
+lemma_refl_proof cl = lemma_refl cl
+                *** QED
 
 
 

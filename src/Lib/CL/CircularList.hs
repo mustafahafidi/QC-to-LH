@@ -92,6 +92,7 @@ import Test.QuickCheck.Gen
 {-@ LIQUID "--no-totality" @-}
 {-@ LIQUID "--no-termination-check" @-}
 {-@ LIQUID "--higherorder" @-}
+{-@ LIQUID "--no-adt" @-}
 
 -- To convince LH of the safety of this file
 {-@ ignore rotN @-}
