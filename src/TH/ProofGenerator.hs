@@ -9,20 +9,17 @@ module TH.ProofGenerator (
     
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax
+import Language.Haskell.TH.Quote
 import Language.Haskell.Liquid.UX.QuasiQuoter
 import Language.Haskell.Liquid.ProofCombinators
 import Language.Haskell.Liquid.Liquid
 
 import Language.Haskell.Meta.Parse
-import Language.Haskell.TH.Quote
 
 import Control.Monad
 import Control.Exception
 import System.IO
 import System.Process
-import Text.Regex
-
-import qualified Data.ByteString.Lazy.Char8 as Char8
 import Text.Read
 
 import Data.List
@@ -31,6 +28,7 @@ import Data.Strings
 
 import System.Environment
 
+--------------------------------------------------------------
 -- Needed ignores because LH fails with "elaborate elabToInt" on this module
 {-@ ignore lhp @-}
 {-@ ignore generateProofFromExp @-}
@@ -39,8 +37,7 @@ import System.Environment
 {-@ ignore generateFromOptions @-}
 {-@ ignore parseOptions @-}
 {-@ LIQUID "--max-case-expand=0" @-}
--- {-@ LIQUID "--diff" @-}
--- {-@ ignore TH.ProofGenerator @-}
+--------------------------------------------------------------
 
 
 data Option = Ple 
@@ -48,7 +45,8 @@ data Option = Ple
             | Ignore 
             | GenProp 
             | Debug 
-            | Admit 
+            | Admit
+            | PatternMatch
             | RunLiquid
             | RunLiquidW
             deriving (Eq, Read, Show)
@@ -85,6 +83,7 @@ parseOptions str = do
         let body      = strJoin "\n" bs
         opts <- parseGivenOptions (filter (\s->not $ strNull s) (strSplitAll "|" os ))
         
+
         when (not (elem GenProp opts) &&
               elem Reflect opts ) $ failWith "you cannot use `reflect` without `genProp`"
         generateProofFromDecl body opts
@@ -108,114 +107,132 @@ generateProofFromDecl decs opts =
     case parseDecs decs of
         Left err -> failWith $ "The given declaration cannot be parsed: " ++ decs++err
         Right parsedDecls -> do
-
             -- checking declarations
             when (length parsedDecls < 2) (failWith $ "Please provide both type signature and body of the function.")
+
             -- getting the signature
             let (sd:(bodyDs@(bd:bs))) = parsedDecls
             let (SigD nm sigType) = sd
-            -- reportWarningToUser $ show $ bodyDs
+
             -- generate name for the proof
             let proofName = show nm ++proof_suffix
-            -- let sigTypes = strSplitAll "->" $ pprint (SigD (mkName proofName) sigType)
+            
             -- check that it returns a boolean
             case isSuffixOf "Bool" (pprint sd) of
                 False -> failWith "The given declaration must return a boolean to be transformed to a LiquidHaskell proof"
                 
                 True  -> do
 
-                        -- handle options
-                            let isDebug = elem Debug opts
-                            optionDecs <- generateFromOptions (show nm) parsedDecls opts 
+            -- handle options
+                let isDebug = elem Debug opts
+                optionDecs <- generateFromOptions (show nm) parsedDecls opts 
 
-                        -- add parameters to signature
-                            (typeWP, pr) <- addParamsToType sigType []
-                            -- reportWarningToUser $ show typeWP ++ show pr
-                            -- reportWarningToUser $ show sigTypesWP
-                        -- replace return type with refinement type
-                            let sigTypesWP = strSplitAll "->" typeWP
-                            let fr = init sigTypesWP --splitAt (length sigTypesWP - 1) sigTypesWP
-                            let params = init pr --splitAt (length pr - 1) pr
-                            let replacedRetTypeSig = (strJoin " -> " $
-                                                            fr ++ ["{v:Proof | "++show nm++" "++(strJoin " " (map (\p->show p) params))++"}"])
-                        -- Put back `for all` and context if there was
-                            wildT <- wildCardT
-                            let forAllSig =    (case sigType of
-                                                        ForallT tvb ctx _ -> init $ pprint (ForallT tvb ctx wildT)
-                                                        _ -> "")
-                            let finalRefSign = (show $ mkName proofName) ++ " :: "
-                                                ++ forAllSig
-                                                ++ replacedRetTypeSig
-                            when isDebug $ reportWarningToUser $ finalRefSign
-                            lhDec <- lqDec finalRefSign
-                        -- generate the body
-                            -- add the ***QED to the body for each clause
+            -- add parameters to signature
+                (typeWP, pr) <- addParamsToType sigType []
 
-                            -- (FunD nm clss)
-                            let isAdmit = elem TH.ProofGenerator.Admit opts
-                            -- failWith $ show bd
+            -- replace return type with refinement type
+                let sigTypesWP = strSplitAll "->" typeWP
+                let fr = init sigTypesWP --splitAt (length sigTypesWP - 1) sigTypesWP
+                let params = init pr --splitAt (length pr - 1) pr
+                let replacedRetTypeSig = (strJoin " -> " $
+                                                fr ++ ["{v:Proof | "++show nm++" "++(strJoin " " (map (\p->show p) params))++"}"])
+            -- Put back `for all` and context if there was
+                wildT <- wildCardT
+                let forAllSig =    (case sigType of
+                                            ForallT tvb ctx _ -> init $ pprint (ForallT tvb ctx wildT)
+                                            _ -> "")
+                let finalRefSign = (show $ mkName proofName) ++ " :: "
+                                    ++ forAllSig
+                                    ++ replacedRetTypeSig
+                when isDebug $ reportWarningToUser $ finalRefSign
+                lhDec <- lqDec finalRefSign
 
-                            let finalBody = case bd of
-                                                FunD _ clss -> 
-                                                        let proofClss = map  (\(Clause pns body decs) -> (Clause pns (wrapBodyWithProof isAdmit body) decs)) clss
-                                                        in FunD (mkName proofName) proofClss
-                                                ValD _ body decs  -> ValD (VarP (mkName proofName)) (wrapBodyWithProof isAdmit body) decs
-                            (Module _ (ModName mdName)) <- thisModule
-                            spliceLocation <- location
+            -- generate the body
+                (TyConI (DataD _ _ _ _ constrs _)) <- reify $ mkName "Test"
 
-                            -- run liquidhaskell on binder if asked
-                            lenv <- runIO $ lookupEnv "lhp-running"
-                            let isRunning = case lenv of
-                                                Just "True" -> True
-                                                _           -> False   
-                                
-                            -- runIO $ putStrLn $ "LIQUID IS RUNNING: " ++ show isRunning
-                            let shouldRunLiquid = elem RunLiquid opts
-                            let shouldRunLiquidWarnings = elem RunLiquidW opts
-                            when ((shouldRunLiquid || shouldRunLiquidWarnings) &&
-                                  not isRunning) $  
-                                    do  res <- runIO $ 
-                                            (do setEnv "lhp-running" "True"
+                let isAdmit = elem TH.ProofGenerator.Admit opts
+                finalBody <- case bd of
+                                    FunD _ clss -> (do
+                                        -- pattern matching generation
+                                        pmClss <- patternMatchClauses constrs (head clss)
 
-                                                argss <- getArgs
-                                                let includeArgs = filter (\s->strStartsWith s "-i") argss
-                                                -- putStrLn $ "argsssss"++show includeArgs
-                                                
-                                                -- RUNNING through CLI
-                                                (_, output, _) <- readProcessWithExitCode "liquid" 
-                                                                (includeArgs++[
-                                                                "--check-var",proofName,
-                                                                "--check-var",show nm,
-                                                                "--no-check-imports",
-                                                                loc_filename spliceLocation
-                                                                ]) ""
+                                        let proofClss = map (\(Clause pns body decs) -> 
+                                                        (Clause pns (wrapBodyWithProof isAdmit body) decs)) 
+                                                        pmClss
+                                         in return $ FunD (mkName proofName) proofClss)
+                                    ValD _ body decs  -> return $ ValD (VarP (mkName proofName)) (wrapBodyWithProof isAdmit body) decs
+                
 
-                                                -- RUNNING through Language.Haskell.Liquid.Liquid
-                                                -- let includeArgs = filter (\s->strStartsWith s "-i") argss
-                                                -- let liquidCommand = liquid $ includeArgs ++ ["--check-var",  show nm,"--check-var",  proofName, loc_filename spliceLocation,"--no-check-imports"] 
-                                                -- catch (liquidCommand) (\e -> putStrLn (show (e::SomeException)))
+                -- run liquidhaskell on binder if asked
+                lenv <- runIO $ lookupEnv "lhp-running"
+                let isRunning = case lenv of
+                                    Just "True" -> True
+                                    _           -> False   
+            
+                let shouldRunLiquid = elem RunLiquid opts
+                let shouldRunLiquidWarnings = elem RunLiquidW opts
+                when ((shouldRunLiquid || shouldRunLiquidWarnings) &&
+                        not isRunning) $  
+                        do  res <- runLiquidHaskell (show nm)
+                            when (shouldRunLiquidWarnings) $ reportWarningToUser $  "Result liquidhaskell on: "++ proofName ++  res ++ " \n  "
 
-                                                setEnv "lhp-running" "False"
-                                                -- indent the output
-                                                let substituteRanges = \s -> subRegex (mkRegex "^[ ]*[0-9]+ [|] .*") s ""
-                                                let finOutput = -- ("   "++) $ show $
-                                                            strJoin "  \n   " $ 
-                                                            -- filter (not . strNull) $ 
-                                                            -- map (substituteRanges) $ 
-                                                            lines  $
-                                                            last $ strSplitAll "RESULT:" $
-                                                            output
-                                                return  finOutput
-                                            )
-                                        when (shouldRunLiquidWarnings) $ reportWarningToUser $  "Result liquidhaskell on: "++ proofName ++  res ++ " \n  "
-                            -- failWith $ "Result liquidhaskell on: "++ proofName ++ "\n \n "
-                            
+                return $ optionDecs ++ lhDec ++ [finalBody]
 
 
-                            return $ optionDecs ++ lhDec ++ [finalBody]
+-- ======================================================
+-- |Generates pattern matching given a data constructors 
+-- and a single declaration clause
+-- ======================================================
+patternMatchClauses :: [Con] -> Clause -> Q [Clause]
+patternMatchClauses cons (Clause ((VarP nm):vs) b ds) = do
+    w <- wildP
+    return $ map (replacePattern w) cons
+        where
+            bangsToWild w = map $ const w
+            replacePattern w (NormalC nmCons bngs) = Clause (AsP nm (ConP nmCons (bangsToWild w bngs)):vs) b ds
+            replacePattern w unimplemented = (Clause ((VarP nm):vs) b ds)
+patternMatchClauses _ _ = failWith $ "Unimplemented case for pattern matching generation"
 
 
 
+-- ======================================================
+-- |Run Liquid and return result
+-- ======================================================
+runLiquidHaskell :: String ->  Q String
+runLiquidHaskell propName = 
+        do
+            spliceLocation <- location
+            runIO $ do  setEnv "lhp-running" "True"
+                        argss <- getArgs
+                        let includeArgs = filter (\s->strStartsWith s "-i") argss
+                        -- putStrLn $ "argsssss"++show includeArgs
+                        
+                        -- RUNNING through CLI
+                        (_, output, _) <- readProcessWithExitCode "liquid" 
+                                        (includeArgs++[
+                                        "--check-var", propName ++ proof_suffix,
+                                        "--check-var", propName,
+                                        "--no-check-imports",
+                                        loc_filename spliceLocation
+                                        ]) ""
+
+                        -- RUNNING through Language.Haskell.Liquid.Liquid
+                        -- let includeArgs = filter (\s->strStartsWith s "-i") argss
+                        -- let liquidCommand = liquid $ includeArgs ++ ["--check-var",  show nm,"--check-var",  proofName, loc_filename spliceLocation,"--no-check-imports"] 
+                        -- catch (liquidCommand) (\e -> putStrLn (show (e::SomeException)))
+
+                        setEnv "lhp-running" "False"
+                        -- indent the output
+                        -- let substituteRanges = \s -> subRegex (mkRegex "^[ ]*[0-9]+ [|] .*") s ""
+                        let finOutput = -- ("   "++) $ show $
+                                    strJoin "  \n   " $ 
+                                    -- filter (not . strNull) $ 
+                                    -- map (substituteRanges) $ 
+                                    lines  $
+                                    last $ strSplitAll "RESULT:" $
+                                    output
+                        return  finOutput
+                                            
 
 -- ======================================================
 -- |Given the property declaration, generates additional declarations/annotations that depend on the options 
@@ -266,22 +283,6 @@ addParamsToTypeStr tp acc = do let (p,ps) = strSplit "->" tp
                                let finalParts = (show nName ++ ':':p) : filter (not . strNull) [restWP]
                                return (strJoin "->" finalParts,nName:addedNames)
 
--- ===================
-
-           
--- addParamsToType (ForallT tvb ctx tp) acc = do (rect, params) <- addParamsToType tp acc
---                                               return ((ForallT tvb ctx rect), acc++params)
-           
--- addParamsToType (AppT t1 t2) acc = do (rect1,p1) <- addParamsToType t1 []
---                                       (rect2,p2) <- addParamsToType t2 []
---                                       return ((AppT rect1 rect2),acc++p1++p2)
-
--- addParamsToType (VarT nm) acc = do nName <- newName "p"
---                                    return ((VarT (mkName $ show nName++":"++show nm)), [nName])
--- addParamsToType (ConT nm) acc = do nName <- newName "p"
---                                    return ((ConT (mkName $ show nName++":"++show nm)), [nName])
--- addParamsToType v acc = return (v, acc)
--- -- addParamsToType v        = failWith $ "Cannot parse the signature to add LH parameters in it:"++" don't konw how to treat " ++ (show v)
 
 
 -- ======================================================

@@ -97,7 +97,6 @@ import Test.QuickCheck.Gen
 {-@ ignore rotN @-}
 
 
-
 -- | A functional ring type.
 data CList a = Empty
              | CList [a] a [a]
@@ -453,10 +452,7 @@ instance T.Traversable CList where
 
 
 
-{-@ reflect =*= @-}
-{-@ infix 4 =*= @-}
-(=*=) :: Eq a  => CList a -> CList a -> Bool
-a =*= b = (any ((toList a ==) . toList) . toList $ allRotations b)
+
 
 {- 
 [lhp|genProp|reflect|ple
@@ -486,6 +482,15 @@ lemma_refl cl = cl =*= cl
 
 |]
  -}
+{- 
+{-@ LIQUID "--ple-local" @-}
+
+{-@ reflect =*= @-}
+{-@ infix 4 =*= @-}
+(=*=) :: Eq a  => CList a -> CList a -> Bool
+a =*= b = any ((toList a ==) . toList)  (toList ( singleton b)) --(any ((toList a ==) . toList) . toList $ allRotations b)
+
+
 {-@ reflect lemma_refl @-}
 lemma_refl :: Eq a => CList a -> Bool
 lemma_refl cl = cl =*= cl
@@ -494,9 +499,22 @@ lemma_refl cl = cl =*= cl
 {-@ lemma_refl_proof :: Eq a => cl:CList a -> { lemma_refl cl } @-}
 lemma_refl_proof :: Eq a => CList a -> Proof
 lemma_refl_proof cl@Empty
-  = (cl =*= cl
+  = cl =*= cl
        ? (lemma_refl cl 
-       ===Empty =*= (Empty :: CList Int)
+       === cl =*= cl
+      --  ===( any (\x -> toList cl == toList x)  (toList (allRotations cl)))
+
+      --                                       ? ( (toList (allRotations cl))
+      --                                       ===  toList (singleton cl)
+      --                                       ===  toList (CList [] Empty [])
+      --                                       ===  rightElements (CList [] Empty [])
+      --                                       ===  Empty : ([] ++ (reverse []))
+      --                                       ===  Empty : ([])
+      --                                       ===  [Empty]
+
+                                            
+      --                                       )
+      --  === ( any ((toList cl ==) . toList )  ([Empty]))
             -- ===
             --   ((any ((toList Empty ==) . toList)) . toList
             --      $ allRotations (Empty :: CList Int))
@@ -518,16 +536,49 @@ lemma_refl_proof cl@Empty
             -- ===
             --   (any ((toList Empty ==) . toList))
             --     (rightElements (((CList []) (Empty :: CList Int)) []))
-            ===
-              (any ((toList Empty ==) . toList))
-                ((Empty :: CList Int) : ([] ++ (reverse [])))
-            ? (([] ++ (reverse [])) === ([] ++ ([])) === [])
-            ===
-              (any ((toList Empty ==) . toList)) ((Empty :: CList Int) : ([]))
-            === (any ((toList Empty ==) . toList)) [Empty :: CList Int]
-            ===
-              ((((toList Empty ==) . toList) (Empty :: CList Int))
-                 || (any ((toList (Empty :: CList Int) ==) . toList)) [])
-            ))
-      *** QED
+            -- ===
+            --   (any ((toList Empty ==) . toList))
+            --     ((Empty :: CList Int) : ([] ++ (reverse [])))
+            -- ? (([] ++ (reverse [])) === ([] ++ ([])) === [])
+            -- ===
+            --   (any ((toList Empty ==) . toList)) ((Empty :: CList Int) : ([]))
+            -- === (any ((toList Empty ==) . toList)) [Empty :: CList Int]
+            -- ===
+            --   ((((toList Empty ==) . toList) (Empty :: CList Int))
+            --      || (any ((toList (Empty :: CList Int) ==) . toList)) [])
+            )
+
+      *** Admit
 lemma_refl_proof cl = (cl =*= cl ? (() *** Admit)) *** QED
+ -}
+
+
+-- {-@ LIQUID "--ple-local" @-}
+-- {-@ reflect toListRef @-}
+-- toListRef :: CList a -> [a]
+-- toListRef Empty = []
+-- toListRef (CList l f r) = f : (r ++ (reverse l))
+
+
+-- {-@ reflect eqToList @-}
+-- eqToList ::  CList Int -> CList Int -> Bool
+-- eqToList a b = True
+
+-- {-@ reflect =*= @-}
+-- {-@ infix 4 =*= @-}
+-- (=*=) :: CList Int -> CList Int -> Bool
+-- x =*= Empty = (any (eqToList x) ((toListRef (allRotations Empty))))
+-- x =*= (CList l f r) = (any (eqToList x) (toListRef (allRotations (CList l f r))))
+
+-- {-@ reflect lemma_refl @-}
+-- lemma_refl :: Bool
+-- lemma_refl = Empty =*= Empty
+
+-- {-@ ple lemma_refl_proof @-}
+-- {-@ lemma_refl_proof ::  { lemma_refl  } @-}
+-- lemma_refl_proof :: Proof
+-- lemma_refl_proof = lemma_refl
+--                 -- === Empty =*= Empty
+--                 -- === (any (eqToList Empty) [])
+--                 -- === False
+--             *** QED

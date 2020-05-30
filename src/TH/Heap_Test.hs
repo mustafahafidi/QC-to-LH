@@ -47,7 +47,7 @@ prop_Unit x = unit x ==? [x]
 
 |]
 
-
+-- Deep properties
 
 [lhp|genProp|reflect|ple
 
@@ -62,7 +62,7 @@ prop_Size h@(Node v hl hr)  = size h == length (toList h)
 |]
 
 
-[lhp|genProp|reflect|ple|ignore
+[lhp|genProp|reflect|ple|admit
 
 toList_distProp :: Eq a => [Heap a] -> [Heap a] -> Bool
 toList_distProp h1 h2 = toList' (h1++h2) == (toList' h1 ++ toList' h2)

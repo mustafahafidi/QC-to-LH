@@ -18,10 +18,10 @@ import Lib.LH.Prelude
 import Language.Haskell.Liquid.ProofCombinators
 
 
-{-@ LIQUID "--reflection"    @-}
 {-@ LIQUID "--short-names"    @-}
--- {-@ LIQUID "--diff"    @-}
+{-@ LIQUID "--reflection"    @-}
 {-@ LIQUID "--ple-local"    @-}
+-- {-@ LIQUID "--diff"    @-}
 
 
 
@@ -131,14 +131,14 @@ prop_fromList_focus :: Bool
 prop_fromList_focus = focus (fromList ([1]::[Int])) == Just 1
 
 |]
+------- Deep properties 
 
--- Deep properties 
 
-{-@ reflect =*= @-}
-{-@ infix 4 =*= @-}
-(=*=) :: Eq a  => CList a -> CList a -> Bool
-a =*= b = (any ((toList a ==) . toList) . toList $ allRotations b)
 
+
+--     asd 1 [1]
+--   ===  any (1 ==) [1]
+--     ***QED
 
 -- prop_list :: CList Int -> Bool
 -- prop_list c = c =*= (fromList . toList $ c)
@@ -150,21 +150,79 @@ a =*= b = (any ((toList a ==) . toList) . toList $ allRotations b)
 -- prop_packL :: CList Int -> Bool
 -- prop_packL c = c =*= (packL c)
 
-[lhp|genProp|reflect|ple
+-- [lhp|genProp|reflect
 
-prop_packR :: CList Int -> Bool
-prop_packR c@Empty = c =*= (packR c)
-                ? lemma_refl c
-prop_packR c = c =*= (packR c)
-                ?(()***Admit)
+-- prop_packR :: CList Int -> Bool
+-- prop_packR c@Empty = c =*= (packR c)
+--                 ? lemma_refl c
+-- prop_packR c = c =*= (packR c)
+--                 ?(()***Admit)
 
-|]
+-- |]
+
+
+
+
+
+
+-- Trying to figure out why ple crashes here:
+
+-- {-@ reflect any @-}
+-- any :: (a -> Bool) -> [a] -> Bool
+-- any _ []        = False
+-- any p (x:xs)    = p x || any p xs
+
+{- {-@ reflect =*= @-}
+{-@ infix 4 =*= @-}
+(=*=) :: Eq a  => CList a -> CList a -> Bool
+a =*= b = any ((toList a ==) . toList) [b]
+ -}
+
+ {- 
+{-@ LIQUID "--exactdc" @-}
+{-@ LIQUID "--higherorder" @-}
+
+data CList2 a = Empty2
+             | CList2 [a] a [a]
+
+
+{-@ reflect singleton2 @-}
+singleton2 :: a -> CList2 a
+singleton2 e = CList2 [] e [] 
+
+{-@ reflect toListRef @-}
+toListRef :: CList2 a -> [a]
+toListRef Empty2 = []
+toListRef (CList2 l f r) = f : (r ++ (reverse l))
+
+
+{-@ reflect eqToList @-}
+eqToList ::  CList2 Int -> CList2 Int -> Bool
+eqToList a b = True
+
+{-@ reflect =*= @-}
+{-@ infix 4 =*= @-}
+(=*=) :: CList2 Int -> CList2 Int -> Bool
+x =*= y = (any (eqToList x) (toListRef (singleton2 y)))
+
+{-@ reflect lemma_refl @-}
+lemma_refl :: Bool
+lemma_refl = Empty2 =*= Empty2
+
+-- {-@ ple lemma_refl_proof @-}
+{-@ lemma_refl_proof ::  { lemma_refl  } @-}
+lemma_refl_proof :: Proof
+lemma_refl_proof = lemma_refl
+                *** QED
+
+ -}
 
 
 -- ple crashes here (SMTLIB) thus can't use it in prop_packR
-[lhp|genProp|reflect|ignore
+-- [lhp|genProp|reflect|ple
 
-lemma_refl :: Eq a => CList a -> Bool
-lemma_refl cl = cl =*= cl
+-- lemma_refl :: Eq a => CList2 a -> Bool
+-- lemma_refl cl@Empty2 = Empty =*= (Empty::CList Int)
+-- -- lemma_refl cl = cl =*= cl
 
-|]
+-- |]

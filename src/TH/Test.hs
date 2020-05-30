@@ -161,7 +161,7 @@ testProp6 x y = True
 
 
 
-[lhp|ple|reflect|genProp|runLiquid
+[lhp|ple|reflect|genProp
 
 testProp7 :: Bool -> [Bool] -> Bool
 testProp7 x y = y == [True]

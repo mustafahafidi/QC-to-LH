@@ -1,4 +1,5 @@
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Test2 where
 
@@ -19,65 +20,40 @@ import           Language.Haskell.Liquid.ProofCombinators
 import           Language.Haskell.TH.Syntax
 import           System.Environment
 import           TH.ProofGenerator
+import Language.Haskell.Liquid.ProofCombinators
+import LiquidHaskell
 
-{-@ LIQUID "--reflection" @-}
 {-@ LIQUID "--ple-local" @-}
--- {-@ LIQUID "--diff" @-}
-
-{-
+{-@ LIQUID "--reflection" @-}
 
 data CList a = Empty
              | CList [a] a [a]
-             deriving (Eq, Show)
+
+{-@ reflect singleton @-}
+singleton :: a -> CList a
+singleton e = CList [] e [] 
+
+{-@ reflect toList @-}
+toList :: CList a -> [a]
+toList Empty = []
+toList (CList l f r) = f : (r ++ (reverse l))
+
+
+{-@ reflect eqToList @-}
+eqToList ::  CList Int -> CList Int -> Bool
+eqToList a b = toList a == toList b
 
 {-@ reflect =*= @-}
 {-@ infix 4 =*= @-}
-(=*=) :: Eq a  => CList a -> CList a -> Bool
-a =*= b = (any ((toList a ==) . toList) (toList $ allRotations b))
+(=*=) :: CList Int -> CList Int -> Bool
+x =*= y = (any (eqToList x) (toList (singleton y)))
 
+{-@ reflect lemma_refl @-}
+lemma_refl :: Bool
+lemma_refl = Empty =*= Empty
 
-[lhp|genProp|reflect|ple
-
-lemma_refl :: Eq a => CList a -> Bool
-lemma_refl cl@Empty = cl =*= cl
--- lemma_refl cl = cl =*= cl
-
-|]
- -}
-
--- [lhp|runLiquid|]
--- gdfgfd
-
--- [lhp|ple|reflect|genProp|runLiquid
-
--- testProp7 :: Bool
--- testProp7 = True
-
--- |]
-
-
-[lhp|reflect|ple|genProp
-testProp8 :: Bool -> Bool
-testProp8 b  = False
-|]
-
-
-[lhp|ple|reflect|genProp|debug
-property :: Bool -> [Bool] -> Bool
-property x ls = SOMETHING
-|]
-
-{- 
-
-
-{-@ proof_name ::  {False} @-}
-proof_name ::  Proof
-proof_name = True ***QED
-
-
-{-@ proof2  ::  {True} @-}
-proof2  ::  Proof
-proof2  = True ***QED
- -}
-{- 
-main = putStr "helloworld" -}
+{-@ ple lemma_refl_proof @-}
+{-@ lemma_refl_proof ::  { lemma_refl  } @-}
+lemma_refl_proof :: Proof
+lemma_refl_proof = lemma_refl
+                *** QED
