@@ -3,7 +3,6 @@
 module TH.ProofGenerator (
     generateProofFromDecl,
     generateProofFromExp,
-    generateProofFromVar,
     lhp
 ) where
     
@@ -28,16 +27,6 @@ import Data.Strings
 
 import System.Environment
 
---------------------------------------------------------------
--- Needed ignores because LH fails with "elaborate elabToInt" on this module
-{-@ ignore lhp @-}
-{-@ ignore generateProofFromExp @-}
-{-@ ignore generateProofFromDecl @-}
-{-@ ignore generateProofFromVar @-}
-{-@ ignore generateFromOptions @-}
-{-@ ignore parseOptions @-}
-{-@ LIQUID "--max-case-expand=0" @-}
---------------------------------------------------------------
 
 
 data Option = Ple 
@@ -62,8 +51,11 @@ proof_suffix = "_proof"
 --   - `ignore` generates the `ignore` annotation for *the proof*
 --   - `reflect` generates the `reflect` annotation for *the property*, works only in conjunction of `genProp`
 --   - `genProp` generates the propery along with the proof
---   - `admit` to wrap the proof with "***Admit"
+--   - `admit` to wrap the proof with "***Admit" instead of "***QED"
 --   - `debug` generates a warning containing the generated refinement types & LH annotations
+--   - `runLiquid` runs LH locally and silently on the proof (useful with IDE integration)
+--   - `runLiquidW` runs LH locally to the proof and shows the result as a warning
+--   - `caseExpand` enables case expansion/pattern matching on ADTs
 --------------------------------------------------------------
 lhp :: QuasiQuoter
 lhp = QuasiQuoter {
@@ -167,7 +159,7 @@ transformSignature isDebug (SigD nm sigType) = do
 
 
 -- ======================================================
--- |Given , generates the proof body
+-- |Given `lhp` options, signature and body, it generates the proof body
 -- ======================================================
 transformBody :: [Option] -> Dec -> Dec -> Q Dec
 transformBody opts (SigD nm sigType) (FunD _ clss) = do
@@ -185,6 +177,8 @@ transformBody opts (SigD nm sigType) (ValD _ body decs) = do
         let isAdmit = elem TH.ProofGenerator.Admit opts
         return $ ValD (VarP (mkName proofName)) (wrapBodyWithProof isAdmit body) decs
 transformBody _ _ dec = failWith $ "transformBody: Unsupported body declaration: " ++ show dec
+
+
                 
 -- ======================================================
 -- |Given the property signature type and a clause of the body,
@@ -204,18 +198,21 @@ caseExpandBody sigType cls = do
                     getDCons (ListT)   =  return $ mkName "[]"
                     getDCons (AppT t _) = getDCons t
                     getDCons v = failWith $ "Unsupported " ++ show v
+
                 let getConstructors [] = return []
                     getConstructors (paramT:pts) = do
-                    t <- parseGivenType $ paramT
-                    -- failWith $ show $ t
-                    dcons <- getDCons t
-                    constrs <- reifyGivenStrType 
-                                $ show $ dcons
+                        t <- parseGivenType $ paramT
+                        dcons <- getDCons t
+                        constrs <- reifyGivenStrType 
+                                    $ show $ dcons
+                        -- failWith $ show $ constrs
 
-                    restConstrs <- getConstructors pts
-                    return $ constrs :restConstrs
+                        restConstrs <- getConstructors pts
+                        return $ constrs :restConstrs
                 signatureConstructors <- getConstructors paramTypes
                 patternMatchClauses signatureConstructors cls
+
+
 
 -- ======================================================
 -- |Given type name it attempts to reify it and gets its info 
@@ -225,8 +222,11 @@ reifyGivenStrType :: String -> Q [Con]
 reifyGivenStrType strType = do  info <- reify $ mkName strType
                                 supportedType info
     where
+        -- supportedType (TyConI (DataD _ _ _ _ constrs _)) = return constrs
         supportedType (TyConI (DataD _ _ _ _ constrs _)) = return constrs
         supportedType _ = failWith "Unsupported given type for pattern matching"
+
+
 -- ======================================================
 -- |Attempts to parse a given type
 -- ======================================================
@@ -235,6 +235,9 @@ parseGivenType strType = okOrFail $ parseType strType
             where
                 okOrFail (Right t) = return t
                 okOrFail _         = failWith $ "Unsupported given type "++strType
+
+
+
 -- ======================================================
 -- |Generates pattern matching given a data constructors 
 -- and a single declaration clause
@@ -246,7 +249,6 @@ patternMatchClauses (cons:cs) (Clause ((VarP nm):vs) b ds) =
   do
     w <- wildP
     let fpReplaced = map (replacePattern w) cons
-
     -- given a cls add a parameter to its patterns
     let addParam  p (Clause ptns b ds) = Clause (p:ptns) b ds
     -- "multiplying" single clause to the other pattern matches
@@ -255,12 +257,17 @@ patternMatchClauses (cons:cs) (Clause ((VarP nm):vs) b ds) =
     restClss <- patternMatchClauses cs (Clause (vs) b ds)
     return $ multiply fpReplaced restClss
     where
+        typesToIgnore = ["GHC.Types.I#"] -- don't pattern match on these ones (Int)
         bangsToWild w = map $ const w
-        replacePattern w (NormalC nmCons bngs) = Clause (AsP nm (ConP nmCons (bangsToWild w bngs)):vs) b ds
-        replacePattern w unimplemented = (Clause ((VarP nm):vs) b ds)
+        unimplemented = (Clause ((VarP nm):vs) b ds)
+
+        replacePattern w (NormalC nmCons bngs) = if elem (show nmCons) typesToIgnore
+                                                 then unimplemented
+                                                 else Clause (AsP nm (ConP nmCons (bangsToWild w bngs)):vs) b ds
+                    
+        replacePattern w v = unimplemented
 
 patternMatchClauses _ cls = failWith $ "Unimplemented case for pattern matching generation: " ++ show cls
-
 
 -- ======================================================
 -- |Run Liquid and return result
@@ -288,26 +295,24 @@ runLiquidHaskell opts propName = do
                                     (includeArgs++[
                                     "--check-var", proofName,
                                     "--check-var", propName,
-                                    "--no-check-imports",
+                                    -- "--no-check-imports",
                                     loc_filename spliceLocation
                                     ]) ""
 
-                    -- RUNNING through Language.Haskell.Liquid.Liquid
-                    -- let includeArgs = filter (\s->strStartsWith s "-i") argss
-                    -- let liquidCommand = liquid $ includeArgs ++ ["--check-var",  show nm,"--check-var",  proofName, loc_filename spliceLocation,"--no-check-imports"] 
-                    -- catch (liquidCommand) (\e -> putStrLn (show (e::SomeException)))
+                    {-  
+                    RUNNING through Language.Haskell.Liquid.Liquid
+                    let includeArgs = filter (\s->strStartsWith s "-i") argss
+                    let liquidCommand = liquid $ includeArgs ++ ["--check-var",  show nm,"--check-var",  proofName, loc_filename spliceLocation,"--no-check-imports"] 
+                    catch (liquidCommand) (\e -> putStrLn (show (e::SomeException)))
+                    -}
 
                     setEnv "lhp-running" "False"
                     -- indent the output
-                    -- let substituteRanges = \s -> subRegex (mkRegex "^[ ]*[0-9]+ [|] .*") s ""
-                    let finOutput = -- ("   "++) $ show $
-                                strJoin "  \n   " $ 
-                                -- filter (not . strNull) $ 
-                                -- map (substituteRanges) $ 
-                                lines  $
-                                last $ strSplitAll "RESULT:" $
-                                output
-                    return  finOutput
+                    return $ strJoin "  \n   " $ 
+                            lines  $
+                            last $ strSplitAll "RESULT:" $
+                            output
+
             when (shouldRunLqW) $ 
                 reportWarningToUser $  "Result liquidhaskell on: "++ proofName ++  res ++ " \n  "
 
@@ -376,6 +381,8 @@ wrapBodyWithProof isAdmit oldBody = case oldBody of
 
 
 
+-- ====================================UTILITIES=================================
+
 
 
 -- ======================================================
@@ -391,28 +398,7 @@ generateProofFromExp exp = case parseExp exp of
                                 bodyDec <- [d| $(varP $ mkName (show pName)) = $(pure parsedExp) ***QED |]
                                 return $ lhDec ++ bodyDec
 
-                                        
--- ======================================================
--- |Given a variable name, tries to lookup its info (using `reify`) 
--- and generate a proof for it
--- ======================================================
-generateProofFromVar :: Q (Maybe Name) -> Q [Dec]
-generateProofFromVar varName = 
-        do
-            mName <- varName
-            case mName of
-                Just name -> do
-                    info <- reify name
-                    case info of
-                        VarI nm tp mdecl -> fail $ pprint $ tp
 
-                        _                -> fail $ "[qc-to-lh] error: given binder doesn't represent a value variable (" ++ (show name) ++")"
-                Nothing -> fail "[qc-to-lh] Cannot find given property name" 
-
-
--- ====================================UTILITIES=================================
-                  
--- runLiquid = liquid ["-isrc/","src/Test2.hs"]
 
 -- ======================================================
 -- |Find a signature in a list of given declarations    

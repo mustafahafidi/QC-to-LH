@@ -1,4 +1,3 @@
-{-# LANGUAGE  QuasiQuotes #-}
 {- |
 A simple purely functional circular list, or ring, data type.
 
@@ -72,8 +71,6 @@ module Lib.CL.CircularList (
     -- ** Information
     isEmpty, size, 
 ) where
-import TH.ProofGenerator
-import Language.Haskell.Liquid.ProofCombinators
 
 import Control.Applicative hiding (empty)
 import Prelude hiding ( length, (++), reverse, cycle, iterate,splitAt
@@ -86,15 +83,13 @@ import qualified Data.Foldable as F
 import Lib.LH.Prelude
 import Test.QuickCheck.Arbitrary
 import Test.QuickCheck.Gen
--- import Language.Haskell.Liquid.ProofCombinators ((?))
 
 {-@ LIQUID "--reflection"    @-}
-{-@ LIQUID "--no-totality" @-}
-{-@ LIQUID "--no-termination-check" @-}
+{-@ LIQUID "--no-totality" @-} -- LH doesn't see that `removeL` is total
 {-@ LIQUID "--higherorder" @-}
-{-@ LIQUID "--no-adt" @-}
+-- {-@ LIQUID "--no-adt" @-}
 
--- To convince LH of the safety of this file
+ -- rotN uses infinite lists
 {-@ ignore rotN @-}
 
 
@@ -221,8 +216,8 @@ insertL i (CList l f r) = CList (f:l) i r
 removeL :: CList a -> CList a
 removeL Empty = Empty
 removeL (CList [] _ []) = Empty
-removeL (CList (l:ls) _ rs) = CList ls l rs
-removeL (CList [] _ rs) = let (f:ls) = reverse rs
+removeL (CList (l:ls) _ []) = CList ls l []
+removeL (CList [] _ (r:rs)) = let (f:ls) = reverse (r:rs)
                           in CList ls f []
 
 
@@ -257,9 +252,9 @@ allRotations cl = let
 rotL :: CList a -> CList a
 rotL Empty = Empty
 rotL r@(CList [] _ []) = r
-rotL (CList (l:ls) f rs) = CList ls l (f:rs)
-rotL (CList [] f rs) = let (l:ls) = reverse rs
-                       in CList ls l [f]
+rotL (CList (l:ls) f rs@[]) = CList ls l (f:rs)
+rotL (CList [] f rs@(r:_)) = let (l:ls) = reverse rs
+                              in CList ls l [f]
 
 -- |A non-cyclic version of 'rotL'; that is, only rotate the focus if
 -- there is a previous (left) element to rotate to.

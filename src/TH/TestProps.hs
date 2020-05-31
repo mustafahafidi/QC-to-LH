@@ -27,30 +27,31 @@ import Data.Strings
 
 {-@ LIQUID "--ple-local" @-}
 {-@ LIQUID "--reflection" @-}
-data CList a = Empty
-             | CList [a] a [a]
-             deriving (Eq, Show)
+
 -- type Test a = [a]
 
+data Test = Empty
 $( return [] )
 
-[lhp|debug|caseExpand
-pred2 ::  Bool -> Bool
-pred2 n  = n==n
+[lhp|caseExpand
+pred2 ::  Int -> Bool -> Bool
+pred2 n  b = n
 |]
 
--- main1 :: IO ()
--- main1 = putStrLn $(do
---         (TyConI (DataD ctx nm tvbndr knd constrs drvcls)) <- reify ''Test
---         -- let () = dec
---         let dataTypestr = show $ {- map pprint  -}(constrs::[Con])
---         reportWarning $ dataTypestr
 
---         -- let splitted = strSplitAll "|" dataTypestr
---         -- reportWarning $ show $ splitted
---         stringE ""
+main1 :: IO ()
+main1 = putStrLn $(do
+        (TyConI (DataD ctx nm tvbndr knd constrs drvcls)) <- reify ''Int
+        -- info <- reify $ mkName "Int"
+        -- let () = dec
+        -- let dataTypestr = map pprint (constrs::[Con])
+        reportWarning $ show constrs
+
+        -- let splitted = strSplitAll "|" dataTypestr
+        -- reportWarning $ show $ splitted
+        stringE ""
         
---         )
+        )
 
 
 -- >>> pred2_proof 2 

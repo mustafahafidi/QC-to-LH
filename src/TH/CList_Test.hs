@@ -1,3 +1,4 @@
+-- {-# OPTIONS_GHC -dth-dec-file #-}
 {-# LANGUAGE  QuasiQuotes #-}
 
 module TH.CList_Test where
@@ -17,12 +18,12 @@ import Prelude  hiding (length,
 import Lib.LH.Prelude 
 import Language.Haskell.Liquid.ProofCombinators
 
-{-@ LIQUID "--no-adt" @-}
+-- {-@ LIQUID "--no-adt" @-}
 {-@ LIQUID "--short-names"    @-}
 {-@ LIQUID "--reflection"    @-}
 {-@ LIQUID "--ple-local"    @-}
 -- {-@ LIQUID "--diff"    @-}
-{- 
+
 
 
 [lhp|genProp|reflect|ple
@@ -33,9 +34,8 @@ prop_empty = length (toList empty) == 0
 
 
 
-
-[lhp|genProp|reflect|ple
-
+-- with no-adt ple is not sufficient anymore, needs pattern matching
+[lhp|genProp|reflect|ple|caseExpand
 prop_isEmpty :: [Int] -> Bool
 prop_isEmpty l = null l == isEmpty (fromList l)
 |]
@@ -50,8 +50,8 @@ prop_size l = (length l) == (size . fromList $ l)
 |]
 
 
-
-[lhp|genProp|reflect|ple
+-- with no-adt ple is not sufficient anymore, needs pattern matching
+[lhp|genProp|reflect|ple|caseExpand
 
 prop_focus :: CList Int -> Int -> Bool
 prop_focus c v = (Just v) == (focus $ insertR v c)
@@ -73,9 +73,11 @@ prop_singleton i = toList (singleton i) == [i]
 prop_update :: Int -> CList Int -> Bool
 prop_update v cl@Empty = size (update v cl) == 1
 prop_update v cl = size (update v cl) == size cl
+
 |]
 
 
+ 
 
 [lhp|genProp|reflect|ple
 
@@ -114,7 +116,7 @@ prop_removeR cl = size (removeR cl) == (size cl)-1
 
 |]
 
-
+{-
 
 --needs pattern matching
 [lhp|genProp|reflect|ple|ignore
@@ -132,6 +134,7 @@ prop_fromList_focus = focus (fromList ([1]::[Int])) == Just 1
 
 |]
  -}
+
 ------- Deep properties 
 
 
@@ -161,94 +164,25 @@ prop_fromList_focus = focus (fromList ([1]::[Int])) == Just 1
 
 -- |]
 
--- {-@ data CList a = Empty
---              | CList [a] a [a]
---              deriving (Eq, Show) @-}
+     
+-- {-@ reflect eqf @-}
+-- eqf ::  CList Int -> CList Int -> Bool
+-- eqf a b = toList a == toList b
 
-{-@ reflect eqf @-}
-eqf ::  CList Int -> CList Int -> Bool
-eqf a b = toList a == toList b
-
-{-@ reflect =*= @-}
-{-@ infix 4 =*= @-}
-(=*=) :: CList Int -> CList Int -> Bool
-x =*= y = (any (eqf x) (toList (allRotations y)))
+-- {-@ reflect =*= @-}
+-- {-@ infix 4 =*= @-}
+-- (=*=) :: CList Int -> CList Int -> Bool
+-- x =*= y = (any (eqf x) (toList (allRotations y)))
 
 
-{-@ reflect lemma_refl @-}
-lemma_refl :: CList Int -> Bool
-lemma_refl cl = cl =*= cl
-
-{-@ ple lemma_refl_proof @-}
-{-@ lemma_refl_proof ::  cl:CList Int -> { lemma_refl cl } @-}
-lemma_refl_proof cl@Empty = lemma_refl cl
-                *** QED 
-lemma_refl_proof cl = lemma_refl cl
-                *** QED
-
-
-
-
-
-
--- Trying to figure out why ple crashes here:
-
--- {-@ reflect any @-}
--- any :: (a -> Bool) -> [a] -> Bool
--- any _ []        = False
--- any p (x:xs)    = p x || any p xs
-
-{- {-@ reflect =*= @-}
-{-@ infix 4 =*= @-}
-(=*=) :: Eq a  => CList a -> CList a -> Bool
-a =*= b = any ((toList a ==) . toList) [b]
- -}
-
- {- 
-{-@ LIQUID "--exactdc" @-}
-{-@ LIQUID "--higherorder" @-}
-
-data CList2 a = Empty2
-             | CList2 [a] a [a]
-
-
-{-@ reflect singleton2 @-}
-singleton2 :: a -> CList2 a
-singleton2 e = CList2 [] e [] 
-
-{-@ reflect toListRef @-}
-toListRef :: CList2 a -> [a]
-toListRef Empty2 = []
-toListRef (CList2 l f r) = f : (r ++ (reverse l))
-
-
-{-@ reflect eqToList @-}
-eqToList ::  CList2 Int -> CList2 Int -> Bool
-eqToList a b = True
-
-{-@ reflect =*= @-}
-{-@ infix 4 =*= @-}
-(=*=) :: CList2 Int -> CList2 Int -> Bool
-x =*= y = (any (eqToList x) (toListRef (singleton2 y)))
-
-{-@ reflect lemma_refl @-}
-lemma_refl :: Bool
-lemma_refl = Empty2 =*= Empty2
+-- {-@ reflect lemma_refl @-}
+-- lemma_refl :: CList Int -> Bool
+-- lemma_refl cl = cl =*= cl
 
 -- {-@ ple lemma_refl_proof @-}
-{-@ lemma_refl_proof ::  { lemma_refl  } @-}
-lemma_refl_proof :: Proof
-lemma_refl_proof = lemma_refl
-                *** QED
+-- {-@ lemma_refl_proof ::  cl:CList Int -> { lemma_refl cl } @-}
+-- lemma_refl_proof cl@Empty = lemma_refl cl
+--                 *** QED 
+-- lemma_refl_proof cl = lemma_refl cl
+--                 *** QED
 
- -}
-
-
--- ple crashes here (SMTLIB) thus can't use it in prop_packR
--- [lhp|genProp|reflect|ple
-
--- lemma_refl :: Eq a => CList2 a -> Bool
--- lemma_refl cl@Empty2 = Empty =*= (Empty::CList Int)
--- -- lemma_refl cl = cl =*= cl
-
--- |]
