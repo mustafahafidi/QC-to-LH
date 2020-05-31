@@ -46,7 +46,7 @@ data Option = Ple
             | GenProp 
             | Debug 
             | Admit
-            | PatternMatch
+            | CaseExpand
             | RunLiquid
             | RunLiquidW
             deriving (Eq, Read, Show)
@@ -120,13 +120,31 @@ generateProofFromDecl decs opts =
             -- check that it returns a boolean
             case isSuffixOf "Bool" (pprint sd) of
                 False -> failWith "The given declaration must return a boolean to be transformed to a LiquidHaskell proof"
-                
                 True  -> do
-
-            -- handle options
+            -- Handle options
                 let isDebug = elem Debug opts
                 optionDecs <- generateFromOptions (show nm) parsedDecls opts 
 
+            -- Transform signature to LH annotation
+                lhDec <- transformSignature isDebug sd
+
+            -- Generate the body
+                finalBody <- transformBody opts sd bd
+
+            -- Run liquidhaskell locally on binder if asked
+                runLiquidHaskell opts (show nm)
+                           
+
+                return $ optionDecs ++ lhDec ++ [finalBody]
+
+
+-- ======================================================
+-- |Given the property signature, adds refinement type with parameters
+-- and returns corresponding LH annotation
+-- ======================================================
+transformSignature :: Bool -> Dec -> Q [Dec]
+transformSignature isDebug (SigD nm sigType) = do
+                let proofName = show nm ++ proof_suffix
             -- add parameters to signature
                 (typeWP, pr) <- addParamsToType sigType []
 
@@ -145,93 +163,154 @@ generateProofFromDecl decs opts =
                                     ++ forAllSig
                                     ++ replacedRetTypeSig
                 when isDebug $ reportWarningToUser $ finalRefSign
-                lhDec <- lqDec finalRefSign
+                lqDec finalRefSign
 
-            -- generate the body
-                (TyConI (DataD _ _ _ _ constrs _)) <- reify $ mkName "Test"
 
-                let isAdmit = elem TH.ProofGenerator.Admit opts
-                finalBody <- case bd of
-                                    FunD _ clss -> (do
-                                        -- pattern matching generation
-                                        pmClss <- patternMatchClauses constrs (head clss)
+-- ======================================================
+-- |Given , generates the proof body
+-- ======================================================
+transformBody :: [Option] -> Dec -> Dec -> Q Dec
+transformBody opts (SigD nm sigType) (FunD _ clss) = do
+        let proofName = show nm ++ proof_suffix
+        let isAdmit = elem TH.ProofGenerator.Admit opts
+        -- if requested generate do case expansion
+        pmClss <- if (elem CaseExpand opts) then caseExpandBody sigType (head clss)
+                                            else return clss
+        let wrap (Clause pns body decs) = Clause pns (wrapBodyWithProof isAdmit body) decs
+        let finalProofClss = map wrap pmClss
+        return $ FunD (mkName proofName) finalProofClss
 
-                                        let proofClss = map (\(Clause pns body decs) -> 
-                                                        (Clause pns (wrapBodyWithProof isAdmit body) decs)) 
-                                                        pmClss
-                                         in return $ FunD (mkName proofName) proofClss)
-                                    ValD _ body decs  -> return $ ValD (VarP (mkName proofName)) (wrapBodyWithProof isAdmit body) decs
+transformBody opts (SigD nm sigType) (ValD _ body decs) = do
+        let proofName = show nm ++ proof_suffix
+        let isAdmit = elem TH.ProofGenerator.Admit opts
+        return $ ValD (VarP (mkName proofName)) (wrapBodyWithProof isAdmit body) decs
+transformBody _ _ dec = failWith $ "transformBody: Unsupported body declaration: " ++ show dec
                 
+-- ======================================================
+-- |Given the property signature type and a clause of the body,
+-- does case expansion (pattern matching on the signature)
+-- ======================================================
+caseExpandBody :: Type -> Clause -> Q [Clause]
+caseExpandBody sigType cls = do
+                let paramTypes = init --drop the return type
+                            $ strSplitAll "->" 
+                            $ pprint
+                            $ case sigType of
+                                ForallT _ _ tp -> tp 
+                                tp             -> tp
+                
+                -- get the data constructors of the types
+                let getDCons (ConT t)   = return t
+                    getDCons (ListT)   =  return $ mkName "[]"
+                    getDCons (AppT t _) = getDCons t
+                    getDCons v = failWith $ "Unsupported " ++ show v
+                let getConstructors [] = return []
+                    getConstructors (paramT:pts) = do
+                    t <- parseGivenType $ paramT
+                    -- failWith $ show $ t
+                    dcons <- getDCons t
+                    constrs <- reifyGivenStrType 
+                                $ show $ dcons
 
-                -- run liquidhaskell on binder if asked
-                lenv <- runIO $ lookupEnv "lhp-running"
-                let isRunning = case lenv of
-                                    Just "True" -> True
-                                    _           -> False   
-            
-                let shouldRunLiquid = elem RunLiquid opts
-                let shouldRunLiquidWarnings = elem RunLiquidW opts
-                when ((shouldRunLiquid || shouldRunLiquidWarnings) &&
-                        not isRunning) $  
-                        do  res <- runLiquidHaskell (show nm)
-                            when (shouldRunLiquidWarnings) $ reportWarningToUser $  "Result liquidhaskell on: "++ proofName ++  res ++ " \n  "
+                    restConstrs <- getConstructors pts
+                    return $ constrs :restConstrs
+                signatureConstructors <- getConstructors paramTypes
+                patternMatchClauses signatureConstructors cls
 
-                return $ optionDecs ++ lhDec ++ [finalBody]
-
-
+-- ======================================================
+-- |Given type name it attempts to reify it and gets its info 
+-- for pattern matching
+-- ======================================================
+reifyGivenStrType :: String -> Q [Con]
+reifyGivenStrType strType = do  info <- reify $ mkName strType
+                                supportedType info
+    where
+        supportedType (TyConI (DataD _ _ _ _ constrs _)) = return constrs
+        supportedType _ = failWith "Unsupported given type for pattern matching"
+-- ======================================================
+-- |Attempts to parse a given type
+-- ======================================================
+parseGivenType :: String -> Q Type
+parseGivenType strType = okOrFail $ parseType strType
+            where
+                okOrFail (Right t) = return t
+                okOrFail _         = failWith $ "Unsupported given type "++strType
 -- ======================================================
 -- |Generates pattern matching given a data constructors 
 -- and a single declaration clause
 -- ======================================================
-patternMatchClauses :: [Con] -> Clause -> Q [Clause]
-patternMatchClauses cons (Clause ((VarP nm):vs) b ds) = do
+patternMatchClauses :: [[Con]] -> Clause -> Q [Clause]
+patternMatchClauses [] (cls) = return [cls]
+patternMatchClauses cons cls@(Clause [] b ds) = return [cls]
+patternMatchClauses (cons:cs) (Clause ((VarP nm):vs) b ds) = 
+  do
     w <- wildP
-    return $ map (replacePattern w) cons
-        where
-            bangsToWild w = map $ const w
-            replacePattern w (NormalC nmCons bngs) = Clause (AsP nm (ConP nmCons (bangsToWild w bngs)):vs) b ds
-            replacePattern w unimplemented = (Clause ((VarP nm):vs) b ds)
-patternMatchClauses _ _ = failWith $ "Unimplemented case for pattern matching generation"
+    let fpReplaced = map (replacePattern w) cons
 
+    -- given a cls add a parameter to its patterns
+    let addParam  p (Clause ptns b ds) = Clause (p:ptns) b ds
+    -- "multiplying" single clause to the other pattern matches
+    let multiply ((Clause (p:vs) b ds):clss) rest = (map (addParam p) rest) ++ multiply clss rest
+        multiply [] rest = []
+    restClss <- patternMatchClauses cs (Clause (vs) b ds)
+    return $ multiply fpReplaced restClss
+    where
+        bangsToWild w = map $ const w
+        replacePattern w (NormalC nmCons bngs) = Clause (AsP nm (ConP nmCons (bangsToWild w bngs)):vs) b ds
+        replacePattern w unimplemented = (Clause ((VarP nm):vs) b ds)
+
+patternMatchClauses _ cls = failWith $ "Unimplemented case for pattern matching generation: " ++ show cls
 
 
 -- ======================================================
 -- |Run Liquid and return result
 -- ======================================================
-runLiquidHaskell :: String ->  Q String
-runLiquidHaskell propName = 
-        do
+runLiquidHaskell :: [Option] -> String ->  Q ()
+runLiquidHaskell opts propName = do
+        -- to avoid loop running liquidhaskell, we set an env variable
+        lenv <- runIO $ lookupEnv "lhp-running"
+        let isRunning = case lenv of
+                            Just "True" -> True
+                            _           -> False   
+        let shouldRunLqW = elem RunLiquidW opts
+        let shouldRunLq = elem RunLiquid opts
+        let proofName = propName ++ proof_suffix
+        when (shouldRunLq || shouldRunLqW) $ do
             spliceLocation <- location
-            runIO $ do  setEnv "lhp-running" "True"
-                        argss <- getArgs
-                        let includeArgs = filter (\s->strStartsWith s "-i") argss
-                        -- putStrLn $ "argsssss"++show includeArgs
-                        
-                        -- RUNNING through CLI
-                        (_, output, _) <- readProcessWithExitCode "liquid" 
-                                        (includeArgs++[
-                                        "--check-var", propName ++ proof_suffix,
-                                        "--check-var", propName,
-                                        "--no-check-imports",
-                                        loc_filename spliceLocation
-                                        ]) ""
+            res <- runIO $ do
+                    setEnv "lhp-running" "True"
+                    argss <- getArgs
+                    let includeArgs = filter (\s->strStartsWith s "-i") argss
+                    -- putStrLn $ "argsssss"++show includeArgs
+                    
+                    -- RUNNING through CLI
+                    (_, output, _) <- readProcessWithExitCode "liquid" 
+                                    (includeArgs++[
+                                    "--check-var", proofName,
+                                    "--check-var", propName,
+                                    "--no-check-imports",
+                                    loc_filename spliceLocation
+                                    ]) ""
 
-                        -- RUNNING through Language.Haskell.Liquid.Liquid
-                        -- let includeArgs = filter (\s->strStartsWith s "-i") argss
-                        -- let liquidCommand = liquid $ includeArgs ++ ["--check-var",  show nm,"--check-var",  proofName, loc_filename spliceLocation,"--no-check-imports"] 
-                        -- catch (liquidCommand) (\e -> putStrLn (show (e::SomeException)))
+                    -- RUNNING through Language.Haskell.Liquid.Liquid
+                    -- let includeArgs = filter (\s->strStartsWith s "-i") argss
+                    -- let liquidCommand = liquid $ includeArgs ++ ["--check-var",  show nm,"--check-var",  proofName, loc_filename spliceLocation,"--no-check-imports"] 
+                    -- catch (liquidCommand) (\e -> putStrLn (show (e::SomeException)))
 
-                        setEnv "lhp-running" "False"
-                        -- indent the output
-                        -- let substituteRanges = \s -> subRegex (mkRegex "^[ ]*[0-9]+ [|] .*") s ""
-                        let finOutput = -- ("   "++) $ show $
-                                    strJoin "  \n   " $ 
-                                    -- filter (not . strNull) $ 
-                                    -- map (substituteRanges) $ 
-                                    lines  $
-                                    last $ strSplitAll "RESULT:" $
-                                    output
-                        return  finOutput
+                    setEnv "lhp-running" "False"
+                    -- indent the output
+                    -- let substituteRanges = \s -> subRegex (mkRegex "^[ ]*[0-9]+ [|] .*") s ""
+                    let finOutput = -- ("   "++) $ show $
+                                strJoin "  \n   " $ 
+                                -- filter (not . strNull) $ 
+                                -- map (substituteRanges) $ 
+                                lines  $
+                                last $ strSplitAll "RESULT:" $
+                                output
+                    return  finOutput
+            when (shouldRunLqW) $ 
+                reportWarningToUser $  "Result liquidhaskell on: "++ proofName ++  res ++ " \n  "
+
                                             
 
 -- ======================================================
@@ -264,17 +343,8 @@ boilerplate pn pd os refTypeStr = do
 --  type and the parameters it added
 -- ======================================================
 addParamsToType :: Type -> [Name] -> Q (String, [Name])
--- better implementation
-
-
 addParamsToType (ForallT tvb ctx tp) acc =  addParamsToTypeStr (pprint tp) []
 addParamsToType (tp) acc =  addParamsToTypeStr (pprint tp) []
--- addParamsToType (AppT t1 t2) acc = addParamsToTypeStr (pprint tp) []
---                 do (rect1,p1) <- addParamsToType t1 []
---                                       (rect2,p2) <- addParamsToType t2 []
---                                       return ((AppT rect1 rect2),acc++p1++p2)
--- addParamsToType _ acc =  return ("",[]) -- add parameters only to the first layer
-
 addParamsToTypeStr :: String -> [Name] -> Q (String, [Name])
 addParamsToTypeStr [] _ = return ("",[])
 addParamsToTypeStr tp acc = do let (p,ps) = strSplit "->" tp
