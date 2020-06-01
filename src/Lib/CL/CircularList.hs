@@ -87,7 +87,7 @@ import Test.QuickCheck.Gen
 {-@ LIQUID "--reflection"    @-}
 {-@ LIQUID "--no-totality" @-} -- LH doesn't see that `removeL` is total
 {-@ LIQUID "--higherorder" @-}
--- {-@ LIQUID "--no-adt" @-}
+{-@ LIQUID "--no-adt" @-}
 
  -- rotN uses infinite lists
 {-@ ignore rotN @-}

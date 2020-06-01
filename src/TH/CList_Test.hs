@@ -1,4 +1,4 @@
--- {-# OPTIONS_GHC -dth-dec-file #-}
+{-# OPTIONS_GHC -dth-dec-file #-}
 {-# LANGUAGE  QuasiQuotes #-}
 
 module TH.CList_Test where
@@ -18,7 +18,7 @@ import Prelude  hiding (length,
 import Lib.LH.Prelude 
 import Language.Haskell.Liquid.ProofCombinators
 
--- {-@ LIQUID "--no-adt" @-}
+{-@ LIQUID "--no-adt" @-}
 {-@ LIQUID "--short-names"    @-}
 {-@ LIQUID "--reflection"    @-}
 {-@ LIQUID "--ple-local"    @-}
@@ -68,18 +68,18 @@ prop_singleton i = toList (singleton i) == [i]
 
 
 
-[lhp|genProp|reflect|ple
+[lhp|genProp|reflect|ple|caseExpand
 
 prop_update :: Int -> CList Int -> Bool
-prop_update v cl@Empty = size (update v cl) == 1
-prop_update v cl = size (update v cl) == size cl
-
+prop_update v cl = case cl of
+                        Empty -> size (update v cl) == 1
+                        _     -> size (update v cl) == size cl
 |]
 
 
  
 
-[lhp|genProp|reflect|ple
+[lhp|genProp|reflect|ple|caseExpand
 
 prop_focus_update :: Int -> CList Int -> Bool
 prop_focus_update v cl = focus(update v cl) == Just v
@@ -88,7 +88,7 @@ prop_focus_update v cl = focus(update v cl) == Just v
 
 
 
-[lhp|genProp|reflect|ple
+[lhp|genProp|reflect|ple|caseExpand
 
 prop_reverse_direction ::  CList Int -> Bool
 prop_reverse_direction cl = reverseDirection (reverseDirection cl) == cl && size (reverseDirection cl) == size cl
@@ -97,14 +97,13 @@ prop_reverse_direction cl = reverseDirection (reverseDirection cl) == cl && size
 
 
 
-[lhp|genProp|reflect|ple
+[lhp|genProp|reflect|ple|caseExpand
 
 prop_insertR :: Int -> CList Int -> Bool
 prop_insertR i cl = let r = (insertR i cl) in
                         size r == size cl+1
 
 |]
-
 
 
 -- needs refinement type
@@ -116,16 +115,14 @@ prop_removeR cl = size (removeR cl) == (size cl)-1
 
 |]
 
-{-
 
---needs pattern matching
-[lhp|genProp|reflect|ple|ignore
+
+[lhp|genProp|reflect|ple|caseExpand
 
 prop_insertR_removeR :: Int -> CList Int -> Bool
 prop_insertR_removeR v cl = removeR (insertR v cl) == cl
 
 |]
-
 
 [lhp|genProp|reflect|ple
 
@@ -133,12 +130,30 @@ prop_fromList_focus :: Bool
 prop_fromList_focus = focus (fromList ([1]::[Int])) == Just 1
 
 |]
- -}
 
-------- Deep properties 
+------- Deep properties
+{-@ reflect eqf @-}
+eqf ::  CList Int -> CList Int -> Bool
+eqf a b = toList a == toList b
 
+{-@ reflect =*= @-}
+{-@ infix 4 =*= @-}
+(=*=) :: CList Int -> CList Int -> Bool
+x =*= y = (any (eqf x) (toList (allRotations y)))
 
+[lhp|genProp|reflect|ple|caseExpand
+lemma_refl :: CList Int -> Bool
+lemma_refl cl = cl =*= cl
+|]
 
+-- {-@ rewriteWith prop_list_proof [lemma_refl_proof, involutionP, splitAt_theorem, assocP, rightIdP,distributivityP] @-}
+[lhp|genProp|reflect|ple
+prop_list :: CList Int -> Bool
+prop_list c@Empty = c =*= (fromList . toList $ c)
+prop_list c@(CList l f r) = c =*= (fromList . toList $ c)
+                    ?(()***Admit)
+prop_list c = c =*= (fromList . toList $ c)
+|]
 
 --     asd 1 [1]
 --   ===  any (1 ==) [1]
@@ -163,16 +178,6 @@ prop_fromList_focus = focus (fromList ([1]::[Int])) == Just 1
 --                 ?(()***Admit)
 
 -- |]
-
-     
--- {-@ reflect eqf @-}
--- eqf ::  CList Int -> CList Int -> Bool
--- eqf a b = toList a == toList b
-
--- {-@ reflect =*= @-}
--- {-@ infix 4 =*= @-}
--- (=*=) :: CList Int -> CList Int -> Bool
--- x =*= y = (any (eqf x) (toList (allRotations y)))
 
 
 -- {-@ reflect lemma_refl @-}

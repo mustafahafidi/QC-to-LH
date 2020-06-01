@@ -19,7 +19,7 @@ import Prelude hiding (length, null, splitAt, (++), reverse, Maybe (..), minimum
 {-@ LIQUID "--reflection"    @-}
 {-@ LIQUID "--short-names"    @-}
 {-@ LIQUID "--ple-local" @-}
-{-@ LIQUID "--diff" @-}
+-- {-@ LIQUID "--diff" @-}
 
 
 {-======================================================
@@ -373,86 +373,6 @@ prop_Merge hl@(Node x h11 h12) hr@(Node y h21 h22)
               ? prop_Merge_subProof hr hl
           ***QED
           -}
-
-
-{- 
-{-======================================================
-                        prop_ToSortedList
-=======================================================-}
-{-@ prop_ToSortedList :: h:Heap Int -> {Lib.QC.Heap.prop_ToSortedList h} @-}
-prop_ToSortedList :: Heap Int -> Proof
-prop_ToSortedList h@Empty = Lib.QC.Heap.prop_ToSortedList h
-                  ===  (h ==? (toSortedList h) && 
-                              (toSortedList h) == sort (toSortedList h))
-                        ? (
-                          h ==? []
-                        === (invariant h && sort (toList h) == sort ([]))
-                        === sort (toList h) == []
-                                  ?(toList h
-                                  === toList' [h]
-                                  === toList' []
-                                  === [])
-                        === sort ([]::[Int]) == sort []
-                        )
-                     ***QED
-
-prop_ToSortedList h@(Node x hl hr) = Lib.QC.Heap.prop_ToSortedList h
-                  ===  (h ==? (toSortedList h) && 
-                              (toSortedList h) == sort (toSortedList h))
-                        ? (
-                          h ==? (toSortedList h)
-                        === (invariant h && sort (toList h) == sort (toSortedList h))
-                        === sort (toList h) == sort (toSortedList h)
-                                ?(toList h
-                              === toList' [h]
-                              === x : toList' [hl,hr]
-                                      ? lemma_distProp hl [hr]
-                              === x : (toList' [hl] ++ toList' [hr])
-                              === x : (toList hl ++ toList hr))
-                        === sort (x : (toList hl ++ toList hr)) == sort (x : toList (hl `merge` hr))
-                                                                    ? th_sort_arg_cons x (toList (hl `merge` hr))
-                                    ? th_sort_arg_cons x (toList hl ++ toList hr)
-                        === sort (x : sort (toList hl ++ toList hr)) == sort (x : sort (toList (hl `merge` hr)))
-                              ? Heap_Proofs.prop_Merge hl hr
-                              ? (
-                                Lib.QC.Heap.prop_Merge hl hr
-                              ===  hl `merge` hr ==? (toList hl ++ toList hr)
-                              === (invariant (hl `merge` hr) && sort (toList (hl `merge` hr)) == sort (toList hl ++ toList hr))
-                              === sort (toList (hl `merge` hr)) == sort (toList hl ++ toList hr)
-                              )
-                        )
-                  === (toSortedList h) == sort (toSortedList h)
-                  === (x : toList (hl `merge` hr)) == sort (x : toList (hl `merge` hr))
-                  ***Admit
-
-{-======================================================
-                        prop_RemoveMin
-=======================================================-}
-{-@ prop_RemoveMin :: h:Heap Int -> { Lib.QC.Heap.prop_RemoveMin h } @-}
-prop_RemoveMin :: Heap Int ->  Proof
-prop_RemoveMin h@Empty =  Lib.QC.Heap.prop_RemoveMin h
-                        ? (removeMin h === Nothing)
-                      === h ==? []
-                      === (invariant h && sort (toList h) == sort [])
-                          ? (invariant h === True)
-                          ? (sort (toList h)
-                          === sort (toList' [h])
-                          === sort (toList' [])
-                          === sort []
-                          )
-                      ***QED
-
-prop_RemoveMin h@(Node x h1 h2) =   Lib.QC.Heap.prop_RemoveMin h
-                                    ? (removeMin h === Just (x, h1 `merge` h2))
-                                === ( let  Just (x,h') = removeMin h
-                                    in (x == minimum (toList h) && h' ==? (toList h \\ [x]))
-                                      ?(toList h
-                                      === toList' [h]
-                                      === x:toList' [h1,h2]
-                                      )
-                                    )
-                                ***Admit
- -}
 
 
 

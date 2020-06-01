@@ -16,7 +16,7 @@ import Control.Monad
   , liftM2
   )
 
-import Prelude hiding (length, (++), reverse, iterate, null, splitAt, Maybe(..), minimum)
+import Prelude hiding (length, (++), reverse, iterate, null, splitAt, {- Maybe(..), -} minimum)
 import Lib.LH.Prelude
 import Language.Haskell.Liquid.ProofCombinators
 --------------------------------------------------------------------------
@@ -28,10 +28,10 @@ import Language.Haskell.Liquid.ProofCombinators
 -- {-@ LIQUID "--prune-unsorted"    @-}
 
 
-data Maybe a = Nothing | Just a
-                deriving (Show, Eq)
+-- data Maybe a = Nothing | Just a
+--                 deriving (Show, Eq)
 
-{-@ data Maybe a = Nothing | Just a @-}
+-- {-@ data Maybe a = Nothing | Just a @-}
  
 data Heap a
   = Node a (Heap a) (Heap a)
@@ -170,70 +170,3 @@ prop_Insert x (h :: Heap Int) =
 {-@ reflect prop_Merge @-}
 prop_Merge h1 (h2 :: Heap Int) =
   (h1 `merge` h2) ==? (toList h1 ++ toList h2)
-
-
----
-{-@ reflect prop_ToSortedList @-}
-prop_ToSortedList (h :: Heap Int) =
-  h ==? xs && xs == sort xs
- where
-  xs = toSortedList h
-  
-prop_FromList (xs :: [Int]) =
-  fromList xs ==? xs
-
-{-@ reflect prop_RemoveMin @-}
-prop_RemoveMin (h :: Heap Int) =
-  -- cover 80 (size h > 1) "non-trivial" $
-  case removeMin h of
-    Nothing     -> h ==? []
-    Just (x,h') -> x == minimum (toList h) && h' ==? (toList h \\ [x])
-                        
-
---------------------------------------------------------------------------
--- generators
-{- 
-instance (Ord a, Arbitrary a) => Arbitrary (Heap a) where
-  arbitrary = sized (arbHeap Nothing)
-   where
-    arbHeap mx n =
-      frequency $
-        [ (1, return Empty) ] ++
-        [ (7, do my <- arbitrary `suchThatMaybe` ((>= mx) . Just)
-                 case my of
-                   Nothing -> return Empty
-                   Just y  -> liftM2 (Node y) arbHeap2 arbHeap2
-                    where arbHeap2 = arbHeap (Just y) (n `div` 2))
-        | n > 0
-        ]
-  -}
---------------------------------------------------------------------------
--- main
-{- 
-return []
-main = $quickCheckAll
- -}
---------------------------------------------------------------------------
--- the end.
-{-
-  shrink Empty          = []
-  shrink (Node x h1 h2) =
-       [ h1, h2 ]
-    ++ [ Node x  h1' h2  | h1' <- shrink h1, x  <=? h1' ]
-    ++ [ Node x  h1  h2' | h2' <- shrink h2, x  <=? h2' ]
-    ++ [ Node x' h1  h2  | x'  <- shrink x,  x' <=? h1, x' <=? h2 ]
--}
-
--- toSortedList (Node x h1 h2) = x : toSortedList (h1 `merge` h2)
-
-{-
-prop_HeapIsNotSorted (h :: Heap Int) =
-  expectFailure $
-    toList h == toSortedList h
--}
-
--- >>>       putStrLn "ciao"
--- >>> prop_Insert 2 (Node 4 Empty Empty)
--- ciao
--- True
---

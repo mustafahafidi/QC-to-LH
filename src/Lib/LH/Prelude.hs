@@ -162,6 +162,7 @@ singletonP x
   === [x]
   *** QED 
 
+{-@ rewrite involutionP @-}
 {-@ involutionP :: xs:[a] -> {reverse (reverse xs) == xs } @-}
 involutionP :: [a] -> Proof 
 involutionP [] 
@@ -187,8 +188,8 @@ involutionP (x:xs)
   === (x:xs)
   *** QED 
 
+{-@ rewrite distributivityP @-}
 {-@ distributivityP :: xs:[a] -> ys:[a] -> {reverse (xs ++ ys) == (reverse ys) ++ (reverse xs)} @-}
-
 distributivityP :: [a] -> [a] -> Proof
 distributivityP [] ys =   reverse ([] ++ ys)
     === reverse ys 
@@ -206,7 +207,7 @@ distributivityP (x:xs) ys  =   reverse ((x:xs) ++ ys)
     === reverse ys ++ reverse (x:xs)
     *** QED 
     
-
+{-@ rewrite rightIdP @-}
 {-@ rightIdP :: xs:[a] -> { xs ++ [] == xs } @-}
 rightIdP :: [a] -> Proof
 rightIdP []     
@@ -220,6 +221,7 @@ rightIdP (x:xs)
   === x : xs
   *** QED
 
+{-@ rewrite assocP @-}
 {-@ ple assocP @-}
 {-@ assocP :: xs:[a] -> ys:[a] -> zs:[a] 
           -> { xs ++ (ys ++ zs) == (xs ++ ys) ++ zs }  @-}
@@ -228,7 +230,7 @@ assocP [] _ _       = trivial
 assocP (x:xs) ys zs = assocP xs ys zs
 
 
-
+{-@ rewrite splitAt_theorem @-}
 {-@ inline splitAt_theorem_p @-}
 {-@ splitAt_theorem_p ::   n:Int -> a:{[t]| length a >= n} -> Bool @-}
 splitAt_theorem_p n as =  let (l,r) = splitAt n as
@@ -276,6 +278,7 @@ th_sort_arg_cons l rs =  sort (l:rs) == sort (l:sort rs)
                             ***Admit
 -------------
 
+{-@ rewrite append_length @-}
 {-@ append_length ::  ls:[a] -> rs:[a] -> { length (ls ++ rs) == length ls + length rs} @-}
 append_length ::  [a] -> [a] -> Proof
 append_length ls rs = length (ls ++ rs) == length ls + length rs

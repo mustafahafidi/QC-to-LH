@@ -15,6 +15,8 @@ import Prelude hiding (length, null, splitAt, (++), reverse,any)
 {-@ LIQUID "--reflection"    @-}
 {-@ LIQUID "--short-names"    @-}
 {-@ LIQUID "--no-totality"    @-}
+{-@ LIQUID "--diff"    @-}
+{-@ LIQUID "--no-adt"    @-}
 
 
 {-@ reflect =*= @-}

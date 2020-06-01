@@ -112,8 +112,11 @@ Or if you have an extension that reads `.liquid` dirs to show you the errors ([l
 
 #### Debugging
 
-To see what `lhp` has generated, you can run ghci/ghc/liquidhaskell with the ghc option `"-dth-dec-file"` which will generate "\*.th.hs" files for each module where you Template Haskell (including the QQ `lhp`).
-If you don't want to see all of that, and you want to see only the LH annotations that `lhp` has generated, you can use the option `debug`:
+To see what `lhp` has generated, you can run ghci/ghc/liquidhaskell with the option `-dth-dec-file` or put on top of your module
+`{-# OPTIONS_GHC -dth-dec-file #-}`
+This will cause GHC to generate a "\*.th.hs" containing what `lhp` expands to.
+
+If you don't want to see all of that, and you want to see only the LH annotations that `lhp` generates, then you can use the option `debug`:
 
 ```haskell
 [lhp|ple|reflect|genProp|debug
