@@ -166,10 +166,10 @@ transformBody opts (SigD nm sigType) (FunD _ clss) = do
         let proofName = show nm ++ proof_suffix
         let isAdmit = elem TH.ProofGenerator.Admit opts
         -- if requested generate do case expansion
-        pmClss <- if (elem CaseExpand opts) then caseExpandBody sigType (head clss)
+        pmClss <- if (elem CaseExpand opts) then caseExpandBody sigType (last clss)
                                             else return clss
         let wrap (Clause pns body decs) = Clause pns (wrapBodyWithProof isAdmit body) decs
-        let finalProofClss = map wrap ({- tail clss++ -}pmClss)
+        let finalProofClss = map wrap (init clss++pmClss)
         return $ FunD (mkName proofName) finalProofClss
 
 transformBody opts (SigD nm sigType) (ValD _ body decs) = do
@@ -335,9 +335,14 @@ generateFromOptions pn pd (Ple:os) =  boilerplate pn pd os ("ple " ++ pn++proof_
 generateFromOptions pn pd (Ignore:os) = boilerplate pn pd os ("ignore " ++ pn++proof_suffix)
 generateFromOptions pn pd (Reflect:os) = boilerplate pn pd os ("reflect " ++ pn)
 
-generateFromOptions pn pd (GenProp:os)   = do restDecs <- generateFromOptions pn pd os
+generateFromOptions pn pd (GenProp:os)   = do   restDecs <- generateFromOptions pn pd os
                                             --   failWith $ show $ map pprint (cleanProof pd)
-                                              return (restDecs++(cleanProof pd))
+                                            -- extract only the property (supposed to be given as the last one)
+                                                let sign = head pd
+                                                let lastDec = case last pd of
+                                                                FunD nm clss -> FunD nm [last clss]
+                                                                v            -> v
+                                                return (restDecs++(cleanProof [sign, lastDec]))
 
 generateFromOptions pn pd (opt:os) =  generateFromOptions pn pd os
                                     -- boilerplate pn pd os ((strToLower $ show opt) ++ " " ++ pn)
