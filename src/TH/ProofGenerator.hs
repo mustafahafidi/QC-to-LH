@@ -169,7 +169,7 @@ transformBody opts (SigD nm sigType) (FunD _ clss) = do
         pmClss <- if (elem CaseExpand opts) then caseExpandBody sigType (head clss)
                                             else return clss
         let wrap (Clause pns body decs) = Clause pns (wrapBodyWithProof isAdmit body) decs
-        let finalProofClss = map wrap pmClss
+        let finalProofClss = map wrap ({- tail clss++ -}pmClss)
         return $ FunD (mkName proofName) finalProofClss
 
 transformBody opts (SigD nm sigType) (ValD _ body decs) = do
@@ -261,13 +261,14 @@ patternMatchClauses (cons:cs) (Clause ((VarP nm):vs) b ds) =
         bangsToWild w = map $ const w
         unimplemented = (Clause ((VarP nm):vs) b ds)
 
-        replacePattern w (NormalC nmCons bngs) = if elem (show nmCons) typesToIgnore
+        replacePattern w (NormalC nmCons bngs) =if elem (show nmCons) typesToIgnore
                                                  then unimplemented
-                                                 else Clause (AsP nm (ConP nmCons (bangsToWild w bngs)):vs) b ds
+                                                 else 
+                                                      Clause (AsP nm (ConP nmCons (bangsToWild w bngs)):vs) b ds
                     
         replacePattern w v = unimplemented
 
-patternMatchClauses _ cls = failWith $ "Unimplemented case for pattern matching generation: " ++ show cls
+patternMatchClauses _ cls = failWith $ "Unimplemented case for pattern matching generation: " ++ pprint cls
 
 -- ======================================================
 -- |Run Liquid and return result
@@ -282,29 +283,33 @@ runLiquidHaskell opts propName = do
         let shouldRunLqW = elem RunLiquidW opts
         let shouldRunLq = elem RunLiquid opts
         let proofName = propName ++ proof_suffix
-        when (shouldRunLq || shouldRunLqW) $ do
+        -- error $ "isRunning: " ++ show isRunning
+        
+        when ((shouldRunLq || shouldRunLqW) && not isRunning) $ do
             spliceLocation <- location
             res <- runIO $ do
                     setEnv "lhp-running" "True"
                     argss <- getArgs
                     let includeArgs = filter (\s->strStartsWith s "-i") argss
                     -- putStrLn $ "argsssss"++show includeArgs
+                    -- error $ "isRunning: " ++ show isRunning
                     
-                    -- RUNNING through CLI
-                    (_, output, _) <- readProcessWithExitCode "liquid" 
-                                    (includeArgs++[
+
+                    let liquidArgs = (includeArgs++[
                                     "--check-var", proofName,
                                     "--check-var", propName,
-                                    -- "--no-check-imports",
+                                    "--no-check-imports",
                                     loc_filename spliceLocation
-                                    ]) ""
+                                    ])
 
-                    {-  
-                    RUNNING through Language.Haskell.Liquid.Liquid
-                    let includeArgs = filter (\s->strStartsWith s "-i") argss
-                    let liquidCommand = liquid $ includeArgs ++ ["--check-var",  show nm,"--check-var",  proofName, loc_filename spliceLocation,"--no-check-imports"] 
-                    catch (liquidCommand) (\e -> putStrLn (show (e::SomeException)))
-                    -}
+
+                    -- -- RUNNING through CLI
+                    -- (_, output, _) <- readProcessWithExitCode "liquid" 
+                    --                 liquidArgs ""
+                    let output = "asd"
+                    -- RUNNING through Language.Haskell.Liquid.Liquid 
+                    catch (liquid liquidArgs) (\e -> putStrLn (show (e::SomeException)))
+                    
 
                     setEnv "lhp-running" "False"
                     -- indent the output
@@ -331,7 +336,8 @@ generateFromOptions pn pd (Ignore:os) = boilerplate pn pd os ("ignore " ++ pn++p
 generateFromOptions pn pd (Reflect:os) = boilerplate pn pd os ("reflect " ++ pn)
 
 generateFromOptions pn pd (GenProp:os)   = do restDecs <- generateFromOptions pn pd os
-                                              return (restDecs++pd)
+                                            --   failWith $ show $ map pprint (cleanProof pd)
+                                              return (restDecs++(cleanProof pd))
 
 generateFromOptions pn pd (opt:os) =  generateFromOptions pn pd os
                                     -- boilerplate pn pd os ((strToLower $ show opt) ++ " " ++ pn)
@@ -342,6 +348,31 @@ boilerplate pn pd os refTypeStr = do
                                     rest <- generateFromOptions pn pd os
                                     return  (lhdec ++ rest)
     
+-- ======================================================
+-- |Given a proof, extracts the property (deletes inductive calls made using `?`)
+-- ======================================================
+cleanProof :: [Dec] -> [Dec]
+cleanProof [] = []
+cleanProof ((ValD p body decs):rest) = (ValD p (trimInductiveCalls body) decs):(cleanProof rest)
+                                    
+cleanProof ((FunD nm clss):rest) = (FunD nm (recClean clss)):(cleanProof rest)
+                    where
+                        recClean [] = []
+                        recClean ((Clause p body ds):cls) = (Clause p (trimInductiveCalls body) ds) : recClean cls
+cleanProof (v:vs) = v:(cleanProof vs)
+
+trimInductiveCalls :: Body -> Body
+trimInductiveCalls (GuardedB grds) = GuardedB (recDelete grds)
+                                where
+                                    recDelete [] = []
+                                    recDelete ((grd, exp):gs) = (grd, deleteInd exp):(recDelete gs)
+trimInductiveCalls (NormalB exp) = NormalB (deleteInd exp)
+ 
+deleteInd :: Exp -> Exp
+deleteInd old@(UInfixE e1 (VarE op) e2) = case show op of
+                                            "?" -> deleteInd e1
+                                            _ -> (UInfixE (deleteInd e1) (VarE op) (deleteInd e2))
+deleteInd v = v
 
 -- ======================================================
 -- |Given a type adds parameters (LH way) and returns the
