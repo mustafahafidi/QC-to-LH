@@ -29,14 +29,24 @@ import Data.Strings
 
 {-@ LIQUID "--ple-local" @-}
 {-@ LIQUID "--reflection" @-}
+{-@ LIQUID "--shortnames" @-}
 
 -- type Test a = [a]
 
--- data Test = Empty
--- -- $( return [] )
+
+-- pp_proof :: Test Int Int -> Proof
+-- pp_proof t@Empty = (True) *** QED
+-- pp_proof t@(Test _ _) = (True) *** QED
+
+
+
+-- [lhp|caseExpand
+-- pp :: Test Int Int -> Bool
+-- pp t = True
+-- |]
+
+
 -- {-@ infix 4  ++ @-}
-
-
 -- {-@ rewrite assocP @-}
 -- {-@ ple assocP @-}
 -- {-@ assocP :: xs:[a] -> ys:[a] -> zs:[a] 
@@ -69,50 +79,37 @@ assoc2 xs ys zs ws
 -- |]
 
 
+-- [lhp|genProp|reflect|ple|caseExpand
+-- assoc1 :: Eq a => [a] -> [a] -> [a] -> [a] -> Bool
+-- assoc1 (x:xs) ys zs = () ? assoc1_proof xs ys zs
+-- assoc1 xs ys zs = xs ++ (ys ++ zs) == (xs ++ ys) ++ zs
+-- |]
+-- [lhp|caseExpand
+-- assoc1 :: Eq a => [a] -> [a] -> Bool
+-- assoc1 xs ys  = True
+-- |]
+
+-- $( return [] )
+
+data Test = Empty Test | Test 
+$( return [] )
+
+-- [lhp|caseExpand
+-- p :: Test -> Bool
+-- p v = True
+-- |]
+
 -- main1 :: IO ()
 -- main1 = putStrLn $(do
---         (TyConI (DataD ctx nm tvbndr knd constrs drvcls)) <- reify ''Int
---         -- info <- reify $ mkName "Int"
+--         (TyConI (DataD ctx nm tvbndr knd constrs drvcls)) <- reify ''[]
+--         -- info <- reify $ ''Test
 --         -- let () = dec
 --         -- let dataTypestr = map pprint (constrs::[Con])
---         reportWarning $ show constrs
+--         recCons <- getRecursiveConstr (nm,constrs)
+--         reportWarning $ show $ recCons
+--         -- reportWarning $ show constrs
 --         -- let splitted = strSplitAll "|" dataTypestr
 --         -- reportWarning $ show $ splitted
 --         stringE ""
 --         )
-{-@ LIQUID "--shortnames" @-}
 
-
--- {-@ reflect pred_Size @-}
--- pred_Size ::  Heap Int -> Bool
--- -- pred_Size h@Empty  = 
--- --   size h == length (toList h)
--- -- pred_Size h@(Node v hl hr)  = 
--- --   size h == length (toList h)
--- pred_Size h = (size h) == length (toList h)
--- -- {-@ rewriteWith prop_Size [distProp, append_length, pred_Size] @-}
--- {-@ ple prop_Size @-}
--- {-@ prop_Size ::  h:Heap Int -> { pred_Size h } @-}
--- prop_Size ::  Heap Int -> Proof
--- -- prop_Size h@Empty  = trivial
--- prop_Size h@(Node v hl hr)  = ((size h) == length (toList h) ? (distProp [hl]) [hr]
---        ? TH.TestProps.prop_Size hl
---        ? TH.TestProps.prop_Size hr
---        ? (append_length (toList' [hl])) (toList' [hr]))
---       *** QED
--- prop_Size h  = ((size h) == length (toList h)) *** QED
-
--- {-@ LIQUID "--notermination" @-}
--- {-@ LIQUID "--nototality" @-}
-
-{-@ rewriteWith prop_Size_proof [distProp, append_length] @-}
-[lhp|genProp|reflect|ple|caseExpand
-prop_Size ::  Heap Int -> Bool
-prop_Size h@(Node v hl hr)  = size h == length (toList h) 
-                ? distProp [hl] [hr]
-                ? prop_Size_proof hl
-                ? prop_Size_proof hr
-                ? append_length (toList' [hl]) (toList' [hr]) 
-                
-prop_Size h  = size h == length (toList h) 
-|]

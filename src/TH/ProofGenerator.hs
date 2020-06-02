@@ -1,10 +1,12 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE  TemplateHaskell #-}
-module TH.ProofGenerator (
-    generateProofFromDecl,
-    generateProofFromExp,
-    lhp
-) where
+module TH.ProofGenerator 
+-- (
+--     generateProofFromDecl,
+--     generateProofFromExp,
+--     lhp
+-- )
+where
     
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax
@@ -16,6 +18,7 @@ import Language.Haskell.Liquid.Liquid
 import Language.Haskell.Meta.Parse
 
 import Control.Monad
+import Control.Applicative
 import Control.Exception
 import System.IO
 import System.Process
@@ -193,48 +196,34 @@ caseExpandBody sigType cls = do
                                 ForallT _ _ tp -> tp 
                                 tp             -> tp
                 
-                -- get the data constructors of the types
-                let getDCons (ConT t)   = return t
-                    getDCons (ListT)   =  return $ mkName "[]"
-                    getDCons (AppT t _) = getDCons t
-                    getDCons v = failWith $ "Unsupported " ++ show v
+                -- get the data constructors of the signature types
+                constrs <- getConstructors paramTypes
+                let signatureConstructors = snd $ unzip constrs
+                clss <- patternMatchClauses signatureConstructors cls
+                exhaustClss <- exhaustiveInduction constrs clss
+                -- reportWarningToUser $ show constrs
+                -- reportWarningToUser $ show clss
+                -- reportWarningToUser $ show exhaustClss
+                return exhaustClss
+   
 
-                let getConstructors [] = return []
-                    getConstructors (paramT:pts) = do
-                        t <- parseGivenType $ paramT
-                        dcons <- getDCons t
-                        constrs <- reifyGivenStrType 
-                                    $ show $ dcons
-                        -- failWith $ show $ constrs
+getName :: Type -> Q Name 
+getName (ConT t)   = return t
+getName (ListT)   =  return $ mkName "[]"
+getName (AppT t _) = getName t
+getName v = failWith $ "Cannot get the name of the given type (unsupported): " ++ show v
 
-                        restConstrs <- getConstructors pts
-                        return $ constrs :restConstrs
-                signatureConstructors <- getConstructors paramTypes
-                patternMatchClauses signatureConstructors cls
+getConstructors :: [String] -> Q [(Name, [Con])]
+getConstructors [] = return []
+getConstructors (paramT:pts) = do
+    t <- parseGivenType $ paramT
+    consName <- getName t
+    constrs <- reifyGivenStrType 
+                $ show $ consName
+    -- failWith $ show $ constrs
 
-
-
--- ======================================================
--- |Given type name it attempts to reify it and gets its info 
--- for pattern matching
--- ======================================================
-reifyGivenStrType :: String -> Q [Con]
-reifyGivenStrType strType = do  info <- reify $ mkName strType
-                                supportedType info
-    where
-        -- supportedType (TyConI (DataD _ _ _ _ constrs _)) = return constrs
-        supportedType (TyConI (DataD _ _ _ _ constrs _)) = return constrs
-        supportedType _ = failWith "Unsupported given type for pattern matching"
-
-
--- ======================================================
--- |Attempts to parse a given type
--- ======================================================
-parseGivenType :: String -> Q Type
-parseGivenType strType = okOrFail $ parseType strType
-            where
-                okOrFail (Right t) = return t
-                okOrFail _         = failWith $ "Unsupported given type "++strType
+    restConstrs <- getConstructors pts
+    return $ (consName, constrs) :restConstrs
 
 
 
@@ -261,14 +250,75 @@ patternMatchClauses (cons:cs) (Clause ((VarP nm):vs) b ds) =
         bangsToWild w = map $ const w
         unimplemented = (Clause ((VarP nm):vs) b ds)
 
-        replacePattern w (NormalC nmCons bngs) =if elem (show nmCons) typesToIgnore
-                                                 then unimplemented
-                                                 else 
+        replacePattern w (NormalC nmCons bngs) =
+                                                -- if elem (show nmCons) typesToIgnore
+                                                --  then unimplemented
+                                                --  else 
                                                       Clause (AsP nm (ConP nmCons (bangsToWild w bngs)):vs) b ds
-                    
+        replacePattern w (InfixC bng1 infxCons bng2) =
+                                                -- if elem (show infxCons) typesToIgnore
+                                                --  then unimplemented
+                                                --  else 
+                                                      Clause (AsP nm (InfixP w infxCons w):vs) b ds           
         replacePattern w v = unimplemented
 
 patternMatchClauses _ cls = failWith $ "Unimplemented case for pattern matching generation: " ++ pprint cls
+
+
+
+-- ======================================================
+-- |Given signature constructors, and body adds inductive
+-- calls exhaustively on each recursive data type. It should be 
+-- called after case expansion (`patternMatchClauses`)
+-- ======================================================
+exhaustiveInduction :: [(Name,[Con])] -> [Clause] -> Q [Clause]
+exhaustiveInduction [] allCases = return allCases
+exhaustiveInduction ((nm, con):cons) allCases = do
+                                    -- take off one argument and do exhaustive induction recursively
+                                    rest <- exhaustiveInduction cons [ (Clause (tail ptns) b d)  | (Clause ptns b d) <- allCases]
+                                    -- put it back on recursive result and add current argument
+                                    recIdxs <- getRecursiveConstr nm con
+                                    -- reportWarningToUser $ show recIdxs
+                                    let zippedClauses  = [ Clause p1 b d  | (Clause p1 _ _, Clause _ b d ) <- zip allCases rest]
+                                    -- reportWarningToUser $ show zippedClauses
+                                    addInductiveCall (zip con recIdxs) zippedClauses
+
+
+addInductiveCall :: [(Con, Maybe Int)] -> [Clause] -> Q [Clause]
+addInductiveCall cons [] = return []
+addInductiveCall ((_,Nothing):cs) clss = return clss -- if the data cons is not recursive we don't do anything
+addInductiveCall ((NormalC nmCons bngs,Just bidx):cs) clss = return  -- lookup the clause that uses this recursive datatype
+                                                        [ if patternUsesRecCons p
+                                                            then (Clause (p:ptns) (replaceBodyExp b (getIndExp p)) d)
+                                                            else cls 
+                                                        | cls@(Clause (p:ptns) b d) <- clss]
+                                        where
+                                            patternUsesRecCons (AsP nm (ConP conPtn ptns)) = show conPtn == show nmCons
+                                            getIndExp (AsP nmp (ConP nmCons bngs)) = AppE (VarE $ mkName "ProofNameTODO") (case parseExp (pprint $ bngs !! bidx) of
+                                                                                                                            Right exp -> exp
+                                                                                                                            _         -> VarE $ mkName "error"
+                                                                                                                            )
+                                            replaceBodyExp oldBody indExp = wrapBodyWith (\b -> (UInfixE (b) (VarE $ mkName "?") (indExp))) oldBody
+-- addInductiveCall cons clss = return []
+    
+
+    
+getRecursiveConstr :: Name -> [Con] -> Q [Maybe Int]
+getRecursiveConstr nm [] = return []
+getRecursiveConstr nm ((NormalC nmCons bngs):cs) = do   rest <- getRecursiveConstr nm cs
+                                                        let foundBang = ((searchInBang nm bngs 0):rest) 
+                                                        -- reportWarningToUser $ show foundBang
+                                                        return foundBang
+getRecursiveConstr nm (_:cs) = failWith $ "Cannot get recursive parts of given type " ++ show nm --Nothing : getRecursiveConstr (nm,cs)
+                   
+
+-- find the recursive bang in the given single data constructor
+searchInBang :: Name -> [BangType] -> Int -> Maybe Int
+searchInBang nm ((b,(AppT t1 t2)):bs) idx = searchInBang nm ((b,t1):bs) (idx) <|> searchInBang nm ((b, t2):bs) (idx)
+searchInBang nm ((b,(ConT nc)):bs) idx = if (show nc == show nm)
+                                    then Just idx 
+                                    else searchInBang nm bs (idx+1)
+searchInBang nm v _ = Nothing
 
 -- ======================================================
 -- |Run Liquid and return result
@@ -353,8 +403,10 @@ boilerplate pn pd os refTypeStr = do
                                     rest <- generateFromOptions pn pd os
                                     return  (lhdec ++ rest)
     
+
 -- ======================================================
 -- |Given a proof, extracts the property (deletes inductive calls made using `?`)
+--  This is used to extract the plain property out of a proof
 -- ======================================================
 cleanProof :: [Dec] -> [Dec]
 cleanProof [] = []
@@ -401,14 +453,46 @@ addParamsToTypeStr tp acc = do let (p,ps) = strSplit "->" tp
 --  or `(Body)***Admit` depending on `isAdmit`
 -- ======================================================
 wrapBodyWithProof :: Bool -> Body -> Body
-wrapBodyWithProof isAdmit oldBody = case oldBody of
-                                        NormalB bodyExp -> NormalB $ transformBody bodyExp
-                                        GuardedB gds    -> GuardedB (mapGuards gds)
+wrapBodyWithProof isAdmit oldBody = wrapBodyWith transformExp  oldBody
             where
               typeProof = (if isAdmit then "Admit" else "QED")
-              transformBody oldBody = (UInfixE (ParensE (oldBody)) (VarE $ mkName "***") (ConE $ mkName typeProof))
-              mapGuards gds = map (\(g, bodyExp) -> (g, transformBody bodyExp)) gds
+              transformExp oldBody = (UInfixE (ParensE (oldBody)) (VarE $ mkName "***") (ConE $ mkName typeProof))
 
+
+
+-- ======================================================
+-- |Given an expression transformer, applies it on a given Body
+-- ======================================================
+wrapBodyWith :: (Exp -> Exp) -> Body -> Body
+wrapBodyWith transformer oldBody = case oldBody of
+                                        NormalB bodyExp -> NormalB $ transformExp bodyExp
+                                        GuardedB gds    -> GuardedB (mapGuards gds)
+            where
+              mapGuards gds = map (\(g, bodyExp) -> (g, transformExp bodyExp)) gds
+              transformExp oldBody = transformer oldBody
+
+
+-- ======================================================
+-- |Given type name it attempts to reify it and gets its info 
+-- for pattern matching
+-- ======================================================
+reifyGivenStrType :: String -> Q [Con]
+reifyGivenStrType strType = do  info <- reify $ mkName strType
+                                supportedType info
+    where
+        -- supportedType (TyConI (DataD _ _ _ _ constrs _)) = return constrs
+        supportedType (TyConI (DataD _ _ _ _ constrs _)) = return constrs
+        supportedType _ = failWith "Unsupported given type for pattern matching"
+
+
+-- ======================================================
+-- |Attempts to parse a given type
+-- ======================================================
+parseGivenType :: String -> Q Type
+parseGivenType strType = okOrFail $ parseType strType
+            where
+                okOrFail (Right t) = return t
+                okOrFail _         = failWith $ "Unsupported given type "++strType
 
 
 
