@@ -75,6 +75,8 @@ property_proof x ls = SOMETHING
                     ***QED
 ```
 
+### LH annotations
+
 You might want to use reflection on `property` and PLE on `propert_proof`, so you can either use `lhp` options:
 
 ```haskell
@@ -94,6 +96,53 @@ property :: Bool -> [Bool] -> Bool
 property x ls = SOMETHING
 |]
 ```
+
+### Automatic Case Splitting
+
+You can use the option `caseExpand` to automatically do case splitting on your proof's parameters, this will drastically ease the proof to `PLE`.
+
+For example, writing this:
+
+```haskell
+data Fruit = Apple | Banana
+[lhp|ple|caseExpand
+property :: Bool -> Fruit  -> Bool
+property bl fr = True
+|]
+```
+
+Is the same as writing this proof:
+
+```haskell
+{-@ ple property_proof @-}
+property_proof :: Bool -> Fruit -> Proof
+property_proof bl@False fr@Apple
+  = (True) *** QED
+property_proof bl@False fr@Banana
+  = (True) *** QED
+property_proof bl@True fr@Apple
+  = (True) *** QED
+property_proof bl@True fr@Banana
+  = (True) *** QED
+```
+
+### Helping LH with a single case
+
+Using case expansion, you might want to add information on a single case, for example by adding an inductive hypothesis:
+
+```haskell
+data Object = Apple | Box Fruit
+[lhp|genProp|reflect|ple|caseExpand
+property :: Bool -> Object  -> Bool
+property bl (Box fr) = ()
+                  ? property_proof bl fr
+                  ? some_other_property
+property bl fr = SOMETHING
+|]
+```
+
+You only have to make sure that the plain boolean property is the last one you declare. You can specify anything that you want `lhp` to include in the proof above that.
+If you use `genProp` the property generated will not include the additional information that you provide with the "?" combinator. They will remain only in the proof:
 
 #### Running LiquidHaskell locally to a proof
 

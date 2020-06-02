@@ -91,12 +91,12 @@ assoc2 xs ys zs ws
 
 -- $( return [] )
 
-data Test = Empty Test | Test 
+data Test = Test Test Test | Empty
 $( return [] )
 
 -- [lhp|caseExpand
--- p :: Test -> Bool
--- p v = True
+-- p :: Test -> Bool -> Bool
+-- p v y = True
 -- |]
 
 -- main1 :: IO ()
@@ -113,3 +113,11 @@ $( return [] )
 --         stringE ""
 --         )
 
+
+
+data Fruit = Apple | Banana
+$( return [] )
+[lhp|caseExpand
+property :: Bool -> Fruit  -> Bool
+property bl fr = True
+|]

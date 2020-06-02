@@ -16,6 +16,7 @@ import Language.Haskell.Liquid.ProofCombinators
 import Language.Haskell.Liquid.Liquid
 
 import Language.Haskell.Meta.Parse
+import Language.Haskell.Meta.Utils
 
 import Control.Monad
 import Control.Applicative
@@ -200,11 +201,11 @@ caseExpandBody sigType cls = do
                 constrs <- getConstructors paramTypes
                 let signatureConstructors = snd $ unzip constrs
                 clss <- patternMatchClauses signatureConstructors cls
-                exhaustClss <- exhaustiveInduction constrs clss
+                -- exhaustClss <- exhaustiveInduction constrs clss
                 -- reportWarningToUser $ show constrs
                 -- reportWarningToUser $ show clss
                 -- reportWarningToUser $ show exhaustClss
-                return exhaustClss
+                return clss
    
 
 getName :: Type -> Q Name 
@@ -228,7 +229,7 @@ getConstructors (paramT:pts) = do
 
 
 -- ======================================================
--- |Generates pattern matching given a data constructors 
+-- |Generates pattern matching given data constructors 
 -- and a single declaration clause
 -- ======================================================
 patternMatchClauses :: [[Con]] -> Clause -> Q [Clause]
@@ -236,8 +237,7 @@ patternMatchClauses [] (cls) = return [cls]
 patternMatchClauses cons cls@(Clause [] b ds) = return [cls]
 patternMatchClauses (cons:cs) (Clause ((VarP nm):vs) b ds) = 
   do
-    w <- wildP
-    let fpReplaced = map (replacePattern w) cons
+    fpReplaced <- replacePattern cons
     -- given a cls add a parameter to its patterns
     let addParam  p (Clause ptns b ds) = Clause (p:ptns) b ds
     -- "multiplying" single clause to the other pattern matches
@@ -247,20 +247,30 @@ patternMatchClauses (cons:cs) (Clause ((VarP nm):vs) b ds) =
     return $ multiply fpReplaced restClss
     where
         typesToIgnore = ["GHC.Types.I#"] -- don't pattern match on these ones (Int)
-        bangsToWild w = map $ const w
-        unimplemented = (Clause ((VarP nm):vs) b ds)
 
-        replacePattern w (NormalC nmCons bngs) =
+        replacePattern [] = return []
+        replacePattern ((NormalC nmCons bngs):cs) = do 
+                                                        vars <- generateVars bngs
+                                                        rest <- replacePattern cs
+                                                        return $ ( Clause (AsP nm (ConP nmCons vars):vs) b ds):rest
                                                 -- if elem (show nmCons) typesToIgnore
                                                 --  then unimplemented
                                                 --  else 
-                                                      Clause (AsP nm (ConP nmCons (bangsToWild w bngs)):vs) b ds
-        replacePattern w (InfixC bng1 infxCons bng2) =
-                                                -- if elem (show infxCons) typesToIgnore
-                                                --  then unimplemented
-                                                --  else 
-                                                      Clause (AsP nm (InfixP w infxCons w):vs) b ds           
-        replacePattern w v = unimplemented
+        replacePattern ((InfixC bng1 infxCons bng2):cs)  = do 
+                                                        (v1:v2:_) <- generateVars [bng1, bng2]
+                                                        rest <- replacePattern cs
+                                                        return $ ( Clause (AsP nm (InfixP v1 infxCons v2):vs) b ds):rest
+        replacePattern (v:cs) = do 
+                                    rest <- replacePattern cs
+                                    return $ (Clause ((VarP nm):vs) b ds):rest
+
+        generateVars [] = return []
+        generateVars (_:bs) = do
+                                varName <- newName "p"
+                                rest <- generateVars bs
+                                return $ (VarP $ mkName $ show varName):rest --the show thing around Name is necessary to keep consistency
+
+        unimplemented = (Clause ((VarP nm):vs) b ds)
 
 patternMatchClauses _ cls = failWith $ "Unimplemented case for pattern matching generation: " ++ pprint cls
 
@@ -271,54 +281,119 @@ patternMatchClauses _ cls = failWith $ "Unimplemented case for pattern matching 
 -- calls exhaustively on each recursive data type. It should be 
 -- called after case expansion (`patternMatchClauses`)
 -- ======================================================
-exhaustiveInduction :: [(Name,[Con])] -> [Clause] -> Q [Clause]
-exhaustiveInduction [] allCases = return allCases
+-- clause level recursion
+exhaustiveInduction :: [(Name,[Con])] -> [Clause] -> Q [([[String]],Clause)]
+exhaustiveInduction [] allCases = return [([],cls)|cls<-allCases]
 exhaustiveInduction ((nm, con):cons) allCases = do
                                     -- take off one argument and do exhaustive induction recursively
                                     rest <- exhaustiveInduction cons [ (Clause (tail ptns) b d)  | (Clause ptns b d) <- allCases]
+
+                                    recBangs <- getRecursiveConstr nm con
                                     -- put it back on recursive result and add current argument
-                                    recIdxs <- getRecursiveConstr nm con
-                                    -- reportWarningToUser $ show recIdxs
-                                    let zippedClauses  = [ Clause p1 b d  | (Clause p1 _ _, Clause _ b d ) <- zip allCases rest]
-                                    -- reportWarningToUser $ show zippedClauses
-                                    addInductiveCall (zip con recIdxs) zippedClauses
+                                    current <- addInductiveCall (zip con recBangs) allCases
+
+                                    let addParam p ys = p ++ ys
+                                    -- "multiplying" single clause to the other pattern matches
+                                    let multiply (p:ps) ys = (map (addParam p) ys) ++ multiply ps ys
+                                        multiply [] ys = []
 
 
-addInductiveCall :: [(Con, Maybe Int)] -> [Clause] -> Q [Clause]
-addInductiveCall cons [] = return []
-addInductiveCall ((_,Nothing):cs) clss = return clss -- if the data cons is not recursive we don't do anything
-addInductiveCall ((NormalC nmCons bngs,Just bidx):cs) clss = return  -- lookup the clause that uses this recursive datatype
-                                                        [ if patternUsesRecCons p
-                                                            then (Clause (p:ptns) (replaceBodyExp b (getIndExp p)) d)
-                                                            else cls 
-                                                        | cls@(Clause (p:ptns) b d) <- clss]
+                                    let finalClss = [
+                                              ind1++ind2
+                                            | ( (ind1, c1@(Clause _ _ _)),(ind2, Clause _ _ _) ) <- zip current rest]
+                                    reportWarningToUser $ "Current: " ++ (show $ length current)
+                                    reportWarningToUser $ "rest: " ++ (show $ length rest)
+                                    reportWarningToUser $ "finalClss: " ++ (show $ length finalClss)
+                                    reportWarningToUser $ "final: " ++ show finalClss
+                                    -- -- failWith $ show $ zip con recBangs
+                                    -- -- let (hd) = asd
+                                    -- failWith $ show [ strs | (strs,cls) <- finalClss]
+                                    return current
+
+
+--  bang level
+addInductiveCall :: [(Con, [Int])] -> [Clause] -> Q [([[String]],Clause)]
+-- addInductiveCall [] c = return 
+-- addInductiveCall ((_,[]):cs) allCases = return [([],cls)|cls<-allCases] -- if the data cons is not recursive we don't do anything
+addInductiveCall ((NormalC nmCons bngs,bis):cs) allCases = do
+                                    rest <- addInductiveCall cs allCases --[ (Clause ptns b d)  | (Clause (p:ptns) b d) <- allCases]
+
+                                    -- let (Clause (p:p2:ptns) b d) = head allCases
+                                    -- let first   = getProofParam p bis
+                                    -- let second   = getProofParam p2 bis
+                                    reportWarningToUser $ "addinductivecall" ++ show rest
+                                    -- failWith $ show (multiply first second)
+                                    -- failWith $ show ([
+                                                
+                                    --             (multiply pInd (getProofParam p bis) ,
+                                    --           Clause p1 b d)
+                                    --         | (Clause p1@(p:ptns) _ _,(pInd, Clause _ b d) ) <- zip allCases rest])
+
+                                    return [
+                                              ({- multiply -} (getProofParam p bis) ++ pInd ,
+                                              (Clause p1 b d)) 
+                                            | (Clause p1@(p:ptns) _ _,(pInd, Clause _ b d) ) <- zip allCases rest]
+                                    
+
+                                
                                         where
-                                            patternUsesRecCons (AsP nm (ConP conPtn ptns)) = show conPtn == show nmCons
-                                            getIndExp (AsP nmp (ConP nmCons bngs)) = AppE (VarE $ mkName "ProofNameTODO") (case parseExp (pprint $ bngs !! bidx) of
-                                                                                                                            Right exp -> exp
-                                                                                                                            _         -> VarE $ mkName "error"
-                                                                                                                            )
-                                            replaceBodyExp oldBody indExp = wrapBodyWith (\b -> (UInfixE (b) (VarE $ mkName "?") (indExp))) oldBody
--- addInductiveCall cons clss = return []
+                                            patternUsesRecCons (AsP _ (ConP conPtn ptns)) = normaliseName conPtn == normaliseName nmCons
+
+                                            getProofParam :: Pat -> [Int] -> [[String]]
+                                            getProofParam p@(AsP nm (ConP _ (ptns))) ids = 
+                                                [  [(if patternUsesRecCons p
+                                                        then (ptnToName $ ptns !! i)
+                                                        else show nm)]    | i <- ids]
+                                                    
+                                            ptnToName (VarP nmv) = show nmv
+
+                                            multiply :: [[String]] -> [[String]] -> [[String]]
+                                            multiply [] vs = vs
+                                            multiply (x:xs) vs = [ x++v | v <- vs] ++ multiply xs vs
+
+                                            -- getIndExp _ [] body = body
+                                            -- getIndExp ptns (idx:bs) body 
+                                            --         = getIndExp ptns bs newBody
+                                            --               where
+                                            --                indExp = case parseExp (genProofCall ptns idx) of
+                                            --                     Right exp -> exp
+                                            --                     _         -> VarE $ mkName "Error"
+
+                                            --                --AppE (VarE $ mkName "proofNameTODO") 
+                                            --                newBody = wrapBodyWith (\b -> (UInfixE (b) (VarE $ mkName "?") (indExp))) body
+                               
+addInductiveCall [] allCases = return [([],cls)|cls<-allCases]                            
+addInductiveCall cons clss = failWith $ "Unimplemented case in exhaustive induction : " ++ show cons ++ show clss
     
 
     
-getRecursiveConstr :: Name -> [Con] -> Q [Maybe Int]
+getRecursiveConstr :: Name -> [Con] -> Q [[Int]]
 getRecursiveConstr nm [] = return []
 getRecursiveConstr nm ((NormalC nmCons bngs):cs) = do   rest <- getRecursiveConstr nm cs
-                                                        let foundBang = ((searchInBang nm bngs 0):rest) 
-                                                        -- reportWarningToUser $ show foundBang
-                                                        return foundBang
+                                                        foundBangs <- (searchInBang nm bngs 0) 
+                                                        -- reportWarningToUser $ show $ "found" ++ show (foundBangs:rest)
+                                                        return (foundBangs:rest)
 getRecursiveConstr nm (_:cs) = failWith $ "Cannot get recursive parts of given type " ++ show nm --Nothing : getRecursiveConstr (nm,cs)
                    
 
--- find the recursive bang in the given single data constructor
-searchInBang :: Name -> [BangType] -> Int -> Maybe Int
-searchInBang nm ((b,(AppT t1 t2)):bs) idx = searchInBang nm ((b,t1):bs) (idx) <|> searchInBang nm ((b, t2):bs) (idx)
-searchInBang nm ((b,(ConT nc)):bs) idx = if (show nc == show nm)
-                                    then Just idx 
-                                    else searchInBang nm bs (idx+1)
-searchInBang nm v _ = Nothing
+-- says whether the bangs of a single data constructor are recursive
+searchInBang :: Name -> [BangType]  -> Int -> Q ([Int])
+searchInBang nm ((b,(AppT t1 t2)):bs) idx = do
+                                                rest <- searchInBang nm bs (idx+1)
+                                                b1 <- searchInBang nm ((b,t1):bs) idx
+                                                b2 <- searchInBang nm ((b,t2):bs) idx
+                                                -- res <- do bngT1 <|> bngT2
+                                                reportWarningToUser $ (show b1 ++ show b2)
+                                                
+                                                return $ (b1++b2++rest)
+searchInBang nm ((b,(ConT nc)):bs) idx = do
+                                    rest <- searchInBang nm bs (idx+1)
+                                    let isCurrentRec = normaliseName nc == normaliseName nm
+                                    -- reportWarningToUser $ (show $  isCurrentRec)
+                                    
+                                    return $ (if isCurrentRec then [idx] else [])++rest
+searchInBang nm [] idx = return []
+searchInBang nm v  idx = failWith $ "searchInBang unimplemented given bang: "++show v
 
 -- ======================================================
 -- |Run Liquid and return result
