@@ -284,7 +284,7 @@ exhaustiveInduction [] allCases = return [([],cls)|cls<-allCases]
 exhaustiveInduction params@(cr@(nm, con):cons) allCases = do
                                     -- take off one argument and do exhaustive induction recursively
                                     rest <- exhaustiveInduction cons [ (Clause (tail ptns) b d)  | (Clause ptns b d) <- allCases]
-
+                                    -- reportWarningToUser $ "calling getRecursiveContrs" ++ show con
                                     recBangs <- getRecursiveConstr nm con
                                     -- failWith $ show $ allCases
 
@@ -319,48 +319,46 @@ recursiveBangsInd :: [(Con, [Int])] -> [Clause] -> Q [([[String]],Clause)]
 -- recursiveBangsInd [] c = return 
 -- recursiveBangsInd ((_,[]):cs) allCases = return [([],cls)|cls<-allCases] -- if the data cons is not recursive we don't do anything
 recursiveBangsInd [] allCases = return [([],cls)|cls<-allCases]                            
-recursiveBangsInd crlist@((cr@(NormalC nmCons bngs),bis):cs) allCases = do
-                                    rest <- recursiveBangsInd cs allCases --[ (Clause ptns b d)  | 
-
+recursiveBangsInd ((cr,bis):cs) allCases 
+                | (NormalC nmCons bngs) <- cr = do
+                                    rest <- recursiveBangsInd cs allCases 
                                     let final  = [
-                                              ((getIndCallParams p bis) ++ pInd,
+                                              ((getIndCallParams nmCons p bis) ++ pInd,
                                               (Clause p1 b d)) 
                                             | (Clause p1@(p:ptns) _ _,(pInd, Clause _ b d) ) <- zip allCases rest]
-                                    
-                                    -- reportWarningToUser $ "params: " ++ pprint cr++ show bis
-
-                                    -- reportWarningToUser $ "final: " ++ show [(calls, pprint cls)| (calls,cls)<-final]
-                                    -- reportWarningToUser $ "final: " ++ show [((getIndCallParams p bis), pprint p)| (Clause p1@(p:_) _ _,(pInd, Clause _ b d) ) <- zip allCases rest]
-                                    -- reportWarningToUser $ show final
+                                   
                                     return final
                                 
-                                        where
-                                            patternUsesRecCons (AsP _ (ConP conPtn _)) = normaliseName conPtn == normaliseName nmCons
+                | (InfixC bngt1 nmCons bngt2) <- cr = do
+                                    rest <- recursiveBangsInd cs allCases 
+                                    let final  = [
+                                              ((getIndCallParams nmCons p bis) ++ pInd,
+                                              (Clause p1 b d)) 
+                                            | (Clause p1@(p:ptns) _ _,(pInd, Clause _ b d) ) <- zip allCases rest]
+                                   
+                                    return final
 
-                                            getIndCallParams :: Pat -> [Int] -> [[String]]
-                                            getIndCallParams p@(AsP nm (ConP _ (ptns))) ids = 
-                                                if patternUsesRecCons p then
-                                                    [  [(ptnToName $ ptns !! i)]  | i <- ids]
-                                                else
-                                                    []
-                                                    
-                                            ptnToName (VarP nmv) = show nmv
-                                            ptnToName (v) = show v
+                            where
+                                            
 
-                                            multiply :: [[String]] -> [[String]] -> [[String]]
-                                            multiply [] vs = vs
-                                            multiply (x:xs) vs = [ x++v | v <- vs] ++ multiply xs vs
+                                getIndCallParams :: Name -> Pat -> [Int] -> [[String]]
+                                getIndCallParams nmCons (AsP nm (ConP conPtn (ptns))) ids = 
+                                    if (normaliseName conPtn == normaliseName nmCons) then
+                                        [  [(ptnToName $ ptns !! i)]  | i <- ids]
+                                    else
+                                        []
+                                getIndCallParams nmCons (AsP nm (InfixP ptn1 conPtn ptn2)) ids = 
+                                    if (normaliseName conPtn == normaliseName nmCons) then
+                                        [  [(ptnToName $ [ptn1,ptn2] !! i)]  | i <- ids]
+                                    else
+                                        []        
+                                ptnToName (VarP nmv) = show nmv
+                                ptnToName (v) = show v
 
-                                            -- getIndExp _ [] body = body
-                                            -- getIndExp ptns (idx:bs) body 
-                                            --         = getIndExp ptns bs newBody
-                                            --               where
-                                            --                indExp = case parseExp (genProofCall ptns idx) of
-                                            --                     Right exp -> exp
-                                            --                     _         -> VarE $ mkName "Error"
+                                multiply :: [[String]] -> [[String]] -> [[String]]
+                                multiply [] vs = vs
+                                multiply (x:xs) vs = [ x++v | v <- vs] ++ multiply xs vs
 
-                                            --                --AppE (VarE $ mkName "proofNameTODO") 
-                                            --                newBody = wrapBodyWith (\b -> (UInfixE (b) (VarE $ mkName "?") (indExp))) body
                                
 recursiveBangsInd cons clss = failWith $ "Unimplemented case in exhaustive induction : " ++ show cons ++ show clss
     
@@ -368,21 +366,31 @@ recursiveBangsInd cons clss = failWith $ "Unimplemented case in exhaustive induc
     
 getRecursiveConstr :: Name -> [Con] -> Q [[Int]]
 getRecursiveConstr nm [] = return []
-getRecursiveConstr nm ((NormalC nmCons bngs):cs) = do   rest <- getRecursiveConstr nm cs
+getRecursiveConstr nm (con@(NormalC nmCons bngs):cs) = do   
+                                                        rest <- getRecursiveConstr nm cs
                                                         foundBangs <- (searchInBang nm bngs 0) 
+                                                        -- reportWarningToUser $ show $ "found" ++ show (foundBangs)++show con
+                                                        return (foundBangs:rest)
+getRecursiveConstr nm (con@(InfixC bngt1 nmCons bngt2):cs) = do   
+                                                        rest <- getRecursiveConstr nm cs
+                                                        foundBangs <- (searchInBang nm [bngt1,bngt2] 0) 
+                                                        -- reportWarningToUser $ show $ "found" ++ show (foundBangs)++show con
                                                         -- reportWarningToUser $ show $ "found" ++ show (foundBangs:rest)
                                                         return (foundBangs:rest)
-getRecursiveConstr nm (_:cs) = failWith $ "Cannot get recursive parts of given type " ++ show nm --Nothing : getRecursiveConstr (nm,cs)
+getRecursiveConstr nm (con:cs) = do
+                                failWith $ "asd" ++ show con
+                                failWith $ "Cannot get recursive parts of given type " ++ show nm 
                    
 
 -- says which bangs of a single data constructor are recursive
 searchInBang :: Name -> [BangType]  -> Int -> Q ([Int])
+searchInBang nm [] idx = return []
 searchInBang nm ((b,(AppT t1 t2)):bs) idx = do
                                                 rest <- searchInBang nm bs (idx+1)
-                                                b1 <- searchInBang nm ((b,t1):bs) idx
-                                                b2 <- searchInBang nm ((b,t2):bs) idx
+                                                b1 <- searchInBang nm [(b,t1)] idx
+                                                b2 <- searchInBang nm [(b,t2)] idx
                                                 -- res <- do bngT1 <|> bngT2
-                                                reportWarningToUser $ (show b1 ++ show b2)
+                                                -- reportWarningToUser $ (show b1 ++ show b2)
                                                 
                                                 return $ (b1++b2++rest)
 searchInBang nm ((b,(ConT nc)):bs) idx = do
@@ -391,8 +399,19 @@ searchInBang nm ((b,(ConT nc)):bs) idx = do
                                     -- reportWarningToUser $ (show $  isCurrentRec)
                                     
                                     return $ (if isCurrentRec then [idx] else [])++rest
-searchInBang nm [] idx = return []
-searchInBang nm v  idx = failWith $ "searchInBang unimplemented given bang: "++show v
+searchInBang nm ((b,ListT):bs) idx =  do
+                                    rest <- searchInBang nm bs (idx+1)
+                                    let isCurrentRec = "[]" == (show $ normaliseName nm)
+                                    
+                                    return $ (if isCurrentRec then [idx] else [])++rest
+    -- failWith $ show nm ++ show ListT
+
+    
+searchInBang nm (v:bs)  idx = searchInBang nm bs (idx+1)
+-- searchInBang nm b@(v:bs)  idx = do
+--     rest <- searchInBang nm bs idx
+--     reportWarningToUser $ "searchInBang unimplemented given bang: "++show nm++show b++show rest++show bs
+--     return []
 
 
 -- ======================================================

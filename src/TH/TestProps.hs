@@ -1,5 +1,6 @@
 {-# LANGUAGE  TemplateHaskell #-}
 {-# LANGUAGE  QuasiQuotes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# OPTIONS_GHC -dth-dec-file #-}
 module TH.TestProps where 
 import Language.Haskell.Liquid.ProofCombinators
@@ -79,8 +80,44 @@ property z = plus Z z == z
 {-======================================================
             EXAMPLE 2 automatic induction
 =======================================================-}
+{- 
+data List a = Nil | Cons a (List a) 
+        deriving (Eq)
+$(return [])
+
+{-@ reflect appendL @-}
+appendL :: List a -> List a -> List a
+appendL Nil rs = rs
+appendL (Cons el rest) rs = Cons el (rest `appendL` rs)
+
+{-@ reflect reverseL @-}
+reverseL :: List a -> List a
+reverseL Nil = Nil
+reverseL (Cons el ls) = reverseL ls  `appendL` Cons el Nil
 
 [lhp|genProp|reflect|ple|caseExpand|induction
-involution :: [a] -> Bool
-involution xs = reverse (reverse xs) == xs
+rightIdP :: Eq a => List a -> Bool
+rightIdP xs  = xs `appendL` Nil == xs
 |]
+-}
+
+{-======================================================
+        Example 3 GHC lists
+=======================================================-}
+
+
+-- [lhp|genProp|reflect|ple|caseExpand|induction
+-- propList :: [Int] -> Bool
+-- propList ls = ls ==ls
+-- |]
+
+
+[lhp|genProp|reflect|ple|caseExpand|induction
+rightIdP :: Eq a => [a]-> Bool
+rightIdP xs  = xs ++ [] == xs
+|]
+
+-- [lhp|genProp|reflect|ple|caseExpand|induction
+-- assocP ::  Eq a => [a] -> [a] -> [a] -> Bool
+-- assocP xs ys zs = xs ++ (ys ++ zs) == (xs ++ ys) ++ zs 
+-- |]
