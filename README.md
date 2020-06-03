@@ -131,20 +131,17 @@ property_proof bl@True fr@Banana
 Using case expansion, you might want to add information on a single case, for example by adding an inductive hypothesis:
 
 ```haskell
-data Object = Apple | Box Fruit
 [lhp|genProp|reflect|ple|caseExpand
-property :: Bool -> Object  -> Bool
-property bl (Box fr) = ()
-                  ? property_proof bl fr
-                  ? some_other_property
-property bl fr = SOMETHING
+assocP :: Eq a => [a] -> [a] -> [a] -> Bool
+assocP (x:xs) ys zs = () ? assocP_proof xs ys zs
+assocP xs ys zs = xs ++ (ys ++ zs) == (xs ++ ys) ++ zs
 |]
 ```
 
 You only have to make sure that the plain boolean property is the last one you declare. You can specify anything that you want `lhp` to include in the proof above that.
 If you use `genProp` the property generated will not include the additional information that you provide with the "?" combinator. They will remain only in the proof:
 
-#### Running LiquidHaskell locally to a proof
+### Running LiquidHaskell locally to a proof
 
 You could use `runLiquidW` option to run liquidhaskell locally on a proof and see its result as a warning:
 
@@ -159,7 +156,7 @@ Will show `LH`'s result on the binders `property` and `property_proof` as a warn
 
 Or if you have an extension that reads `.liquid` dirs to show you the errors ([like this one for vscode](https://marketplace.visualstudio.com/items?itemName=MustafaHafidi.liquidhaskell-diagnostics)), you can use the option `runLiquid` instead, which will run silently LH on the proof.
 
-#### Debugging
+### Debugging
 
 To see what `lhp` has generated, you can run ghci/ghc/liquidhaskell with the option `-dth-dec-file` or put on top of your module
 `{-# OPTIONS_GHC -dth-dec-file #-}`
@@ -184,7 +181,7 @@ Will show you this warnings in your IDE/ghci/ghc:
     [qc-to-lh]: property_proof :: p_0:Bool  -> p_1: [Bool]  -> {v:Proof | property p_2 p_3}
 ```
 
-## CList and Skew Heap Proofs Case studies
+# CList and Skew Heap Proofs Case studies
 
 - `src/CList_Proofs.hs` contains the formal proofs of the QuickCheck properties in `src/Lib/CL/QuickCheck.hs`
 - `src/Heap_Proofs.hs` contains the formal proofs of the QuickCheck properties in `src/Lib/QC/Heap.hs`

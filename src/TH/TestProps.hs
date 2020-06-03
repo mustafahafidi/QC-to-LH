@@ -1,6 +1,5 @@
 {-# LANGUAGE  TemplateHaskell #-}
 {-# LANGUAGE  QuasiQuotes #-}
-{-# LANGUAGE  ExplicitForAll #-}
 {-# OPTIONS_GHC -dth-dec-file #-}
 module TH.TestProps where 
 import Language.Haskell.Liquid.ProofCombinators
@@ -16,13 +15,14 @@ import Prelude  hiding (length,
 import Lib.LH.Prelude  
 -- import Lib.CL.CircularList
 import Lib.QC.Heap
-import Heap_Proofs
+-- import Heap_Proofs
 
 
 
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax
 import Language.Haskell.TH.Quote
+import Language.Haskell.Meta.Parse
 
 import Data.Strings
 
@@ -31,93 +31,56 @@ import Data.Strings
 {-@ LIQUID "--reflection" @-}
 {-@ LIQUID "--shortnames" @-}
 
--- type Test a = [a]
-
-
--- pp_proof :: Test Int Int -> Proof
--- pp_proof t@Empty = (True) *** QED
--- pp_proof t@(Test _ _) = (True) *** QED
 
 
 
--- [lhp|caseExpand
--- pp :: Test Int Int -> Bool
--- pp t = True
+
+{- [lhp|genProp|reflect|ple|runLiquid
+assocP :: Eq a => [a] -> [a] -> [a] -> Bool
+assocP (x:xs) ys zs = () ? assocP_proof xs ys zs
+assocP xs ys zs = xs ++ (ys ++ zs) == (xs ++ ys) ++ zs
+|] -}
+
+-- data T = E T Int | A
+-- $(return [])
+-- [lhp|genProp|reflect|ple|caseExpand|induction
+-- property :: T -> T -> Bool
+-- property t v = True
 -- |]
 
-
--- {-@ infix 4  ++ @-}
--- {-@ rewrite assocP @-}
--- {-@ ple assocP @-}
--- {-@ assocP :: xs:[a] -> ys:[a] -> zs:[a] 
---           -> { xs ++ (ys ++ zs) == (xs ++ ys) ++ zs }  @-}
--- assocP :: [a] -> [a] -> [a] -> Proof
--- assocP [] _ _       = trivial
--- assocP (x:xs) ys zs = assocP xs ys zs
+{-======================================================
+            EXAMPLE 1 automatic induction
+=======================================================-}
 {- 
-{-@ reflect pred2 @-}
-pred2 :: Eq a => [a] -> [a] -> [a] -> [a] -> Bool
-pred2 xs ys zs ws =  xs ++ (ys ++ (zs ++ ws)) == ((xs ++ ys) ++ zs) ++ ws 
+data N = S N | Z deriving (Show,Eq)
 
-{-@ rewriteWith assoc2 [assocP] @-}
-{-@ ple assoc2 @-}
-{-@ assoc2 :: xs:[a] -> ys:[a] -> zs:[a] -> ws:[a]
-          -> { pred2 xs ys zs ws } @-}
-assoc2 :: forall a.  Eq a => [a] -> [a] -> [a] -> [a] -> Proof
-assoc2 xs ys zs ws
-  = (xs ++ (ys ++ (zs ++ ws)) == ((xs ++ ys) ++ zs) ++ ws )
-    ***QED
+$(return [])
 
+
+{-@ reflect plus @-}
+plus :: N -> N -> N
+plus m Z     = m
+plus m (S n) = S (plus m n)
+
+{-@ ple proof @-}
+{-@ proof :: n : N -> { plus Z n = n } @-}
+proof :: N -> ()
+proof Z     = ()
+proof (S n) = () ? proof n
+
+-- automatically by lhp
+[lhp|genProp|reflect|ple|caseExpand|induction
+property :: N ->  Bool
+property z = plus Z z == z
+|]
  -}
 
--- {-@ rewriteWith pred2_proof [assocP] @-}
--- [lhp|genProp|reflect|ple
 
--- pred2 :: Eq a => [a] -> [a] -> [a] -> [a] -> Bool
--- pred2 xs ys zs ws =  xs ++ (ys ++ (zs ++ ws)) == ((xs ++ ys) ++ zs) ++ ws 
+{-======================================================
+            EXAMPLE 2 automatic induction
+=======================================================-}
 
--- |]
-
-
--- [lhp|genProp|reflect|ple|caseExpand
--- assoc1 :: Eq a => [a] -> [a] -> [a] -> [a] -> Bool
--- assoc1 (x:xs) ys zs = () ? assoc1_proof xs ys zs
--- assoc1 xs ys zs = xs ++ (ys ++ zs) == (xs ++ ys) ++ zs
--- |]
--- [lhp|caseExpand
--- assoc1 :: Eq a => [a] -> [a] -> Bool
--- assoc1 xs ys  = True
--- |]
-
--- $( return [] )
-
-data Test = Test Test Test | Empty
-$( return [] )
-
--- [lhp|caseExpand
--- p :: Test -> Bool -> Bool
--- p v y = True
--- |]
-
--- main1 :: IO ()
--- main1 = putStrLn $(do
---         (TyConI (DataD ctx nm tvbndr knd constrs drvcls)) <- reify ''[]
---         -- info <- reify $ ''Test
---         -- let () = dec
---         -- let dataTypestr = map pprint (constrs::[Con])
---         recCons <- getRecursiveConstr (nm,constrs)
---         reportWarning $ show $ recCons
---         -- reportWarning $ show constrs
---         -- let splitted = strSplitAll "|" dataTypestr
---         -- reportWarning $ show $ splitted
---         stringE ""
---         )
-
-
-
-data Fruit = Apple | Banana
-$( return [] )
-[lhp|caseExpand
-property :: Bool -> Fruit  -> Bool
-property bl fr = True
+[lhp|genProp|reflect|ple|caseExpand|induction
+involution :: [a] -> Bool
+involution xs = reverse (reverse xs) == xs
 |]

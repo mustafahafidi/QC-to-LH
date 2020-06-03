@@ -1,5 +1,6 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE  TemplateHaskell #-}
+{-@ LIQUID "--compilespec" @-}
 module TH.ProofGenerator 
 -- (
 --     generateProofFromDecl,
@@ -40,6 +41,7 @@ data Option = Ple
             | Debug 
             | Admit
             | CaseExpand
+            | Induction
             | RunLiquid
             | RunLiquidW
             deriving (Eq, Read, Show)
@@ -70,7 +72,7 @@ lhp = QuasiQuoter {
     quoteDec = parseOptions
     }
     where
-        bad = error "`lhq` quasiquoter can only be used as a top-level declaration"
+        bad = error "`lhp` quasiquoter can only be used as a top-level declaration"
 
 
 parseOptions :: String -> Q [Dec]
@@ -170,8 +172,9 @@ transformBody opts (SigD nm sigType) (FunD _ clss) = do
         let proofName = show nm ++ proof_suffix
         let isAdmit = elem TH.ProofGenerator.Admit opts
         -- if requested generate do case expansion
-        pmClss <- if (elem CaseExpand opts) then caseExpandBody sigType (last clss)
-                                            else return clss
+        pmClss <-  caseExpandBody proofName opts sigType (last clss) 
+        -- if (elem CaseExpand opts) then caseExpandBody sigType (last clss)
+        --                                     else return clss
         let wrap (Clause pns body decs) = Clause pns (wrapBodyWithProof isAdmit body) decs
         let finalProofClss = map wrap (init clss++pmClss)
         return $ FunD (mkName proofName) finalProofClss
@@ -188,8 +191,12 @@ transformBody _ _ dec = failWith $ "transformBody: Unsupported body declaration:
 -- |Given the property signature type and a clause of the body,
 -- does case expansion (pattern matching on the signature)
 -- ======================================================
-caseExpandBody :: Type -> Clause -> Q [Clause]
-caseExpandBody sigType cls = do
+caseExpandBody :: String -> [Option] -> Type -> Clause -> Q [Clause]
+caseExpandBody proofName opts sigType cls = do
+            let mustCaseExpand = elem CaseExpand opts
+            let mustDoInduction = elem Induction opts
+
+            if (mustCaseExpand) then do
                 let paramTypes = init --drop the return type
                             $ strSplitAll "->" 
                             $ pprint
@@ -201,11 +208,21 @@ caseExpandBody sigType cls = do
                 constrs <- getConstructors paramTypes
                 let signatureConstructors = snd $ unzip constrs
                 clss <- patternMatchClauses signatureConstructors cls
-                -- exhaustClss <- exhaustiveInduction constrs clss
+
+                -- do the induction thing
+                if mustDoInduction then do
+                    indClauses <- exhaustiveInduction constrs clss
+                    transformClausesWithInduction proofName indClauses
+                else
+                    return clss
+
+            else do
+                when mustDoInduction $ reportWarningToUser "The `induction` option has no effect without caseExpansion"
+                return [cls]
                 -- reportWarningToUser $ show constrs
                 -- reportWarningToUser $ show clss
                 -- reportWarningToUser $ show exhaustClss
-                return clss
+                -- return clss
    
 
 getName :: Type -> Q Name 
@@ -226,6 +243,156 @@ getConstructors (paramT:pts) = do
     restConstrs <- getConstructors pts
     return $ (consName, constrs) :restConstrs
 
+
+
+transformClausesWithInduction :: String -> [([[String]], Clause)] -> Q [Clause]
+transformClausesWithInduction pn [] = return []
+transformClausesWithInduction pn ((indCalls, (Clause ptns body decs)):cs) = do
+                    rest <- transformClausesWithInduction pn cs
+                    indCallsExps <- generateCalls pn indCalls
+                    let newBody = wrapBodyWithIndCalls body indCallsExps
+                    return ((Clause ptns newBody decs):rest)
+-- ======================================================
+-- |Given a Body and a list of expressions, wraps the body 
+-- recursively with the `?` proof combinator
+-- ======================================================
+wrapBodyWithIndCalls :: Body -> [Exp] -> Body
+wrapBodyWithIndCalls bd [] = bd
+wrapBodyWithIndCalls bd (call:cs) = wrapBodyWith (\b -> (UInfixE (b) (VarE $ mkName "?") (call))) (wrapBodyWithIndCalls bd cs)
+
+-- ======================================================
+-- |Given a proof name and a list of inductive calls (only their parameters),
+--  returns a list of `proof_name [params..]` call expressions
+-- ======================================================
+generateCalls :: String -> [[String]] -> Q [Exp] 
+generateCalls proofName [] = return []
+generateCalls proofName (callParams:cs) = do
+            let strCall = strJoin " " (proofName:callParams)
+            rest <- generateCalls proofName cs
+            case parseExp strCall of
+                Right exp -> return (exp : rest)
+                Left err  -> failWith $ "Cannot generate inductive calls: " ++ err
+            
+ 
+-- ======================================================
+-- |Given signature constructors and body, returns for each clause
+-- the inductive calls (only their parameters)
+-- ======================================================
+-- clause level recursion
+exhaustiveInduction :: [(Name,[Con])] -> [Clause] -> Q [([[String]],Clause)]
+exhaustiveInduction [] allCases = return [([],cls)|cls<-allCases]
+exhaustiveInduction params@(cr@(nm, con):cons) allCases = do
+                                    -- take off one argument and do exhaustive induction recursively
+                                    rest <- exhaustiveInduction cons [ (Clause (tail ptns) b d)  | (Clause ptns b d) <- allCases]
+
+                                    recBangs <- getRecursiveConstr nm con
+                                    -- failWith $ show $ allCases
+
+                                    -- put it back on recursive result and add current argument
+                                    current <- recursiveBangsInd (zip con recBangs) allCases
+
+                                    let addParam p ys = p ++ ys
+                                    -- "multiplying" single clause to the other pattern matches
+                                    let multiply vs [] = vs
+                                        multiply [] ys = []
+                                        multiply (p:ps) ys = (map (addParam p) ys) ++ multiply ps ys
+
+                                    
+                                    let finalClss = [
+                                              (filterNonTerminatingIndCalls $ multiply ind1 ind2,c1)
+                                            | ( (ind1, c1@(Clause _ _ _)),(ind2, Clause _ _ _) ) <- zip current rest]
+                                    -- reportWarningToUser $ "params: " ++ (show cr)
+                                    -- reportWarningToUser $ "finalClss: " ++ (show $ [(filterNonTerminatingIndCalls calls, pprint cls)|(calls, cls)<-finalClss])
+                                    -- reportWarningToUser $ "finalClss2: " ++ show [ (ind1,ind2) | ( (ind1, c1@(Clause _ _ _)),(ind2, Clause _ _ _) ) <- zip current rest]
+                                    return finalClss
+                        where
+                            filterNonTerminatingIndCalls :: [[a]] -> [[a]]
+                            filterNonTerminatingIndCalls [] = [] 
+                            filterNonTerminatingIndCalls (indCall : ic) = 
+                                if(length params == length indCall) then
+                                    indCall : filterNonTerminatingIndCalls ic
+                                else
+                                    filterNonTerminatingIndCalls ic
+
+--  generates inductive call within a single type (its constructors are given)
+recursiveBangsInd :: [(Con, [Int])] -> [Clause] -> Q [([[String]],Clause)]
+-- recursiveBangsInd [] c = return 
+-- recursiveBangsInd ((_,[]):cs) allCases = return [([],cls)|cls<-allCases] -- if the data cons is not recursive we don't do anything
+recursiveBangsInd [] allCases = return [([],cls)|cls<-allCases]                            
+recursiveBangsInd crlist@((cr@(NormalC nmCons bngs),bis):cs) allCases = do
+                                    rest <- recursiveBangsInd cs allCases --[ (Clause ptns b d)  | 
+
+                                    let final  = [
+                                              ((getIndCallParams p bis) ++ pInd,
+                                              (Clause p1 b d)) 
+                                            | (Clause p1@(p:ptns) _ _,(pInd, Clause _ b d) ) <- zip allCases rest]
+                                    
+                                    -- reportWarningToUser $ "params: " ++ pprint cr++ show bis
+
+                                    -- reportWarningToUser $ "final: " ++ show [(calls, pprint cls)| (calls,cls)<-final]
+                                    -- reportWarningToUser $ "final: " ++ show [((getIndCallParams p bis), pprint p)| (Clause p1@(p:_) _ _,(pInd, Clause _ b d) ) <- zip allCases rest]
+                                    -- reportWarningToUser $ show final
+                                    return final
+                                
+                                        where
+                                            patternUsesRecCons (AsP _ (ConP conPtn _)) = normaliseName conPtn == normaliseName nmCons
+
+                                            getIndCallParams :: Pat -> [Int] -> [[String]]
+                                            getIndCallParams p@(AsP nm (ConP _ (ptns))) ids = 
+                                                if patternUsesRecCons p then
+                                                    [  [(ptnToName $ ptns !! i)]  | i <- ids]
+                                                else
+                                                    []
+                                                    
+                                            ptnToName (VarP nmv) = show nmv
+                                            ptnToName (v) = show v
+
+                                            multiply :: [[String]] -> [[String]] -> [[String]]
+                                            multiply [] vs = vs
+                                            multiply (x:xs) vs = [ x++v | v <- vs] ++ multiply xs vs
+
+                                            -- getIndExp _ [] body = body
+                                            -- getIndExp ptns (idx:bs) body 
+                                            --         = getIndExp ptns bs newBody
+                                            --               where
+                                            --                indExp = case parseExp (genProofCall ptns idx) of
+                                            --                     Right exp -> exp
+                                            --                     _         -> VarE $ mkName "Error"
+
+                                            --                --AppE (VarE $ mkName "proofNameTODO") 
+                                            --                newBody = wrapBodyWith (\b -> (UInfixE (b) (VarE $ mkName "?") (indExp))) body
+                               
+recursiveBangsInd cons clss = failWith $ "Unimplemented case in exhaustive induction : " ++ show cons ++ show clss
+    
+
+    
+getRecursiveConstr :: Name -> [Con] -> Q [[Int]]
+getRecursiveConstr nm [] = return []
+getRecursiveConstr nm ((NormalC nmCons bngs):cs) = do   rest <- getRecursiveConstr nm cs
+                                                        foundBangs <- (searchInBang nm bngs 0) 
+                                                        -- reportWarningToUser $ show $ "found" ++ show (foundBangs:rest)
+                                                        return (foundBangs:rest)
+getRecursiveConstr nm (_:cs) = failWith $ "Cannot get recursive parts of given type " ++ show nm --Nothing : getRecursiveConstr (nm,cs)
+                   
+
+-- says which bangs of a single data constructor are recursive
+searchInBang :: Name -> [BangType]  -> Int -> Q ([Int])
+searchInBang nm ((b,(AppT t1 t2)):bs) idx = do
+                                                rest <- searchInBang nm bs (idx+1)
+                                                b1 <- searchInBang nm ((b,t1):bs) idx
+                                                b2 <- searchInBang nm ((b,t2):bs) idx
+                                                -- res <- do bngT1 <|> bngT2
+                                                reportWarningToUser $ (show b1 ++ show b2)
+                                                
+                                                return $ (b1++b2++rest)
+searchInBang nm ((b,(ConT nc)):bs) idx = do
+                                    rest <- searchInBang nm bs (idx+1)
+                                    let isCurrentRec = normaliseName nc == normaliseName nm
+                                    -- reportWarningToUser $ (show $  isCurrentRec)
+                                    
+                                    return $ (if isCurrentRec then [idx] else [])++rest
+searchInBang nm [] idx = return []
+searchInBang nm v  idx = failWith $ "searchInBang unimplemented given bang: "++show v
 
 
 -- ======================================================
@@ -267,133 +434,16 @@ patternMatchClauses (cons:cs) (Clause ((VarP nm):vs) b ds) =
         generateVars [] = return []
         generateVars (_:bs) = do
                                 varName <- newName "p"
+                                wildVar <- wildP
                                 rest <- generateVars bs
-                                return $ (VarP $ mkName $ show varName):rest --the show thing around Name is necessary to keep consistency
-
+                                -- {- $ mkName $ show -}
+                                return $ (VarP  $ mkName $ show varName):rest 
+                                -- return $ wildVar:rest 
         unimplemented = (Clause ((VarP nm):vs) b ds)
 
 patternMatchClauses _ cls = failWith $ "Unimplemented case for pattern matching generation: " ++ pprint cls
 
 
-
--- ======================================================
--- |Given signature constructors, and body adds inductive
--- calls exhaustively on each recursive data type. It should be 
--- called after case expansion (`patternMatchClauses`)
--- ======================================================
--- clause level recursion
-exhaustiveInduction :: [(Name,[Con])] -> [Clause] -> Q [([[String]],Clause)]
-exhaustiveInduction [] allCases = return [([],cls)|cls<-allCases]
-exhaustiveInduction ((nm, con):cons) allCases = do
-                                    -- take off one argument and do exhaustive induction recursively
-                                    rest <- exhaustiveInduction cons [ (Clause (tail ptns) b d)  | (Clause ptns b d) <- allCases]
-
-                                    recBangs <- getRecursiveConstr nm con
-                                    -- put it back on recursive result and add current argument
-                                    current <- addInductiveCall (zip con recBangs) allCases
-
-                                    let addParam p ys = p ++ ys
-                                    -- "multiplying" single clause to the other pattern matches
-                                    let multiply (p:ps) ys = (map (addParam p) ys) ++ multiply ps ys
-                                        multiply [] ys = []
-
-
-                                    let finalClss = [
-                                              ind1++ind2
-                                            | ( (ind1, c1@(Clause _ _ _)),(ind2, Clause _ _ _) ) <- zip current rest]
-                                    reportWarningToUser $ "Current: " ++ (show $ length current)
-                                    reportWarningToUser $ "rest: " ++ (show $ length rest)
-                                    reportWarningToUser $ "finalClss: " ++ (show $ length finalClss)
-                                    reportWarningToUser $ "final: " ++ show finalClss
-                                    -- -- failWith $ show $ zip con recBangs
-                                    -- -- let (hd) = asd
-                                    -- failWith $ show [ strs | (strs,cls) <- finalClss]
-                                    return current
-
-
---  bang level
-addInductiveCall :: [(Con, [Int])] -> [Clause] -> Q [([[String]],Clause)]
--- addInductiveCall [] c = return 
--- addInductiveCall ((_,[]):cs) allCases = return [([],cls)|cls<-allCases] -- if the data cons is not recursive we don't do anything
-addInductiveCall ((NormalC nmCons bngs,bis):cs) allCases = do
-                                    rest <- addInductiveCall cs allCases --[ (Clause ptns b d)  | (Clause (p:ptns) b d) <- allCases]
-
-                                    -- let (Clause (p:p2:ptns) b d) = head allCases
-                                    -- let first   = getProofParam p bis
-                                    -- let second   = getProofParam p2 bis
-                                    reportWarningToUser $ "addinductivecall" ++ show rest
-                                    -- failWith $ show (multiply first second)
-                                    -- failWith $ show ([
-                                                
-                                    --             (multiply pInd (getProofParam p bis) ,
-                                    --           Clause p1 b d)
-                                    --         | (Clause p1@(p:ptns) _ _,(pInd, Clause _ b d) ) <- zip allCases rest])
-
-                                    return [
-                                              ({- multiply -} (getProofParam p bis) ++ pInd ,
-                                              (Clause p1 b d)) 
-                                            | (Clause p1@(p:ptns) _ _,(pInd, Clause _ b d) ) <- zip allCases rest]
-                                    
-
-                                
-                                        where
-                                            patternUsesRecCons (AsP _ (ConP conPtn ptns)) = normaliseName conPtn == normaliseName nmCons
-
-                                            getProofParam :: Pat -> [Int] -> [[String]]
-                                            getProofParam p@(AsP nm (ConP _ (ptns))) ids = 
-                                                [  [(if patternUsesRecCons p
-                                                        then (ptnToName $ ptns !! i)
-                                                        else show nm)]    | i <- ids]
-                                                    
-                                            ptnToName (VarP nmv) = show nmv
-
-                                            multiply :: [[String]] -> [[String]] -> [[String]]
-                                            multiply [] vs = vs
-                                            multiply (x:xs) vs = [ x++v | v <- vs] ++ multiply xs vs
-
-                                            -- getIndExp _ [] body = body
-                                            -- getIndExp ptns (idx:bs) body 
-                                            --         = getIndExp ptns bs newBody
-                                            --               where
-                                            --                indExp = case parseExp (genProofCall ptns idx) of
-                                            --                     Right exp -> exp
-                                            --                     _         -> VarE $ mkName "Error"
-
-                                            --                --AppE (VarE $ mkName "proofNameTODO") 
-                                            --                newBody = wrapBodyWith (\b -> (UInfixE (b) (VarE $ mkName "?") (indExp))) body
-                               
-addInductiveCall [] allCases = return [([],cls)|cls<-allCases]                            
-addInductiveCall cons clss = failWith $ "Unimplemented case in exhaustive induction : " ++ show cons ++ show clss
-    
-
-    
-getRecursiveConstr :: Name -> [Con] -> Q [[Int]]
-getRecursiveConstr nm [] = return []
-getRecursiveConstr nm ((NormalC nmCons bngs):cs) = do   rest <- getRecursiveConstr nm cs
-                                                        foundBangs <- (searchInBang nm bngs 0) 
-                                                        -- reportWarningToUser $ show $ "found" ++ show (foundBangs:rest)
-                                                        return (foundBangs:rest)
-getRecursiveConstr nm (_:cs) = failWith $ "Cannot get recursive parts of given type " ++ show nm --Nothing : getRecursiveConstr (nm,cs)
-                   
-
--- says whether the bangs of a single data constructor are recursive
-searchInBang :: Name -> [BangType]  -> Int -> Q ([Int])
-searchInBang nm ((b,(AppT t1 t2)):bs) idx = do
-                                                rest <- searchInBang nm bs (idx+1)
-                                                b1 <- searchInBang nm ((b,t1):bs) idx
-                                                b2 <- searchInBang nm ((b,t2):bs) idx
-                                                -- res <- do bngT1 <|> bngT2
-                                                reportWarningToUser $ (show b1 ++ show b2)
-                                                
-                                                return $ (b1++b2++rest)
-searchInBang nm ((b,(ConT nc)):bs) idx = do
-                                    rest <- searchInBang nm bs (idx+1)
-                                    let isCurrentRec = normaliseName nc == normaliseName nm
-                                    -- reportWarningToUser $ (show $  isCurrentRec)
-                                    
-                                    return $ (if isCurrentRec then [idx] else [])++rest
-searchInBang nm [] idx = return []
-searchInBang nm v  idx = failWith $ "searchInBang unimplemented given bang: "++show v
 
 -- ======================================================
 -- |Run Liquid and return result

@@ -63,7 +63,7 @@ prop_Size h@(Node v hl hr)  = ()
 prop_Size h  = size h == length (toList h) 
 |]
 
-
+-- {-@ rewriteWith prop_Insert_proof [prop_Merge_proof] @-}
 [lhp|genProp|reflect|ple
 prop_Insert :: Int -> Heap Int -> Bool
 prop_Insert x h = insert x h ==? (x : toList h)
