@@ -2,11 +2,11 @@
 {-# LANGUAGE  TemplateHaskell #-}
 {-@ LIQUID "--compilespec" @-}
 module TH.ProofGenerator 
--- (
---     generateProofFromDecl,
---     generateProofFromExp,
---     lhp
--- )
+(
+    generateProofFromDecl,
+    generateProofFromExp,
+    lhp
+)
 where
     
 import Language.Haskell.TH
@@ -45,6 +45,8 @@ data Option = Ple
             | RunLiquid
             | RunLiquidW
             deriving (Eq, Read, Show)
+
+type IndParam = (Bool, String) -- the boolean indicates if the parameter is decreasing
 
 proof_suffix = "_proof"
 
@@ -212,7 +214,9 @@ caseExpandBody proofName opts sigType cls = do
                 -- do the induction thing
                 if mustDoInduction then do
                     indClauses <- exhaustiveInduction constrs clss
-                    transformClausesWithInduction proofName indClauses
+                    -- delete possible non terminating calls
+                    let finalCalls = [ (filterNonTerminatingIndCalls calls, clause) | (calls, clause) <- indClauses]
+                    transformClausesWithInduction proofName finalCalls
                 else
                     return clss
 
@@ -244,8 +248,15 @@ getConstructors (paramT:pts) = do
     return $ (consName, constrs) :restConstrs
 
 
+filterNonTerminatingIndCalls :: [[IndParam]] -> [[IndParam]]
+filterNonTerminatingIndCalls [] = [] 
+filterNonTerminatingIndCalls (indCall : ic) = 
+    if(length [()|(True,_) <- indCall] > 0) then
+        indCall : filterNonTerminatingIndCalls ic
+    else
+        filterNonTerminatingIndCalls ic
 
-transformClausesWithInduction :: String -> [([[String]], Clause)] -> Q [Clause]
+transformClausesWithInduction :: String -> [([[IndParam]], Clause)] -> Q [Clause]
 transformClausesWithInduction pn [] = return []
 transformClausesWithInduction pn ((indCalls, (Clause ptns body decs)):cs) = do
                     rest <- transformClausesWithInduction pn cs
@@ -264,10 +275,10 @@ wrapBodyWithIndCalls bd (call:cs) = wrapBodyWith (\b -> (UInfixE (b) (VarE $ mkN
 -- |Given a proof name and a list of inductive calls (only their parameters),
 --  returns a list of `proof_name [params..]` call expressions
 -- ======================================================
-generateCalls :: String -> [[String]] -> Q [Exp] 
+generateCalls :: String -> [[IndParam]] -> Q [Exp] 
 generateCalls proofName [] = return []
 generateCalls proofName (callParams:cs) = do
-            let strCall = strJoin " " (proofName:callParams)
+            let strCall = strJoin " " (proofName:[ ps | (b,ps) <- callParams])
             rest <- generateCalls proofName cs
             case parseExp strCall of
                 Right exp -> return (exp : rest)
@@ -278,8 +289,7 @@ generateCalls proofName (callParams:cs) = do
 -- |Given signature constructors and body, returns for each clause
 -- the inductive calls (only their parameters)
 -- ======================================================
--- clause level recursion
-exhaustiveInduction :: [(Name,[Con])] -> [Clause] -> Q [([[String]],Clause)]
+exhaustiveInduction :: [(Name,[Con])] -> [Clause] -> Q [([[IndParam]],Clause)]
 exhaustiveInduction [] allCases = return [([],cls)|cls<-allCases]
 exhaustiveInduction params@(cr@(nm, con):cons) allCases = do
                                     -- take off one argument and do exhaustive induction recursively
@@ -288,7 +298,7 @@ exhaustiveInduction params@(cr@(nm, con):cons) allCases = do
                                     recBangs <- getRecursiveConstr nm con
                                     -- failWith $ show $ allCases
 
-                                    -- put it back on recursive result and add current argument
+                                    -- put it back on recursion result and add current argument
                                     current <- recursiveBangsInd (zip con recBangs) allCases
 
                                     let addParam p ys = p ++ ys
@@ -299,25 +309,18 @@ exhaustiveInduction params@(cr@(nm, con):cons) allCases = do
 
                                     
                                     let finalClss = [
-                                              (filterNonTerminatingIndCalls $ multiply ind1 ind2,c1)
+                                              (multiply ind1 ind2,c1)
                                             | ( (ind1, c1@(Clause _ _ _)),(ind2, Clause _ _ _) ) <- zip current rest]
                                     -- reportWarningToUser $ "params: " ++ (show cr)
                                     -- reportWarningToUser $ "finalClss: " ++ (show $ [(filterNonTerminatingIndCalls calls, pprint cls)|(calls, cls)<-finalClss])
-                                    -- reportWarningToUser $ "finalClss2: " ++ show [ (ind1,ind2) | ( (ind1, c1@(Clause _ _ _)),(ind2, Clause _ _ _) ) <- zip current rest]
+                                    reportWarningToUser $ "finalClss2: " 
+                                        ++ (show $ strJoin "\n"
+                                            [  show $ multiply ind1 ind2 | ( (ind1, c1@(Clause _ _ _)),(ind2, Clause _ _ _) ) <- zip current rest])
                                     return finalClss
-                        where
-                            filterNonTerminatingIndCalls :: [[a]] -> [[a]]
-                            filterNonTerminatingIndCalls [] = [] 
-                            filterNonTerminatingIndCalls (indCall : ic) = 
-                                if(length params == length indCall) then
-                                    indCall : filterNonTerminatingIndCalls ic
-                                else
-                                    filterNonTerminatingIndCalls ic
+                           
 
 --  generates inductive call within a single type (its constructors are given)
-recursiveBangsInd :: [(Con, [Int])] -> [Clause] -> Q [([[String]],Clause)]
--- recursiveBangsInd [] c = return 
--- recursiveBangsInd ((_,[]):cs) allCases = return [([],cls)|cls<-allCases] -- if the data cons is not recursive we don't do anything
+recursiveBangsInd :: [(Con, [Int])] -> [Clause] -> Q [([[IndParam]],Clause)]
 recursiveBangsInd [] allCases = return [([],cls)|cls<-allCases]                            
 recursiveBangsInd ((cr,bis):cs) allCases 
                 | (NormalC nmCons bngs) <- cr = do
@@ -325,7 +328,7 @@ recursiveBangsInd ((cr,bis):cs) allCases
                                     let final  = [
                                               ((getIndCallParams nmCons p bis) ++ pInd,
                                               (Clause p1 b d)) 
-                                            | (Clause p1@(p:ptns) _ _,(pInd, Clause _ b d) ) <- zip allCases rest]
+                                            | (Clause p1@(p:_) _ _,(pInd, Clause _ b d) ) <- zip allCases rest]
                                    
                                     return final
                                 
@@ -334,28 +337,30 @@ recursiveBangsInd ((cr,bis):cs) allCases
                                     let final  = [
                                               ((getIndCallParams nmCons p bis) ++ pInd,
                                               (Clause p1 b d)) 
-                                            | (Clause p1@(p:ptns) _ _,(pInd, Clause _ b d) ) <- zip allCases rest]
+                                            | (Clause p1@(p:_) _ _,(pInd, Clause _ b d) ) <- zip allCases rest]
                                    
                                     return final
 
                             where
                                             
 
-                                getIndCallParams :: Name -> Pat -> [Int] -> [[String]]
+                                getIndCallParams :: Name -> Pat -> [Int] -> [[IndParam]]
                                 getIndCallParams nmCons (AsP nm (ConP conPtn (ptns))) ids = 
                                     if (normaliseName conPtn == normaliseName nmCons) then
-                                        [  [(ptnToName $ ptns !! i)]  | i <- ids]
+                                        [  [(True,ptnToName $ ptns !! i)]  | i <- ids]
                                     else
-                                        []
+                                        -- todo: check if it the current type is well defined, if so add it
+                                        [[(False,show nm)]]
                                 getIndCallParams nmCons (AsP nm (InfixP ptn1 conPtn ptn2)) ids = 
                                     if (normaliseName conPtn == normaliseName nmCons) then
-                                        [  [(ptnToName $ [ptn1,ptn2] !! i)]  | i <- ids]
+                                        [  [(True,ptnToName $ [ptn1,ptn2] !! i)]  | i <- ids]
                                     else
-                                        []        
+                                        [[(False, show nm)]]
+                                               
                                 ptnToName (VarP nmv) = show nmv
                                 ptnToName (v) = show v
 
-                                multiply :: [[String]] -> [[String]] -> [[String]]
+                                multiply :: [[IndParam]] -> [[IndParam]] -> [[IndParam]]
                                 multiply [] vs = vs
                                 multiply (x:xs) vs = [ x++v | v <- vs] ++ multiply xs vs
 
@@ -432,7 +437,7 @@ patternMatchClauses (cons:cs) (Clause ((VarP nm):vs) b ds) =
     restClss <- patternMatchClauses cs (Clause (vs) b ds)
     return $ multiply fpReplaced restClss
     where
-        typesToIgnore = ["GHC.Types.I#"] -- don't pattern match on these ones (Int)
+        typesToIgnore = ["GHC.Types.I#"] -- don't pattern match on these ones (Int) - unused for now
 
         replacePattern [] = return []
         replacePattern ((NormalC nmCons bngs):cs) = do 
@@ -456,7 +461,7 @@ patternMatchClauses (cons:cs) (Clause ((VarP nm):vs) b ds) =
                                 wildVar <- wildP
                                 rest <- generateVars bs
                                 -- {- $ mkName $ show -}
-                                return $ (VarP  $ mkName $ show varName):rest 
+                                return $ (VarP  $ mkName $ nameToSmallStr varName):rest 
                                 -- return $ wildVar:rest 
         unimplemented = (Clause ((VarP nm):vs) b ds)
 
@@ -647,7 +652,12 @@ parseGivenType strType = okOrFail $ parseType strType
 
 -- ====================================UTILITIES=================================
 
-
+-- ======================================================
+-- |Strip long names (good for debugging)
+-- ======================================================
+nameToSmallStr :: Name -> String
+nameToSmallStr nm = let str = show nm
+                    in head str: drop (length str-3) str
 
 -- ======================================================
 -- |Given an expression as String, it parses it and 
