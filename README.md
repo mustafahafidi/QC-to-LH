@@ -45,6 +45,7 @@ property_proof :: Bool -> [Bool] -> Bool
 property_proof x ls = SOMETHING
                     ***QED
 ```
+(Having the property separated from your proof eases the parsing of your specification to LH)
 
 ### LH annotations
 
@@ -57,7 +58,7 @@ property x ls = SOMETHING
 |]
 ```
 
-Or, manually add LH annotations as:
+Or, since the symbols `property_proof` and `property` are available in the scope, you can manually add LH annotations as:
 
 ```haskell
 {-@ reflect property @-}
@@ -67,6 +68,7 @@ property :: Bool -> [Bool] -> Bool
 property x ls = SOMETHING
 |]
 ```
+You can use the symbols in any other Haskell code, so you're not limited only to LH. For instance, the property can be run with QuickCheck.
 
 ## Proof Automation
 
@@ -326,7 +328,7 @@ Will show you this warnings in your IDE/ghci/ghc:
     [qc-to-lh]: property_proof :: p_0:Bool  -> p_1: [Bool]  -> {v:Proof | property p_0 p_1}
 ```
 
-### Running LiquidHaskell locally to a proof
+### Running LiquidHaskell locally to a proof (experimental)
 
 You could use `runLiquidW` option to run liquidhaskell locally on a proof and see its result as a warning:
 
@@ -337,7 +339,7 @@ property x ls = SOMETHING
 |]
 ```
 
-Will show `LH`'s result on the binders `property` and `property_proof` as a warning. Why? This is useful for IDE integration, because those warnings will automatically show in your IDE without you having to integrate liquidhaskell.
+Will show `LH`'s result on the binders `property` and `property_proof` as a warning at compile time. This is useful for IDE integration, because those warnings will automatically show in your IDE without you having to integrate liquidhaskell.
 
 Or if you have an extension that reads `.liquid` dirs to show you the errors ([like this one for vscode](https://marketplace.visualstudio.com/items?itemName=MustafaHafidi.liquidhaskell-diagnostics)), you can use the option `runLiquid` instead, which will run silently LH on the proof.
 
