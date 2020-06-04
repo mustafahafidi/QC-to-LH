@@ -126,7 +126,7 @@ assocP xs ys zs = xs ++ (ys ++ zs) == (xs ++ ys) ++ zs
 |]
 ```
 
-The above will generate only 2 clauses instead of 4:
+The above will generate only 2 clauses instead of 8:
 
 ```haskell
 assocP ::  Eq a => [a] -> [a] -> [a] -> Bool
