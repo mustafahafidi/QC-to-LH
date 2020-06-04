@@ -31,23 +31,12 @@ import Data.Strings
 {-@ LIQUID "--ple-local" @-}
 {-@ LIQUID "--reflection" @-}
 {-@ LIQUID "--shortnames" @-}
+-- {-@ LIQUID "--diff" @-}
 
 
 
 
 
-{- [lhp|genProp|reflect|ple|runLiquid
-assocP :: Eq a => [a] -> [a] -> [a] -> Bool
-assocP (x:xs) ys zs = () ? assocP_proof xs ys zs
-assocP xs ys zs = xs ++ (ys ++ zs) == (xs ++ ys) ++ zs
-|] -}
-
--- data T = E T Int | A
--- $(return [])
--- [lhp|genProp|reflect|ple|caseExpand|induction
--- property :: T -> T -> Bool
--- property t v = True
--- |]
 
 {-======================================================
             EXAMPLE 1 automatic induction
@@ -109,7 +98,6 @@ rightIdP xs  = xs ++ [] == xs
 {-======================================================
         Example 3 GHC lists
 =======================================================-}
--- data T = T T | A T
 
 -- [lhp|genProp|reflect|ple|caseExpand|induction
 -- propList :: [Int] -> Bool
@@ -123,77 +111,13 @@ rightIdP xs  = xs ++ [] == xs
 -- rightIdP xs  = xs ++ [] == xs
 -- |]
 
-[lhp|genProp|reflect|ple|caseExpand|induction
+[lhp|genProp|reflect|ple|caseExpand|inductionP:1
 assocP ::  Eq a => [a] -> [a] -> [a] -> Bool
 assocP xs ys zs = xs ++ (ys ++ zs) == (xs ++ ys) ++ zs 
 |]
 
--- {-@ LIQUID "--nototality" @-}
--- {-@ LIQUID "--no-termination-check" @-}
-{- 
-{-@ infix ++ @-}
-{-@ ple assocP_proof @-}
-{-@ assocP_proof :: Eq a => xs:[a] -> ys:[a] -> zs:[a] -> {xs ++ (ys ++ zs) == (xs ++ ys) ++ zs} @-}
-assocP_proof :: Eq a => [a] -> [a] -> [a] -> Proof
-assocP_proof xs@[] ys@[] zs@[]
-  = (xs ++ (ys ++ zs) == (xs ++ ys) ++ zs) *** QED
-
-assocP_proof
-  xs@[]
-  ys@[]
-  zs@(p_4 : p_5)
-  = (xs ++ (ys ++ zs) == (xs ++ ys) ++ zs
-       ? ((assocP_proof xs) ys) p_5)
-      *** QED
-assocP_proof
-  xs@[]
-  ys@(p_2 : p_3)
-  zs@[]
-  = (xs ++ (ys ++ zs) == (xs ++ ys) ++ zs) *** QED
-assocP_proof
-  xs@[]
-  ys@(p_2 : p_3)
-  zs@(p_4 : p_5)
-  = (xs ++ (ys ++ zs) == (xs ++ ys) ++ zs
-       ? ((assocP_proof xs) p_3) p_5
-       ? ((assocP_proof xs) ys) p_5)
-      *** QED
-assocP_proof
-  xs@(p_0 : p_1)
-  ys@[]
-  zs@[]
-  = (xs ++ (ys ++ zs) == (xs ++ ys) ++ zs) 
-        ? assocP_proof p_1 ys zs
-  *** QED
-assocP_proof
-  xs@(p_0 : p_1)
-  ys@[]
-  zs@(p_4 : p_5)
-  = (xs ++ (ys ++ zs) == (xs ++ ys) ++ zs)
-       ? ((assocP_proof p_1) ys) p_5
-       ? ((assocP_proof p_1) ys) zs
-       ? ((assocP_proof xs) ys) p_5
-      *** QED
-assocP_proof
-  xs@(p_0 : p_1)
-  ys@(p_2 : p_3)
-  zs@[]
-  = (xs ++ (ys ++ zs) == (xs ++ ys) ++ zs) *** QED
-       ? ((assocP_proof p_1) p_3) zs
-       ? ((assocP_proof p_1) ys) zs
-       ? ((assocP_proof xs) p_3) zs
-
-assocP_proof
-  xs@(p_0 : p_1)
-  ys@(p_2 : p_3)
-  zs@(p_4 : p_5)
-  = (xs ++ (ys ++ zs) == (xs ++ ys) ++ zs)
-       ? ((assocP_proof p375) p377) p379
-       ? ((assocP_proof p375) p377) zs
-       ? ((assocP_proof p375) ys) p379
-       ? ((assocP_proof p375) ys) zs
-       ? ((assocP_proof xs) p377) p379
-       ? ((assocP_proof xs) p377) zs
-       ? ((assocP_proof xs) ys) p379
-       ? ((assocP_proof xs) ys) zs)
-      *** QED -}
+-- {-@ rewriteWith distributivityP_proof [rightIdP] @-}
+-- [lhp|genProp|reflect|ple|caseExpand|induction:1
+-- distributivityP :: Eq a => [a] -> [a] -> Bool
+-- distributivityP xs ys = reverse (xs ++ ys) == (reverse ys) ++ (reverse xs)
+-- |]

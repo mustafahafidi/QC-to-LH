@@ -42,6 +42,7 @@ data Option = Ple
             | Admit
             | CaseExpand
             | Induction
+            | InductionP Int
             | RunLiquid
             | RunLiquidW
             deriving (Eq, Read, Show)
@@ -91,7 +92,7 @@ parseOptions str = do
     where
     parseGivenOptions :: MonadFail m => [String] -> m [Option]
     parseGivenOptions [] = return []
-    parseGivenOptions (opt:os) =  case (readMaybe . strCapitalize) opt of
+    parseGivenOptions (opt:os) =  case (readMaybe . strCapitalize .  strReplace ":" " ") opt of
                                     Nothing -> failWith $ "Uknown given option `"++opt++"`"
                                     Just opt -> do
                                                 rest <- parseGivenOptions os
@@ -196,7 +197,8 @@ transformBody _ _ dec = failWith $ "transformBody: Unsupported body declaration:
 caseExpandBody :: String -> [Option] -> Type -> Clause -> Q [Clause]
 caseExpandBody proofName opts sigType cls = do
             let mustCaseExpand = elem CaseExpand opts
-            let mustDoInduction = elem Induction opts
+            let indPOpt = [opt | opt@(InductionP n) <- opts, n>0]
+            let mustDoInduction = elem Induction opts || length indPOpt > 0
 
             if (mustCaseExpand) then do
                 let paramTypes = init --drop the return type
@@ -215,8 +217,15 @@ caseExpandBody proofName opts sigType cls = do
                 if mustDoInduction then do
                     indClauses <- exhaustiveInduction constrs clss
                     -- delete possible non terminating calls
-                    let finalCalls = [ (filterNonTerminatingIndCalls calls, clause) | (calls, clause) <- indClauses]
-                    transformClausesWithInduction proofName finalCalls
+                    let termCallsCls = [ (filterNonTerminatingIndCalls calls, clause) | (calls, clause) <- indClauses]
+
+                    -- limit calls to n-th parameter
+                    finalCalls <- case indPOpt of
+                                        (InductionP n:_) -> do
+                                            when (n>length paramTypes) $ failWith "The given induction parameter is greater than the number of the actual parameters of your proof"
+                                            return [(filterNonTerminatingIndCalls $ filterIndCallsToParam n indCalls,cls) | (indCalls, cls) <- termCallsCls ]
+                                        _                -> return termCallsCls
+                    addInductiveCallsToClauses proofName finalCalls
                 else
                     return clss
 
@@ -247,6 +256,22 @@ getConstructors (paramT:pts) = do
     restConstrs <- getConstructors pts
     return $ (consName, constrs) :restConstrs
 
+filterIndCallsToParam :: Int -> [[IndParam]] -> [[IndParam]]
+filterIndCallsToParam _ [] = []
+filterIndCallsToParam 0 v@([]:_) = v
+filterIndCallsToParam 0 indCalls =
+    
+    let
+        rest = filterIndCallsToParam 0 [ ps | ((False,nmp):ps) <- indCalls]
+        currentNonRec = nub [  [p] | (p@(False,nmp):_) <- indCalls]
+    in  nub $ multiplyHead currentNonRec rest
+
+filterIndCallsToParam n indCalls = 
+    let
+        rest = filterIndCallsToParam (n-1) [ ps | (pm:ps) <- indCalls]
+        currentParams = nub [ [callParam] | ((callParam):csp) <- indCalls]
+    in  nub $ multiplyHead currentParams rest
+
 
 filterNonTerminatingIndCalls :: [[IndParam]] -> [[IndParam]]
 filterNonTerminatingIndCalls [] = [] 
@@ -256,10 +281,10 @@ filterNonTerminatingIndCalls (indCall : ic) =
     else
         filterNonTerminatingIndCalls ic
 
-transformClausesWithInduction :: String -> [([[IndParam]], Clause)] -> Q [Clause]
-transformClausesWithInduction pn [] = return []
-transformClausesWithInduction pn ((indCalls, (Clause ptns body decs)):cs) = do
-                    rest <- transformClausesWithInduction pn cs
+addInductiveCallsToClauses :: String -> [([[IndParam]], Clause)] -> Q [Clause]
+addInductiveCallsToClauses pn [] = return []
+addInductiveCallsToClauses pn ((indCalls, (Clause ptns body decs)):cs) = do
+                    rest <- addInductiveCallsToClauses pn cs
                     indCallsExps <- generateCalls pn indCalls
                     let newBody = wrapBodyWithIndCalls body indCallsExps
                     return ((Clause ptns newBody decs):rest)
@@ -301,21 +326,14 @@ exhaustiveInduction params@(cr@(nm, con):cons) allCases = do
                                     -- put it back on recursion result and add current argument
                                     current <- recursiveBangsInd (zip con recBangs) allCases
 
-                                    let addParam p ys = p ++ ys
-                                    -- "multiplying" single clause to the other pattern matches
-                                    let multiply vs [] = vs
-                                        multiply [] ys = []
-                                        multiply (p:ps) ys = (map (addParam p) ys) ++ multiply ps ys
-
-                                    
                                     let finalClss = [
-                                              (multiply ind1 ind2,c1)
+                                              (multiplyHead ind1 ind2,c1)
                                             | ( (ind1, c1@(Clause _ _ _)),(ind2, Clause _ _ _) ) <- zip current rest]
                                     -- reportWarningToUser $ "params: " ++ (show cr)
                                     -- reportWarningToUser $ "finalClss: " ++ (show $ [(filterNonTerminatingIndCalls calls, pprint cls)|(calls, cls)<-finalClss])
-                                    reportWarningToUser $ "finalClss2: " 
-                                        ++ (show $ strJoin "\n"
-                                            [  show $ multiply ind1 ind2 | ( (ind1, c1@(Clause _ _ _)),(ind2, Clause _ _ _) ) <- zip current rest])
+                                    -- reportWarningToUser $ "finalClss2: " 
+                                    --     ++ (show $ strJoin "\n"
+                                    --         [  show $ multiply ind1 ind2 | ( (ind1, c1@(Clause _ _ _)),(ind2, Clause _ _ _) ) <- zip current rest])
                                     return finalClss
                            
 
@@ -360,11 +378,6 @@ recursiveBangsInd ((cr,bis):cs) allCases
                                 ptnToName (VarP nmv) = show nmv
                                 ptnToName (v) = show v
 
-                                multiply :: [[IndParam]] -> [[IndParam]] -> [[IndParam]]
-                                multiply [] vs = vs
-                                multiply (x:xs) vs = [ x++v | v <- vs] ++ multiply xs vs
-
-                               
 recursiveBangsInd cons clss = failWith $ "Unimplemented case in exhaustive induction : " ++ show cons ++ show clss
     
 
@@ -466,6 +479,7 @@ patternMatchClauses (cons:cs) (Clause ((VarP nm):vs) b ds) =
         unimplemented = (Clause ((VarP nm):vs) b ds)
 
 patternMatchClauses _ cls = failWith $ "Unimplemented case for pattern matching generation: " ++ pprint cls
+
 
 
 
@@ -651,6 +665,13 @@ parseGivenType strType = okOrFail $ parseType strType
 
 
 -- ====================================UTILITIES=================================
+
+
+
+multiplyHead :: [[a]] -> [[a]] -> [[a]]
+multiplyHead vs [] = vs
+multiplyHead [] ys = []
+multiplyHead (p:ps) yss =  [ p ++ xs | xs <- yss] ++ multiplyHead ps yss
 
 -- ======================================================
 -- |Strip long names (good for debugging)

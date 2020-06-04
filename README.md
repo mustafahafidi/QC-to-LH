@@ -2,36 +2,7 @@
 
 This project aims to facilitate the migration/conversion of QuickCheck properties to LiquidHaskell proofs, by automating the translation process of QuickCheck tests to LiquidHaskell formal proof obligations.
 
-## Roadmap / Timeline :calendar:
-
-### 1) Study automatic translation of GHC properties to Liquidhaskell proofs
-
-- :heavy_check_mark: Find a simple library that uses quickcheck to take into consideration (smaller than xmonad)~~ -> **Data.CircularList**
-- :heavy_check_mark: Get familiar with LH to parse the codebase
-- :heavy_check_mark: Transform not very deep test properties to formal proofs with LiquidHaskell
-- :heavy_check_mark: Find patterns to implement --> light properties like `prop_empty, prop_isEmpty, prop_size, prop_focus` get proved automatically with no additional equational reasoning, and `prop_list, prop_rot` by assumption on some refined types. Added multiple properties with proofs.
-- :heavy_check_mark: Do the induction for the properties ignored
-- :heavy_check_mark: Apply everything on the examples of quickcheck (github)
-- :heavy_check_mark: Make a report/table on the proofs done until now
-- :heavy_check_mark: Redefine Eq == and rewrite properties, then prove them
-  - :heavy_check_mark: Create bug issues to show why reflecting mRotL,mRotR doesn't work
-- :heavy_check_mark: Solve the Heap proofs (try the refined data-type to ease the proofs)
-
-### 2) Design the tool and implement it
-
-- :heavy_check_mark: Check Template Haskell and GHC Plugin
-- :heavy_check_mark: Parse property declaration given as a String
-- :heavy_check_mark: Build refinement type and proof body of the parsed property
-- :heavy_check_mark: Build a syntactic sugar quasiquoter
-- :heavy_check_mark: Possibility to pass options to the custom quasiquoter
-- :heavy_check_mark: Parse options to automatically generate ple, ignore, reflect annotations
-- :heavy_check_mark: Added option to run LH on a single proof
-- [..] Give it a try on CList
-- [..] Give it a try on Heap
-
-### 3) Write paper/thesis describing the whole work (can happen in parallel to the work)
-
-### 4) Defend thesis (17 July 2020)
+It can also be used as a mini proof assistant to help the overall experience and reduce the manual work in LiquidHaskell proofs.
 
 ## Usage
 
@@ -97,6 +68,8 @@ property x ls = SOMETHING
 |]
 ```
 
+## Proof Automation
+
 ### Automatic Case Splitting
 
 You can use the option `caseExpand` to automatically do case splitting on your proof's parameters, this will drastically ease the proof to `PLE`.
@@ -139,24 +112,156 @@ assocP xs ys zs = xs ++ (ys ++ zs) == (xs ++ ys) ++ zs
 ```
 
 You only have to make sure that the plain boolean property is the last one you declare. You can specify anything that you want `lhp` to include in the proof above that.
-If you use `genProp` the property generated will not include the additional information that you provide with the "?" combinator. They will remain only in the proof:
+If you use `genProp` the property generated will not include the additional information that you provide with the "?" combinator.
 
-### Running LiquidHaskell locally to a proof
+## Exhaustive Induction
 
-You could use `runLiquidW` option to run liquidhaskell locally on a proof and see its result as a warning:
+The tool implements a heuristic to automatically generate induction hypotheses for your proofs. It generates all possible inductive hypotheses on your recursive (well defined) parameters. This heuristic works only when you use the automatic case expansion, otherwise the proof generator wouldn't be sure that you'd have a base case for your proof (thus that it terminates).
+
+Suppose you want to prove the following property:
 
 ```haskell
-[lhp|ple|reflect|genProp|runLiquidW
-property :: Bool -> [Bool] -> Bool
-property x ls = SOMETHING
+property xs = xs ++ [] == xs
+```
+
+where `++` is defined as:
+
+```haskell
+(++) :: [a] -> [a] -> [a]
+[]       ++ ys = ys
+(x : xs) ++ ys = x : (xs ++ ys)
+```
+
+You will notice that `PLE` alone does not suffice but it's necessary to give a manual proof:
+
+```haskell
+{-@ rightId :: xs:[a] -> { xs ++ [] == xs } @-}
+rightId :: [a] -> Proof
+rightId []
+   =   [] ++ []
+  === []
+  *** QED
+rightId (x:xs)
+  =   (x:xs) ++ []
+  === x : (xs ++ [])
+      ? rightId xs
+  === x : xs
+  *** QED
+```
+
+Namely, this proof contains the recursive call `rightId xs` (which acts as an inductive hypothesis in the proof).
+With the `lhp` proof assistant you can use the `induction` option and prove the property automatically:
+
+```haskell
+[lhp|genProp|reflect|ple|caseExpand|induction
+rightIdP :: Eq a => [a] -> Bool
+rightIdP xs  = xs ++ [] == xs
 |]
 ```
 
-Will show `LH`'s result on the binders `property` and `property_proof` as a warning. Why? This is useful for IDE integration, because those warnings will automatically show in your IDE without you having to integrate liquidhaskell.
+Under the hood, it generates all possible inductive calls on the subparts of the recursive (well defined) parameters of your proof.
 
-Or if you have an extension that reads `.liquid` dirs to show you the errors ([like this one for vscode](https://marketplace.visualstudio.com/items?itemName=MustafaHafidi.liquidhaskell-diagnostics)), you can use the option `runLiquid` instead, which will run silently LH on the proof.
+### Limit the generated inductive calls
 
-### Debugging
+The `exhaustive induction` may increase the verification time even when you have simple proofs as this one:
+
+```haskell
+{-@ assocP :: xs:[a] -> ys:[a] -> zs:[a]
+        -> { xs ++ (ys ++ zs) == (xs ++ ys) ++ zs }  @-}
+assocP :: [a] -> [a] -> [a] -> Proof
+assocP [] _ _       = trivial
+assocP (x:xs) ys zs = () ? assocP xs ys zs
+```
+
+The case expansion + induction will generate 8 clauses with multiple inductive hypothesis:
+
+```haskell
+assocP_proof :: forall a. Eq a => [a] -> [a] -> [a] -> Proof
+assocP_proof xs@[] ys@[] zs@[]
+  = (xs ++ (ys ++ zs) == (xs ++ ys) ++ zs) *** QED
+assocP_proof xs@[] ys@[] zs@(p072 : p073)
+  = (xs ++ (ys ++ zs) == (xs ++ ys) ++ zs
+       ? ((assocP_proof xs) ys) p073)
+      *** QED
+assocP_proof xs@[] ys@(p070 : p071) zs@[]
+  = (xs ++ (ys ++ zs) == (xs ++ ys) ++ zs
+       ? ((assocP_proof xs) p071) zs)
+      *** QED
+assocP_proof xs@[] ys@(p070 : p071) zs@(p072 : p073)
+  = (xs ++ (ys ++ zs) == (xs ++ ys) ++ zs
+       ? ((assocP_proof xs) p071) zs
+       ? ((assocP_proof xs) p071) p073
+       ? ((assocP_proof xs) ys) p073)
+      *** QED
+assocP_proof xs@(p068 : p069) ys@[] zs@[]
+  = (xs ++ (ys ++ zs) == (xs ++ ys) ++ zs
+       ? ((assocP_proof p069) ys) zs)
+      *** QED
+assocP_proof xs@(p068 : p069) ys@[] zs@(p072 : p073)
+  = (xs ++ (ys ++ zs) == (xs ++ ys) ++ zs
+       ? ((assocP_proof p069) ys) zs
+       ? ((assocP_proof p069) ys) p073
+       ? ((assocP_proof xs) ys) p073)
+      *** QED
+assocP_proof xs@(p068 : p069) ys@(p070 : p071) zs@[]
+  = (xs ++ (ys ++ zs) == (xs ++ ys) ++ zs
+       ? ((assocP_proof p069) ys) zs
+       ? ((assocP_proof p069) p071) zs
+       ? ((assocP_proof xs) p071) zs)
+      *** QED
+assocP_proof xs@(p068 : p069) ys@(p070 : p071) zs@(p072 : p073)
+  = (xs ++ (ys ++ zs) == (xs ++ ys) ++ zs
+       ? ((assocP_proof p069) p071) zs
+       ? ((assocP_proof p069) p071) p073
+       ? ((assocP_proof p069) ys) zs
+       ? ((assocP_proof p069) ys) p073
+       ? ((assocP_proof xs) p071) zs
+       ? ((assocP_proof xs) p071) p073
+       ? ((assocP_proof xs) ys) p073)
+      *** QED
+```
+
+To avoid this explosion, you can use the option `inductionP:1` where `1` means that you want the induction to be generate only on the first parameter of the proof. That will cut all the excess and reduce the verification time.
+Thus, for the case above, you would have an inductive call only for the cases where the first parameter `xs` is non-empty (thus 4):
+
+```haskell
+[lhp|genProp|reflect|ple|caseExpand|inductionP:1
+assocP ::  Eq a => [a] -> [a] -> [a] -> Bool
+assocP xs ys zs = xs ++ (ys ++ zs) == (xs ++ ys) ++ zs
+|]
+```
+
+Will generate this:
+
+```haskell
+assocP_proof :: forall a. Eq a => [a] -> [a] -> [a] -> Proof
+assocP_proof xs@[] ys@[] zs@[]
+  = (xs ++ (ys ++ zs) == (xs ++ ys) ++ zs) *** QED
+assocP_proof xs@[] ys@[] zs@(p072 : p073)
+  = (xs ++ (ys ++ zs) == (xs ++ ys) ++ zs) *** QED
+assocP_proof xs@[] ys@(p070 : p071) zs@[]
+  = (xs ++ (ys ++ zs) == (xs ++ ys) ++ zs) *** QED
+assocP_proof xs@[] ys@(p070 : p071) zs@(p072 : p073)
+  = (xs ++ (ys ++ zs) == (xs ++ ys) ++ zs) *** QED
+assocP_proof xs@(p068 : p069) ys@[] zs@[]
+  = (xs ++ (ys ++ zs) == (xs ++ ys) ++ zs
+       ? ((assocP_proof p069) ys) zs)
+      *** QED
+assocP_proof xs@(p068 : p069) ys@[] zs@(p072 : p073)
+  = (xs ++ (ys ++ zs) == (xs ++ ys) ++ zs
+       ? ((assocP_proof p069) ys) zs)
+      *** QED
+assocP_proof xs@(p068 : p069) ys@(p070 : p071) zs@[]
+  = (xs ++ (ys ++ zs) == (xs ++ ys) ++ zs
+       ? ((assocP_proof p069) ys) zs)
+      *** QED
+assocP_proof xs@(p068 : p069) ys@(p070 : p071) zs@(p072 : p073)
+  = (xs ++ (ys ++ zs) == (xs ++ ys) ++ zs
+       ? ((assocP_proof p069) ys) zs)
+      *** QED
+```
+
+## Debugging
 
 To see what `lhp` has generated, you can run ghci/ghc/liquidhaskell with the option `-dth-dec-file` or put on top of your module
 `{-# OPTIONS_GHC -dth-dec-file #-}`
@@ -178,10 +283,25 @@ Will show you this warnings in your IDE/ghci/ghc:
 
     [qc-to-lh]: reflect property
 
-    [qc-to-lh]: property_proof :: p_0:Bool  -> p_1: [Bool]  -> {v:Proof | property p_2 p_3}
+    [qc-to-lh]: property_proof :: p_0:Bool  -> p_1: [Bool]  -> {v:Proof | property p_0 p_1}
 ```
 
-# CList and Skew Heap Proofs Case studies
+### Running LiquidHaskell locally to a proof
+
+You could use `runLiquidW` option to run liquidhaskell locally on a proof and see its result as a warning:
+
+```haskell
+[lhp|ple|reflect|genProp|runLiquidW
+property :: Bool -> [Bool] -> Bool
+property x ls = SOMETHING
+|]
+```
+
+Will show `LH`'s result on the binders `property` and `property_proof` as a warning. Why? This is useful for IDE integration, because those warnings will automatically show in your IDE without you having to integrate liquidhaskell.
+
+Or if you have an extension that reads `.liquid` dirs to show you the errors ([like this one for vscode](https://marketplace.visualstudio.com/items?itemName=MustafaHafidi.liquidhaskell-diagnostics)), you can use the option `runLiquid` instead, which will run silently LH on the proof.
+
+## CList and Skew Heap Proofs Case studies
 
 - `src/CList_Proofs.hs` contains the formal proofs of the QuickCheck properties in `src/Lib/CL/QuickCheck.hs`
 - `src/Heap_Proofs.hs` contains the formal proofs of the QuickCheck properties in `src/Lib/QC/Heap.hs`
@@ -191,3 +311,35 @@ Will show you this warnings in your IDE/ghci/ghc:
 - To run LH continously by watching file changes, run `spy run -n "stack exec -- liquid -isrc/ {target_file}" src/`
 
 In `package.json` are provided some other commands that run liquidhaskell with `stack` which you can either copy paste in your terminal, or run using `yarn` or `npm`
+
+# Roadmap / Timeline :calendar:
+
+### 1) Study automatic translation of GHC properties to Liquidhaskell proofs
+
+- :heavy_check_mark: Find a simple library that uses quickcheck to take into consideration (smaller than xmonad)~~ -> **Data.CircularList**
+- :heavy_check_mark: Get familiar with LH to parse the codebase
+- :heavy_check_mark: Transform not very deep test properties to formal proofs with LiquidHaskell
+- :heavy_check_mark: Find patterns to implement --> light properties like `prop_empty, prop_isEmpty, prop_size, prop_focus` get proved automatically with no additional equational reasoning, and `prop_list, prop_rot` by assumption on some refined types. Added multiple properties with proofs.
+- :heavy_check_mark: Do the induction for the properties ignored
+- :heavy_check_mark: Apply everything on the examples of quickcheck (github)
+- :heavy_check_mark: Make a report/table on the proofs done until now
+- :heavy_check_mark: Redefine Eq == and rewrite properties, then prove them
+  - :heavy_check_mark: Create bug issues to show why reflecting mRotL,mRotR doesn't work
+- :heavy_check_mark: Solve the Heap proofs (try the refined data-type to ease the proofs)
+
+### 2) Design the tool and implement it
+
+- :heavy_check_mark: Check Template Haskell and GHC Plugin
+- :heavy_check_mark: Parse property declaration given as a String
+- :heavy_check_mark: Build refinement type and proof body of the parsed property
+- :heavy_check_mark: Build a syntactic sugar quasiquoter
+- :heavy_check_mark: Possibility to pass options to the custom quasiquoter
+- :heavy_check_mark: Parse options to automatically generate ple, ignore, reflect annotations
+- :heavy_check_mark: Added option to run LH on a single proof
+- :heavy_check_mark: Added automatic case expansion
+- :heavy_check_mark: Added automatic exhaustive induction
+- :heavy_check_mark: Option to limit the exhaustive induction to certain parameters
+
+### 3) Write paper/thesis describing the whole work (can happen in parallel to the work)
+
+### 4) Defend thesis (17 July 2020)
