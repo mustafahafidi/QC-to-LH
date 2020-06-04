@@ -41,6 +41,7 @@ data Option = Ple
             | Debug 
             | Admit
             | CaseExpand
+            | CaseExpandP Int
             | Induction
             | InductionP Int
             | RunLiquid
@@ -196,8 +197,9 @@ transformBody _ _ dec = failWith $ "transformBody: Unsupported body declaration:
 -- ======================================================
 caseExpandBody :: String -> [Option] -> Type -> Clause -> Q [Clause]
 caseExpandBody proofName opts sigType cls = do
-            let mustCaseExpand = elem CaseExpand opts
             let indPOpt = [opt | opt@(InductionP n) <- opts, n>0]
+            let csPOpt = [opt | opt@(CaseExpandP n) <- opts, n>0]
+            let mustCaseExpand = elem CaseExpand opts || length csPOpt > 0
             let mustDoInduction = elem Induction opts || length indPOpt > 0
 
             if (mustCaseExpand) then do
@@ -208,10 +210,16 @@ caseExpandBody proofName opts sigType cls = do
                                 ForallT _ _ tp -> tp 
                                 tp             -> tp
                 
+                expandParamsN <-  case csPOpt of
+                                        (CaseExpandP n:_) -> do
+                                            when (n>length paramTypes) $ failWith "The given caseExpand parameter is greater than the number of the actual parameters of your proof"
+                                            return n
+                                        _ -> return $ length paramTypes
+
                 -- get the data constructors of the signature types
                 constrs <- getConstructors paramTypes
                 let signatureConstructors = snd $ unzip constrs
-                clss <- patternMatchClauses signatureConstructors cls
+                clss <- patternMatchClauses expandParamsN signatureConstructors cls
 
                 -- do the induction thing
                 if mustDoInduction then do
@@ -327,7 +335,7 @@ exhaustiveInduction params@(cr@(nm, con):cons) allCases = do
                                     current <- recursiveBangsInd (zip con recBangs) allCases
 
                                     let finalClss = [
-                                              (multiplyHead ind1 ind2,c1)
+                                              (nub $ multiplyHead ind1 ind2,c1)
                                             | ( (ind1, c1@(Clause _ _ _)),(ind2, Clause _ _ _) ) <- zip current rest]
                                     -- reportWarningToUser $ "params: " ++ (show cr)
                                     -- reportWarningToUser $ "finalClss: " ++ (show $ [(filterNonTerminatingIndCalls calls, pprint cls)|(calls, cls)<-finalClss])
@@ -374,6 +382,8 @@ recursiveBangsInd ((cr,bis):cs) allCases
                                         [  [(True,ptnToName $ [ptn1,ptn2] !! i)]  | i <- ids]
                                     else
                                         [[(False, show nm)]]
+
+                                getIndCallParams nmCons (VarP nmv) ids = [[(False, show nmv)]]
                                                
                                 ptnToName (VarP nmv) = show nmv
                                 ptnToName (v) = show v
@@ -436,10 +446,11 @@ searchInBang nm (v:bs)  idx = searchInBang nm bs (idx+1)
 -- |Generates pattern matching given data constructors 
 -- and a single declaration clause
 -- ======================================================
-patternMatchClauses :: [[Con]] -> Clause -> Q [Clause]
-patternMatchClauses [] (cls) = return [cls]
-patternMatchClauses cons cls@(Clause [] b ds) = return [cls]
-patternMatchClauses (cons:cs) (Clause ((VarP nm):vs) b ds) = 
+patternMatchClauses :: Int -> [[Con]] -> Clause -> Q [Clause]
+patternMatchClauses 0 _ cls                     = return [cls]
+patternMatchClauses n [] (cls)                  = return [cls]
+patternMatchClauses n cons cls@(Clause [] b ds) = return [cls]
+patternMatchClauses n (cons:cs) (Clause ((VarP nm):vs) b ds) = 
   do
     fpReplaced <- replacePattern cons
     -- given a cls add a parameter to its patterns
@@ -447,7 +458,7 @@ patternMatchClauses (cons:cs) (Clause ((VarP nm):vs) b ds) =
     -- "multiplying" single clause to the other pattern matches
     let multiply ((Clause (p:vs) b ds):clss) rest = (map (addParam p) rest) ++ multiply clss rest
         multiply [] rest = []
-    restClss <- patternMatchClauses cs (Clause (vs) b ds)
+    restClss <- patternMatchClauses (n-1) cs (Clause (vs) b ds)
     return $ multiply fpReplaced restClss
     where
         typesToIgnore = ["GHC.Types.I#"] -- don't pattern match on these ones (Int) - unused for now
@@ -478,7 +489,7 @@ patternMatchClauses (cons:cs) (Clause ((VarP nm):vs) b ds) =
                                 -- return $ wildVar:rest 
         unimplemented = (Clause ((VarP nm):vs) b ds)
 
-patternMatchClauses _ cls = failWith $ "Unimplemented case for pattern matching generation: " ++ pprint cls
+patternMatchClauses n _ cls = failWith $ "Unimplemented case for pattern matching generation: " ++ pprint cls
 
 
 

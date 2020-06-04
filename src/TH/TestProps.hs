@@ -41,7 +41,7 @@ import Data.Strings
 {-======================================================
             EXAMPLE 1 automatic induction
 =======================================================-}
-{- 
+
 data N = S N | Z deriving (Show,Eq)
 
 $(return [])
@@ -64,13 +64,12 @@ proof (S n) = () ? proof n
 property :: N ->  Bool
 property z = plus Z z == z
 |]
- -}
 
 
 {-======================================================
             EXAMPLE 2 automatic induction
 =======================================================-}
-{- 
+
 -- Normally the proof requires case distinction and inductive hypothesis
 {-@ infix ++ @-}
 {-@ ple rightId @-}
@@ -93,31 +92,21 @@ rightIdP :: Eq a => [a]-> Bool
 rightIdP xs  = xs ++ [] == xs
 |]
 
--}
+
 
 {-======================================================
-        Example 3 GHC lists
+        Example 3
 =======================================================-}
 
--- [lhp|genProp|reflect|ple|caseExpand|induction
--- propList :: [Int] -> Bool
--- propList ls = ls ==ls
---                 -- ? propList_proof ls
--- |]
-
-
--- [lhp|genProp|reflect|ple|caseExpand|induction
--- rightIdP :: Eq a => [a]-> Bool
--- rightIdP xs  = xs ++ [] == xs
--- |]
-
-[lhp|genProp|reflect|ple|caseExpand|inductionP:1
+-- limit the case expansion (thus induction too)
+[lhp|genProp|reflect|ple|induction|caseExpandP:1
 assocP ::  Eq a => [a] -> [a] -> [a] -> Bool
 assocP xs ys zs = xs ++ (ys ++ zs) == (xs ++ ys) ++ zs 
 |]
 
--- {-@ rewriteWith distributivityP_proof [rightIdP] @-}
--- [lhp|genProp|reflect|ple|caseExpand|induction:1
--- distributivityP :: Eq a => [a] -> [a] -> Bool
--- distributivityP xs ys = reverse (xs ++ ys) == (reverse ys) ++ (reverse xs)
--- |]
+-- the limit is vital to prove this
+-- {-@ rewriteWith assoc2_proof [assocP] @-}
+[lhp|genProp|reflect|ple|induction|caseExpandP:2
+assoc2 :: Eq a => [a] -> [a] -> [a] -> [a] -> Bool
+assoc2 xs ys zs ws = xs ++ (ys ++ (zs ++ ws)) == ((xs ++ ys) ++ zs) ++ ws
+|]

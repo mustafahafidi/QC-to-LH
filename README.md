@@ -114,6 +114,26 @@ assocP xs ys zs = xs ++ (ys ++ zs) == (xs ++ ys) ++ zs
 You only have to make sure that the plain boolean property is the last one you declare. You can specify anything that you want `lhp` to include in the proof above that.
 If you use `genProp` the property generated will not include the additional information that you provide with the "?" combinator.
 
+### Limiting case expansion on certain parameters
+
+When you have several parameters, the case expansion might generate many clauses, having negative effect on verification time.
+You can use the option `caseExpandP:n` to instruct `lhp` to do pattern matching only on the first `n` parameters of your proof:
+
+```haskell
+[lhp|genProp|reflect|ple|caseExpandP:1
+assocP ::  Eq a => [a] -> [a] -> [a] -> Bool
+assocP xs ys zs = xs ++ (ys ++ zs) == (xs ++ ys) ++ zs
+|]
+```
+
+The above will generate only 2 clauses instead of 4:
+
+```haskell
+assocP ::  Eq a => [a] -> [a] -> [a] -> Bool
+assocP_proof xs@[] ys zs = ...
+assocP_proof xs@(_ : _) ys zs =...
+```
+
 ## Exhaustive Induction
 
 The tool implements a heuristic to automatically generate induction hypotheses for your proofs. It generates all possible inductive hypotheses on your recursive (well defined) parameters. This heuristic works only when you use the automatic case expansion, otherwise the proof generator wouldn't be sure that you'd have a base case for your proof (thus that it terminates).
@@ -261,6 +281,26 @@ assocP_proof xs@(p068 : p069) ys@(p070 : p071) zs@(p072 : p073)
       *** QED
 ```
 
+Alternatively, you are flexible to limit the case expansion and let the induction follow:
+
+```haskell
+[lhp|genProp|reflect|ple|induction|caseExpandP:1
+assocP ::  Eq a => [a] -> [a] -> [a] -> Bool
+assocP xs ys zs = xs ++ (ys ++ zs) == (xs ++ ys) ++ zs
+|]
+```
+
+Generates 1 inductive call and 2 clauses. Just the needed to prove the property:
+
+```haskell
+assocP_proof xs@[] ys zs
+  = (xs ++ (ys ++ zs) == (xs ++ ys) ++ zs) *** QED
+assocP_proof xs@(p686 : p687) ys zs
+  = (xs ++ (ys ++ zs) == (xs ++ ys) ++ zs
+       ? ((assocP_proof p687) ys) zs)
+      *** QED
+```
+
 ## Debugging
 
 To see what `lhp` has generated, you can run ghci/ghc/liquidhaskell with the option `-dth-dec-file` or put on top of your module
@@ -336,9 +376,13 @@ In `package.json` are provided some other commands that run liquidhaskell with `
 - :heavy_check_mark: Possibility to pass options to the custom quasiquoter
 - :heavy_check_mark: Parse options to automatically generate ple, ignore, reflect annotations
 - :heavy_check_mark: Added option to run LH on a single proof
+
+--- Meeting 02/06/2020
+
 - :heavy_check_mark: Added automatic case expansion
 - :heavy_check_mark: Added automatic exhaustive induction
 - :heavy_check_mark: Option to limit the exhaustive induction to certain parameters
+- :heavy_check_mark: Option to limit the case expansion on the n-th parameter (same as the induction)
 
 ### 3) Write paper/thesis describing the whole work (can happen in parallel to the work)
 

@@ -22,7 +22,7 @@ import Language.Haskell.Liquid.ProofCombinators
 {-@ LIQUID "--short-names"    @-}
 {-@ LIQUID "--reflection"    @-}
 {-@ LIQUID "--ple-local"    @-}
--- {-@ LIQUID "--diff"    @-}
+{-@ LIQUID "--diff"    @-}
 
 
 
@@ -106,14 +106,27 @@ prop_insertR i cl = let r = (insertR i cl) in
 |]
 
 
+{-@ reflect prop_remov @-}
+prop_remov cl = case cl of
+                        Empty -> size (removeR cl) == 0
+                        _     -> size (removeR cl) == (size cl)-1
 -- needs refinement type
-[lhp|genProp|reflect|ple|ignore
+-- [lhp|genProp|reflect|ple|caseExpand|induction
+{-@ ple prop_remov_proof @-}
+{-@ prop_remov_proof :: cl:CList Int -> { prop_remov cl } @-}
+prop_remov_proof :: CList Int -> Proof
 
-prop_removeR :: CList Int -> Bool
-prop_removeR cl@Empty = size (removeR cl) == 0
-prop_removeR cl = size (removeR cl) == (size cl)-1
+prop_remov_proof cl@Lib.CL.CircularList.Empty = trivial
+prop_remov_proof cl@(Lib.CL.CircularList.CList [] p433 []) = trivial
+prop_remov_proof cl@(Lib.CL.CircularList.CList l p433 []) = size (removeR cl)
+                                === (let (f:rs)=reverse l in
+                                     size(CList [] f rs)) 
+                                ===  (size cl)-1
+                                ***QED
+prop_remov_proof cl@(Lib.CL.CircularList.CList p1 p433 p2) = trivial
+-- prop_remov cl = trivial
 
-|]
+-- |]
 
 
 
