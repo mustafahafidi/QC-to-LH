@@ -221,8 +221,8 @@ assocP_proof xs@(p068 : p069) ys@(p070 : p071) zs@(p072 : p073)
       *** QED
 ```
 
-To avoid this explosion, you can use the option `inductionP:1` where `1` means that you want the induction to be generate only on the first parameter of the proof. That will cut all the excess and reduce the verification time.
-Thus, for the case above, you would have an inductive call only for the cases where the first parameter `xs` is non-empty (thus 4):
+To avoid this explosion, you can use the option `inductionP:1` where `1` means that you want the induction to be generated only on the first parameter of the proof. That will cut all the excess and reduce the verification time.
+Thus, for the case above, you would have an inductive call only for the cases where the first parameter `xs` is non-empty (thus 4). The following is safe:
 
 ```haskell
 [lhp|genProp|reflect|ple|caseExpand|inductionP:1
