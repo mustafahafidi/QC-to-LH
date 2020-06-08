@@ -155,7 +155,7 @@ transformSignature isDebug (SigD nm sigType) = do
                 let fr = init sigTypesWP --splitAt (length sigTypesWP - 1) sigTypesWP
                 let params = init pr --splitAt (length pr - 1) pr
                 let replacedRetTypeSig = (strJoin " -> " $
-                                                fr ++ ["{v:Proof | "++show nm++" "++(strJoin " " (map (\p->show p) params))++"}"])
+                                                fr ++ ["{v:Proof | "++show nm++" "++(strJoin " " (map (\p-> nameToSmallStr p) params))++"}"])
             -- Put back `for all` and context if there was
                 wildT <- wildCardT
                 let forAllSig =    (case sigType of
@@ -617,7 +617,7 @@ addParamsToTypeStr [] _ = return ("",[])
 addParamsToTypeStr tp acc = do let (p,ps) = strSplit "->" tp
                                nName <- newName "p"
                                (restWP,addedNames) <- addParamsToTypeStr ps []
-                               let finalParts = (show nName ++ ':':p) : filter (not . strNull) [restWP]
+                               let finalParts = (nameToSmallStr nName ++ ':':p) : filter (not . strNull) [restWP]
                                return (strJoin "->" finalParts,nName:addedNames)
 
 

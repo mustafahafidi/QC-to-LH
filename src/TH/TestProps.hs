@@ -1,7 +1,7 @@
 {-# LANGUAGE  TemplateHaskell #-}
 {-# LANGUAGE  QuasiQuotes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
--- {-# OPTIONS_GHC -dth-dec-file #-}
+{-# OPTIONS_GHC -dth-dec-file #-}
 module TH.TestProps where 
 import Language.Haskell.Liquid.ProofCombinators
 import TH.ProofGenerator
@@ -16,6 +16,7 @@ import Prelude  hiding (length,
 import Lib.LH.Prelude  
 -- import Lib.CL.CircularList
 import Lib.QC.Heap
+import Heap_Proofs (distProp, req_order, prop_Merge_subProof)
 -- import Heap_Proofs
 
 
@@ -112,8 +113,9 @@ assoc2 xs ys zs ws = xs ++ (ys ++ (zs ++ ws)) == ((xs ++ ys) ++ zs) ++ ws
 |] -}
 
 {-======================================================
-        Example 4
+        Example 4 
 =======================================================-}
+
 
 
 -- [lhp|genProp|reflect|ple
@@ -139,14 +141,3 @@ lemma_refl cl = cl =*= cl
 |]
  -}
 
-
-[lhp|genProp|reflect|ple
-prop_Size ::  Heap Int -> Bool
-prop_Size h@(Node v hl hr)  = ()
-                ? distProp [hl] [hr]
-                ? prop_Size_proof hl
-                ? prop_Size_proof hr
-                ? append_length (toList' [hl]) (toList' [hr]) 
-                
-prop_Size h  = size h == length (toList h) 
-|]
