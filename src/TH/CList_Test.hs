@@ -22,7 +22,7 @@ import Language.Haskell.Liquid.ProofCombinators
 {-@ LIQUID "--short-names"    @-}
 {-@ LIQUID "--reflection"    @-}
 {-@ LIQUID "--ple-local"    @-}
-{-@ LIQUID "--diff"    @-}
+-- {-@ LIQUID "--diff"    @-}
 
 
 
@@ -106,28 +106,18 @@ prop_insertR i cl = let r = (insertR i cl) in
 |]
 
 
-{-@ reflect prop_remov @-}
-prop_remov cl = case cl of
-                        Empty -> size (removeR cl) == 0
-                        _     -> size (removeR cl) == (size cl)-1
--- needs refinement type
--- [lhp|genProp|reflect|ple|caseExpand|induction
-{-@ ple prop_remov_proof @-}
-{-@ prop_remov_proof :: cl:CList Int -> { prop_remov cl } @-}
-prop_remov_proof :: CList Int -> Proof
-
-prop_remov_proof cl@Lib.CL.CircularList.Empty = trivial
-prop_remov_proof cl@(Lib.CL.CircularList.CList [] p433 []) = trivial
-prop_remov_proof cl@(Lib.CL.CircularList.CList l p433 []) = size (removeR cl)
+[lhp|genProp|reflect|ple
+prop_removeR ::  CList Int -> Bool
+prop_removeR cl@(CList [] _ []) = trivial
+prop_removeR cl@(CList l@(_:_) p433 []) = size (removeR cl)
                                 === (let (f:rs)=reverse l in
                                      size(CList [] f rs)) 
                                 ===  (size cl)-1
-                                ***QED
-prop_remov_proof cl@(Lib.CL.CircularList.CList p1 p433 p2) = trivial
--- prop_remov cl = trivial
-
--- |]
-
+                                
+prop_removeR cl = case cl of
+                    Empty -> size (removeR cl) == 0
+                    _     -> size (removeR cl) == (size cl)-1
+|]
 
 
 [lhp|genProp|reflect|ple|caseExpand
@@ -159,13 +149,21 @@ lemma_refl :: CList Int -> Bool
 lemma_refl cl = cl =*= cl
 |]
 
--- {-@ rewriteWith prop_list_proof [lemma_refl_proof, involutionP, splitAt_theorem, assocP, rightIdP,distributivityP] @-}
+{-@ LIQUID "--nototality" @-} --necessary because of
 [lhp|genProp|reflect|ple
 prop_list :: CList Int -> Bool
-prop_list c@Empty = c =*= (fromList . toList $ c)
-prop_list c@(CList l f r) = c =*= (fromList . toList $ c)
-                    ?(()***Admit)
-prop_list c = c =*= (fromList . toList $ c)
+prop_list c@Empty = (c =*= (fromList . toList $ c))
+                    ? (lemma_refl_proof c)
+prop_list c@(CList l f r) = (c =*= (fromList . toList $ c))
+        ? (let
+                a@(i:is) = f : (r ++ (reverse l))
+                len = length a
+                (sr,sl) = splitAt (len `div` 2) is
+                b = CList (reverse sl) i sr
+            in  c =*= b
+                ? involutionP sl
+                ? splitAt_theorem (len `div` 2) is
+            )
 |]
 
 --     asd 1 [1]

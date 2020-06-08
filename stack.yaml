@@ -42,6 +42,9 @@ extra-deps:
     subdirs:
       - ./liquid-fixpoint
       - "."
+  # - /home/mustafa/coding/liquidhaskell
+  # - /home/mustafa/coding/liquidhaskell/liquid-fixpoint
+
   - tasty-rerun-1.1.14
   - fgl-visualize-0.1.0.1
   - located-base-0.1.1.1
