@@ -181,7 +181,7 @@ rightIdP xs  = xs ++ [] == xs
 |]
 ```
 
-Under the hood, it generates all possible inductive calls on the subparts of the recursive (well defined) parameters of your proof.
+Under the hood, it generates all possible inductive calls on the subparts of the recursive (well defined) parameters of your proof, then it filters out those that endanger the proof's termination.
 
 ### Limit the generated inductive calls
 
