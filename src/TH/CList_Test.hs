@@ -149,7 +149,7 @@ lemma_refl :: CList Int -> Bool
 lemma_refl cl = cl =*= cl
 |]
 
-{-@ LIQUID "--nototality" @-} --necessary because of
+-- {-@ LIQUID "--nototality" @-} --necessary because of
 [lhp|genProp|reflect|ple
 prop_list :: CList Int -> Bool
 prop_list c@Empty = (c =*= (fromList . toList $ c))
@@ -164,6 +164,8 @@ prop_list c@(CList l f r) = (c =*= (fromList . toList $ c))
                 ? involutionP sl
                 ? splitAt_theorem (len `div` 2) is
             )
+
+prop_list c = (c =*= (fromList . toList $ c))
 |]
 
 --     asd 1 [1]
