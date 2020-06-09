@@ -134,7 +134,9 @@ prop_fromList_focus = focus (fromList ([1]::[Int])) == Just 1
 
 |]
 
-------- Deep properties
+{-======================================================
+            (VERY) DEEP PROPERTIES
+=======================================================-}
 {-@ reflect eqf @-}
 eqf ::  CList Int -> CList Int -> Bool
 eqf a b = toList a == toList b
@@ -149,29 +151,12 @@ lemma_refl :: CList Int -> Bool
 lemma_refl cl = cl =*= cl
 |]
 
--- {-@ LIQUID "--nototality" @-} --necessary because of
-[lhp|genProp|reflect|ple
-prop_list :: CList Int -> Bool
-prop_list c@Empty = (c =*= (fromList . toList $ c))
-                    ? (lemma_refl_proof c)
-prop_list c@(CList l f r) = (c =*= (fromList . toList $ c))
-        ? (let
-                a@(i:is) = f : (r ++ (reverse l))
-                len = length a
-                (sr,sl) = splitAt (len `div` 2) is
-                b = CList (reverse sl) i sr
-            in  c =*= b
-                ? involutionP sl
-                ? splitAt_theorem (len `div` 2) is
-            )
-
-prop_list c = (c =*= (fromList . toList $ c))
-|]
 
 [lhp|genProp|reflect|ple
 prop_rot :: CList Int -> Bool
 prop_rot c@(CList [] f rs@(_:_))  =   c =*= (rotR  (rotL c))
-                            ? ((rotR (rotL c))
+                            ? (
+                                (rotR (rotL c))
                             === (let (l:ls) = reverse rs
                                         in rotR (CList ls l [f])
                                 )
@@ -193,16 +178,29 @@ prop_packL c = c =*= (packL c)
 |]
 
 
--- prop_packL :: CList Int -> Bool
--- prop_packL c = c =*= (packL c)
+[lhp|genProp|reflect|ple
+prop_packR ::  CList Int -> Bool
+prop_packR c@(CList l f r) = c =*= (packR c)
+        ? rightIdP (r ++ (reverse l))
 
--- [lhp|genProp|reflect
+prop_packR c =  c =*= (packR c)
+|]
 
--- prop_packR :: CList Int -> Bool
--- prop_packR c@Empty = c =*= (packR c)
---                 ? lemma_refl c
--- prop_packR c = c =*= (packR c)
---                 ?(()***Admit)
 
--- |]
+[lhp|genProp|reflect|ple
+prop_list :: CList Int -> Bool
+prop_list c@Empty = (c =*= (fromList . toList $ c))
+                    ? (lemma_refl_proof c)
+prop_list c@(CList l f r) = (c =*= (fromList . toList $ c))
+        ? (let
+                a@(i:is) = f : (r ++ (reverse l))
+                len = length a
+                (sr,sl) = splitAt (len `div` 2) is
+                b = CList (reverse sl) i sr
+            in  c =*= b
+                ? involutionP sl
+                ? splitAt_theorem (len `div` 2) is
+            )
 
+prop_list c = (c =*= (fromList . toList $ c))
+|]

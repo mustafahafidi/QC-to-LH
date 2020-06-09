@@ -14,9 +14,9 @@ import Prelude  hiding (length,
                         any
                         )
 import Lib.LH.Prelude  
--- import Lib.CL.CircularList
-import Lib.QC.Heap
-import Heap_Proofs (distProp, req_order, prop_Merge_subProof)
+import Lib.CL.CircularList
+-- import Lib.QC.Heap
+-- import Heap_Proofs (distProp, req_order, prop_Merge_subProof, lemma_distProp)
 -- import Heap_Proofs
 
 
@@ -123,21 +123,3 @@ assoc2 xs ys zs ws = xs ++ (ys ++ (zs ++ ws)) == ((xs ++ ys) ++ zs) ++ ws
 -- asd = 0==2
 --     -- ?(0==!1)
 -- |]
-{- 
-{-@ LIQUID "--nototality" @-}
-------- Deep properties
-{-@ reflect eqf @-}
-eqf ::  CList Int -> CList Int -> Bool
-eqf a b = toList a == toList b
-
-{-@ reflect =*= @-}
-{-@ infix 4 =*= @-}
-(=*=) :: CList Int -> CList Int -> Bool
-x =*= y = (any (eqf x) (toList (allRotations y)))
-
-[lhp|genProp|reflect|ple|caseExpand
-lemma_refl :: CList Int -> Bool
-lemma_refl cl = cl =*= cl
-|]
- -}
-

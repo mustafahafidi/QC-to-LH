@@ -383,7 +383,9 @@ In `package.json` are provided some other commands that run liquidhaskell with `
 - :heavy_check_mark: Added automatic exhaustive induction
 - :heavy_check_mark: Option to limit the exhaustive induction to certain parameters
 - :heavy_check_mark: Option to limit the case expansion on the n-th parameter (same as the induction)
-- [..] TODO: make case expansion reuse user-provided cases, if induction prop is used, then it should add them directly to pre-existing clause
+- [..] TODO: support for higher order properties (arrows as arguments)
+- [..] TODO: consider support for case expansion in sub terms (for example the type [[a]])
+- [..] TODO: (optimization) make case expansion reuse user-provided cases, if induction prop is used, then it should add them directly to pre-existing clause
 
 ### 3) Write paper/thesis describing the whole work (can happen in parallel to the work)
 
