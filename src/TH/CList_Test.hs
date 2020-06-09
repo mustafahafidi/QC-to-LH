@@ -22,7 +22,7 @@ import Language.Haskell.Liquid.ProofCombinators
 {-@ LIQUID "--short-names"    @-}
 {-@ LIQUID "--reflection"    @-}
 {-@ LIQUID "--ple-local"    @-}
--- {-@ LIQUID "--diff"    @-}
+{-@ LIQUID "--diff"    @-}
 
 
 
@@ -168,16 +168,30 @@ prop_list c@(CList l f r) = (c =*= (fromList . toList $ c))
 prop_list c = (c =*= (fromList . toList $ c))
 |]
 
---     asd 1 [1]
---   ===  any (1 ==) [1]
---     ***QED
+[lhp|genProp|reflect|ple
+prop_rot :: CList Int -> Bool
+prop_rot c@(CList [] f rs@(_:_))  =   c =*= (rotR  (rotL c))
+                            ? ((rotR (rotL c))
+                            === (let (l:ls) = reverse rs
+                                        in rotR (CList ls l [f])
+                                )
+                            )
+                            === c =*= (CList (reverse rs) f [])
+                                ? involutionP rs
+                                ? rightIdP rs
+prop_rot c = c =*= (rotR $ rotL c)
+|]
 
--- prop_list :: CList Int -> Bool
--- prop_list c = c =*= (fromList . toList $ c)
 
--- -- {-@ inline prop_rot @-}
--- prop_rot :: CList Int -> Bool
--- prop_rot c = c =*= (rotR $ rotL c)
+[lhp|genProp|reflect|ple|caseExpand
+prop_packL ::  CList Int -> Bool
+prop_packL c@(CList l f r) = c =*= (packL c)
+        ? (distributivityP l (reverse r))
+        ? involutionP r
+
+prop_packL c = c =*= (packL c)
+|]
+
 
 -- prop_packL :: CList Int -> Bool
 -- prop_packL c = c =*= (packL c)
@@ -191,16 +205,4 @@ prop_list c = (c =*= (fromList . toList $ c))
 --                 ?(()***Admit)
 
 -- |]
-
-
--- {-@ reflect lemma_refl @-}
--- lemma_refl :: CList Int -> Bool
--- lemma_refl cl = cl =*= cl
-
--- {-@ ple lemma_refl_proof @-}
--- {-@ lemma_refl_proof ::  cl:CList Int -> { lemma_refl cl } @-}
--- lemma_refl_proof cl@Empty = lemma_refl cl
---                 *** QED 
--- lemma_refl_proof cl = lemma_refl cl
---                 *** QED
 
