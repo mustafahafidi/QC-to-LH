@@ -1,4 +1,5 @@
 {-# LANGUAGE  QuasiQuotes #-}
+{-# LANGUAGE  TemplateHaskell #-}
 -- {-# OPTIONS_GHC -dth-dec-file #-}
 module Test.Tactics where 
 import Language.Haskell.Liquid.ProofCombinators
@@ -31,7 +32,7 @@ data NAT = S NAT | Z
     deriving (Show,Eq)
 
 
-$(return [])
+$(return []) --required to make NAT available at compile time before the rest is evaluated
 
 
 {-@ reflect plus @-}
@@ -96,9 +97,20 @@ rightIdP xs  = xs ++ [] == xs
 
 
 -- the limit is vital to prove this
-[lhp|genProp|reflect|ple|induction|caseExpandP:2
-assoc2 :: Eq a => [a] -> [a] -> [a] -> [a] -> Bool
-assoc2 xs ys zs ws = xs ++ (ys ++ (zs ++ ws)) == ((xs ++ ys) ++ zs) ++ ws
-|]
+-- [lhp|genProp|reflect|ple|induction|caseExpandP:2
+-- assoc2 :: Eq a => [a] -> [a] -> [a] -> [a] -> Bool
+-- assoc2 xs ys zs ws = xs ++ (ys ++ (zs ++ ws)) == ((xs ++ ys) ++ zs) ++ ws
+-- |]
+
+
+-- [lhp|genProp|reflect|ple|caseExpand
+-- prop_packL ::  CList Int -> Bool
+-- prop_packL c@(CList l f r) = c =*= (packL c)
+--         ? (distributivityP l (reverse r))
+--         ? involutionP r
+
+-- prop_packL c = c =*= (packL c)
+-- |]
+
 
 

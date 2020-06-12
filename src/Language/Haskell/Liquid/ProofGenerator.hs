@@ -66,6 +66,8 @@ proof_suffix = "_proof"
 --   - `runLiquid` runs LH locally and silently on the proof (useful with IDE integration)
 --   - `runLiquidW` runs LH locally to the proof and shows the result as a warning
 --   - `caseExpand` enables case expansion/pattern matching on ADTs
+--   - `caseExpandP:{n}` limits the case expansion to the first {n} parameters
+--   - `inductionP:{n}` limits the inductive calls to the first {n} parameters
 --------------------------------------------------------------
 lhp :: QuasiQuoter
 lhp = QuasiQuoter {
