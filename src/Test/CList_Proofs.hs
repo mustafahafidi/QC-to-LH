@@ -1,9 +1,9 @@
-{-# OPTIONS_GHC -dth-dec-file #-}
+-- {-# OPTIONS_GHC -dth-dec-file #-}
 {-# LANGUAGE  QuasiQuotes #-}
 
-module TH.CList_Test where
+module Test.CList_Proofs where
 
-import TH.ProofGenerator (lhp)
+import Language.Haskell.Liquid.ProofGenerator (lhp)
 
 import Lib.CL.CircularList 
 -- import CList_Proofs ((=*=))
@@ -27,14 +27,12 @@ import Language.Haskell.Liquid.ProofCombinators
 
 
 [lhp|genProp|reflect|ple
-
 prop_empty :: Bool
 prop_empty = length (toList empty) == 0
 |]
 
 
 
--- with no-adt ple is not sufficient anymore, needs pattern matching
 [lhp|genProp|reflect|ple|caseExpand
 prop_isEmpty :: [Int] -> Bool
 prop_isEmpty l = null l == isEmpty (fromList l)
@@ -44,24 +42,19 @@ prop_isEmpty l = null l == isEmpty (fromList l)
 
 
 [lhp|genProp|reflect|ple
-
 prop_size :: [Int] -> Bool
 prop_size l = (length l) == (size . fromList $ l)
 |]
 
 
--- with no-adt ple is not sufficient anymore, needs pattern matching
 [lhp|genProp|reflect|ple|caseExpand
-
 prop_focus :: CList Int -> Int -> Bool
 prop_focus c v = (Just v) == (focus $ insertR v c)
 |]
 
 
 --  Additional properties
-
 [lhp|genProp|reflect|ple
-
 prop_singleton :: Int -> Bool
 prop_singleton i = toList (singleton i) == [i]
 |]
@@ -69,7 +62,6 @@ prop_singleton i = toList (singleton i) == [i]
 
 
 [lhp|genProp|reflect|ple|caseExpand
-
 prop_update :: Int -> CList Int -> Bool
 prop_update v cl = case cl of
                         Empty -> size (update v cl) == 1
@@ -80,7 +72,6 @@ prop_update v cl = case cl of
  
 
 [lhp|genProp|reflect|ple|caseExpand
-
 prop_focus_update :: Int -> CList Int -> Bool
 prop_focus_update v cl = focus(update v cl) == Just v
 
@@ -89,7 +80,6 @@ prop_focus_update v cl = focus(update v cl) == Just v
 
 
 [lhp|genProp|reflect|ple|caseExpand
-
 prop_reverse_direction ::  CList Int -> Bool
 prop_reverse_direction cl = reverseDirection (reverseDirection cl) == cl && size (reverseDirection cl) == size cl
 
@@ -98,11 +88,9 @@ prop_reverse_direction cl = reverseDirection (reverseDirection cl) == cl && size
 
 
 [lhp|genProp|reflect|ple|caseExpand
-
 prop_insertR :: Int -> CList Int -> Bool
 prop_insertR i cl = let r = (insertR i cl) in
                         size r == size cl+1
-
 |]
 
 
@@ -121,17 +109,13 @@ prop_removeR cl = case cl of
 
 
 [lhp|genProp|reflect|ple|caseExpand
-
 prop_insertR_removeR :: Int -> CList Int -> Bool
 prop_insertR_removeR v cl = removeR (insertR v cl) == cl
-
 |]
 
 [lhp|genProp|reflect|ple
-
 prop_fromList_focus :: Bool
 prop_fromList_focus = focus (fromList ([1]::[Int])) == Just 1
-
 |]
 
 {-======================================================

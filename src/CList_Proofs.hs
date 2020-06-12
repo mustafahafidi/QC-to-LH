@@ -1,6 +1,8 @@
 {- 
 =================================================================
                       Data.CircularList proofs
+    *With --no-adt this file is unsafe
+    please see the new proofs (safe) in Test/CList_proofs done using `lhp`
 =================================================================
 -}
 

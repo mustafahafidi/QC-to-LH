@@ -1,10 +1,10 @@
 {-# LANGUAGE  QuasiQuotes #-}
-{-# OPTIONS_GHC -dth-dec-file #-}
+-- {-# OPTIONS_GHC -dth-dec-file #-}
 
-module TH.Heap_Test where
+module Test.Heap_Proofs where
 
 
-import TH.ProofGenerator (lhp)
+import Language.Haskell.Liquid.ProofGenerator (lhp)
 
 import Lib.QC.Heap 
 import Prelude  hiding (length, 

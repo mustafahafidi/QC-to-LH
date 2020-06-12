@@ -10,7 +10,7 @@
     "ghci": "stack exec -- ghci -isrc/",
     "liquid": "stack exec -- liquid -isrc/ "
   },
-  "repository": "git@github.com:mustafahafidi/QC-to-LH.git",
+  "repository": "git@github.com:mustafahafidi/qc-to-lh.git",
   "author": "Mustafa <mustafahafidi96@gmail.com>",
   "license": "MIT"
 }

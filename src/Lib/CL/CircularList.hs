@@ -56,7 +56,7 @@ module Lib.CL.CircularList (
     -- ** Update of CList
     update, reverseDirection,
     -- ** Converting CLists to Lists
-    leftElements, rightElements, toInfList,
+    leftElements, rightElements,
     -- ** Extraction and Accumulation
     focus, insertL, insertR,
     removeL, removeR,
@@ -184,9 +184,9 @@ leftElements :: CList a -> [a]
 leftElements Empty = []
 leftElements (CList l f r) = f : (l ++ (reverse r))
 
--- |Make a CList into an infinite list.
-toInfList :: CList a -> [a]
-toInfList = cycle . toList
+-- -- |Make a CList into an infinite list.
+-- toInfList :: CList a -> [a]
+-- toInfList = cycle . toList
 
 
 {- Extraction and Accumulation -}

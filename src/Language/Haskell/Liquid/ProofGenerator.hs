@@ -1,7 +1,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE  TemplateHaskell #-}
 {-@ LIQUID "--compilespec" @-}
-module TH.ProofGenerator 
+module Language.Haskell.Liquid.ProofGenerator 
 (
     generateProofFromDecl,
     generateProofFromExp,
@@ -174,7 +174,7 @@ transformSignature isDebug (SigD nm sigType) = do
 transformBody :: [Option] -> Dec -> Dec -> Q Dec
 transformBody opts (SigD nm sigType) (FunD _ clss) = do
         let proofName = show nm ++ proof_suffix
-        let isAdmit = elem TH.ProofGenerator.Admit opts
+        let isAdmit = elem Language.Haskell.Liquid.ProofGenerator.Admit opts
         -- if requested generate do case expansion
         pmClss <-  caseExpandBody proofName opts sigType (last clss) 
         -- if (elem CaseExpand opts) then caseExpandBody sigType (last clss)
@@ -185,7 +185,7 @@ transformBody opts (SigD nm sigType) (FunD _ clss) = do
 
 transformBody opts (SigD nm sigType) (ValD _ body decs) = do
         let proofName = show nm ++ proof_suffix
-        let isAdmit = elem TH.ProofGenerator.Admit opts
+        let isAdmit = elem Language.Haskell.Liquid.ProofGenerator.Admit opts
         return $ ValD (VarP (mkName proofName)) (wrapBodyWithProof isAdmit body) decs
 transformBody _ _ dec = failWith $ "transformBody: Unsupported body declaration: " ++ show dec
 
@@ -406,8 +406,7 @@ getRecursiveConstr nm (con@(InfixC bngt1 nmCons bngt2):cs) = do
                                                         -- reportWarningToUser $ show $ "found" ++ show (foundBangs:rest)
                                                         return (foundBangs:rest)
 getRecursiveConstr nm (con:cs) = do
-                                failWith $ "asd" ++ show con
-                                failWith $ "Cannot get recursive parts of given type " ++ show nm 
+                                failWith $ "Unimplemented: Cannot get recursive parts of given type " ++ show nm 
                    
 
 -- says which bangs of a single data constructor are recursive

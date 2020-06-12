@@ -12,8 +12,6 @@ import Prelude hiding (length,
                         minimum
                         )
 
-{-@ LIQUID "--no-totality" @-}
-{-@ LIQUID "--no-termination-check" @-}
 {-@ LIQUID "--reflection"    @-}
 {-@ LIQUID "--ple-local"    @-}
  
@@ -49,9 +47,9 @@ reverse (x:xs) = reverse xs ++ [x]
 -- the infinite repetition of the original list.  It is the identity
 -- on infinite lists.
 
-cycle                   :: [a] -> [a]
--- cycle []                = errorEmptyList "cycle"
-cycle xs                = xs' where xs' = xs ++ xs'
+-- cycle                   :: [a] -> [a]
+-- -- cycle []                = errorEmptyList "cycle"
+-- cycle xs                = xs' where xs' = xs ++ xs'
 
 
 {-@ lazy iterate @-}
@@ -59,7 +57,7 @@ cycle xs                = xs' where xs' = xs ++ xs'
 iterate :: (a -> a) -> a -> [a]
 iterate f x =  x : iterate f (f x)
 
-
+{-@ LIQUID "--nototality" @-} --this is required here
 {-@ reflect splitAt @-}
 {-@ splitAt :: n:Int
             -> a:{[t]| length a >= n}

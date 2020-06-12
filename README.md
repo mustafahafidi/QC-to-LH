@@ -45,6 +45,7 @@ property_proof :: Bool -> [Bool] -> Bool
 property_proof x ls = SOMETHING
                     ***QED
 ```
+
 (Having the property separated from your proof eases the parsing of your specification to LH)
 
 ### LH annotations
@@ -68,6 +69,7 @@ property :: Bool -> [Bool] -> Bool
 property x ls = SOMETHING
 |]
 ```
+
 You can use the symbols in any other Haskell code, so you're not limited only to LH. For instance, the property can be run with QuickCheck.
 
 ## Proof Automation
@@ -346,49 +348,18 @@ Or if you have an extension that reads `.liquid` dirs to show you the errors ([l
 ## CList and Skew Heap Proofs Case studies
 
 - `src/CList_Proofs.hs` contains the formal proofs of the QuickCheck properties in `src/Lib/CL/QuickCheck.hs`
+  - The proofs have been rewritten using the ProofGenerator lhp in `src/Test/CList_Proofs.hs`
 - `src/Heap_Proofs.hs` contains the formal proofs of the QuickCheck properties in `src/Lib/QC/Heap.hs`
-
+  - The proofs have been rewritten using the ProofGenerator lhp in `src/Test/Heap_Proofs.hs`
 - To run LH on them: `stack exec -- liquid -isrc/ {target_file}`
 
 - To run LH continously by watching file changes, run `spy run -n "stack exec -- liquid -isrc/ {target_file}" src/`
 
 In `package.json` are provided some other commands that run liquidhaskell with `stack` which you can either copy paste in your terminal, or run using `yarn` or `npm`
 
-# Roadmap / Timeline :calendar:
+# TODO:
 
-### 1) Study automatic translation of GHC properties to Liquidhaskell proofs
-
-- :heavy_check_mark: Find a simple library that uses quickcheck to take into consideration (smaller than xmonad)~~ -> **Data.CircularList**
-- :heavy_check_mark: Get familiar with LH to parse the codebase
-- :heavy_check_mark: Transform not very deep test properties to formal proofs with LiquidHaskell
-- :heavy_check_mark: Find patterns to implement --> light properties like `prop_empty, prop_isEmpty, prop_size, prop_focus` get proved automatically with no additional equational reasoning, and `prop_list, prop_rot` by assumption on some refined types. Added multiple properties with proofs.
-- :heavy_check_mark: Do the induction for the properties ignored
-- :heavy_check_mark: Apply everything on the examples of quickcheck (github)
-- :heavy_check_mark: Make a report/table on the proofs done until now
-- :heavy_check_mark: Redefine Eq == and rewrite properties, then prove them
-  - :heavy_check_mark: Create bug issues to show why reflecting mRotL,mRotR doesn't work
-- :heavy_check_mark: Solve the Heap proofs (try the refined data-type to ease the proofs)
-
-### 2) Design the tool and implement it
-
-- :heavy_check_mark: Check Template Haskell and GHC Plugin
-- :heavy_check_mark: Parse property declaration given as a String
-- :heavy_check_mark: Build refinement type and proof body of the parsed property
-- :heavy_check_mark: Build a syntactic sugar quasiquoter
-- :heavy_check_mark: Possibility to pass options to the custom quasiquoter
-- :heavy_check_mark: Parse options to automatically generate ple, ignore, reflect annotations
-- :heavy_check_mark: Added option to run LH on a single proof
-
---- Meeting 02/06/2020
-
-- :heavy_check_mark: Added automatic case expansion
-- :heavy_check_mark: Added automatic exhaustive induction
-- :heavy_check_mark: Option to limit the exhaustive induction to certain parameters
-- :heavy_check_mark: Option to limit the case expansion on the n-th parameter (same as the induction)
-- [..] TODO: support for higher order properties (arrows as arguments)
-- [..] TODO: consider support for case expansion in sub terms (for example the type [[a]])
-- [..] TODO: (optimization) make case expansion reuse user-provided cases, if induction prop is used, then it should add them directly to pre-existing clause
-
-### 3) Write paper/thesis describing the whole work (can happen in parallel to the work)
-
-### 4) Defend thesis (17 July 2020)
+- [..] benchmark `lhp`
+- [..] support for higher order properties (arrows as arguments)
+- [..] consider support for case expansion in sub terms (for example the type [[a]])
+- [..](optimization) make case expansion reuse user-provided cases, if induction prop is used, then it should add them directly to pre-existing clause
