@@ -117,7 +117,7 @@ generateProofFromDecl decs opts =
             -- getting the signature
             let (sd:(bodyDs@(bd:bs))) = parsedDecls
             let (SigD nm sigType) = sd
-
+            -- failWith $ show $ bodyDs
             -- generate name for the proof
             let proofName = show nm ++proof_suffix
             
@@ -126,11 +126,10 @@ generateProofFromDecl decs opts =
                 False -> failWith "The given declaration must return a boolean to be transformed to a LiquidHaskell proof"
                 True  -> do
             -- Handle options
-                let isDebug = elem Debug opts
                 optionDecs <- generateFromOptions (show nm) parsedDecls opts 
 
             -- Transform signature to LH annotation
-                lhDec <- transformSignature isDebug sd
+                lhDec <- transformSignature opts sd bd
 
             -- Generate the body
                 finalBody <- transformBody opts sd bd
@@ -146,19 +145,35 @@ generateProofFromDecl decs opts =
 -- |Given the property signature, adds refinement type with parameters
 -- and returns corresponding LH annotation
 -- ======================================================
-transformSignature :: Bool -> Dec -> Q [Dec]
-transformSignature isDebug (SigD nm sigType) = do
+transformSignature :: [Option] -> Dec -> Dec -> Q [Dec]
+transformSignature opts (SigD nm sigType) bd = do
                 let proofName = show nm ++ proof_suffix
+
+            --  getting the property and params used
+                let inclProp = not $ elem GenProp opts
+
+                extParams <- if inclProp then do (nps,_) <- getProperty bd
+                                                 return nps
+                                          else return []
+
             -- add parameters to signature
-                (typeWP, pr) <- addParamsToType sigType []
+                (typeWP, pr) <- addParamsToType sigType extParams
 
             -- replace return type with refinement type
                 let sigTypesWP = strSplitAll "->" typeWP
                 let fr = init sigTypesWP --splitAt (length sigTypesWP - 1) sigTypesWP
                 let params = init pr --splitAt (length pr - 1) pr
+
+                refPredicate <- if inclProp 
+                                   then do
+                                        (_,pureProperty) <- getProperty bd
+                                        return $ pprint pureProperty
+                                   else return $ show nm++" "++(strJoin " " (map (\p-> nameToSmallStr p) params))
+                
                 let replacedRetTypeSig = (strJoin " -> " $
-                                                fr ++ ["{v:Proof | "++show nm++" "++(strJoin " " (map (\p-> nameToSmallStr p) params))++"}"])
-            -- Put back `for all` and context if there was
+                                                fr ++ ["{v:Proof | "++refPredicate++"}"])
+                -- failWith $ replacedRetTypeSig
+            -- Put back `for all` and context if there was any
                 wildT <- wildCardT
                 let forAllSig =    (case sigType of
                                             ForallT tvb ctx _ -> init $ pprint (ForallT tvb ctx wildT)
@@ -166,8 +181,27 @@ transformSignature isDebug (SigD nm sigType) = do
                 let finalRefSign = (show $ mkName proofName) ++ " :: "
                                     ++ forAllSig
                                     ++ replacedRetTypeSig
-                when isDebug $ reportWarningToUser $ finalRefSign
+                when (elem Debug opts) $ reportWarningToUser $ finalRefSign
                 lqDec finalRefSign
+        where 
+              getProperty (ValD pat bd decs) = 
+                                            case bd of
+                                                NormalB exp -> return ([], exp)
+                                                _ -> failWith $ "unimplmented conversion of guarded body to ref.type expression"
+                
+              getProperty (FunD _ clss) = do
+                                            let (Clause ptns (bd) decs) =  last clss
+                                            vars <- getVars ptns
+                                            case bd of
+                                                NormalB exp -> return (vars, exp)
+                                                _ -> failWith $ "unimplmented conversion of guarded body to ref.type expression (use genProp option)"
+              getProperty _ = failWith $ "unimplemented: cannot extract pure property"
+              getVars [] = return []
+              getVars ((VarP nm):rest) = do rs <- getVars rest
+                                            return $ nm:rs
+              getVars ((WildP):rest) = failWith $ "unsupported: given wildcard in parameter (use genProp option)"
+
+transformSignature _ _ _ = failWith "Not given a signature"
 
 
 -- ======================================================
@@ -528,12 +562,12 @@ runLiquidHaskell opts propName = do
                                     ])
 
 
-                    -- -- RUNNING through CLI
-                    -- (_, output, _) <- readProcessWithExitCode "liquid" 
-                    --                 liquidArgs ""
-                    let output = "asd"
-                    -- RUNNING through Language.Haskell.Liquid.Liquid 
-                    catch (liquid liquidArgs) (\e -> putStrLn (show (e::SomeException)))
+                    -- RUNNING through CLI
+                    (_, output, _) <- readProcessWithExitCode "liquid" 
+                                    liquidArgs ""
+                    -- let output = "asd"
+                    -- -- RUNNING through Language.Haskell.Liquid.Liquid 
+                    -- catch (liquid liquidArgs) (\e -> putStrLn (show (e::SomeException)))
                     
 
                     setEnv "lhp-running" "False"
@@ -611,15 +645,21 @@ deleteInd v = v
 --  type and the parameters it added
 -- ======================================================
 addParamsToType :: Type -> [Name] -> Q (String, [Name])
-addParamsToType (ForallT tvb ctx tp) acc =  addParamsToTypeStr (pprint tp) []
-addParamsToType (tp) acc =  addParamsToTypeStr (pprint tp) []
+addParamsToType (ForallT tvb ctx tp) extps =  addParamsToTypeStr (pprint tp) extps
+addParamsToType (tp) extps =  addParamsToTypeStr (pprint tp) extps
+
 addParamsToTypeStr :: String -> [Name] -> Q (String, [Name])
 addParamsToTypeStr [] _ = return ("",[])
-addParamsToTypeStr tp acc = do let (p,ps) = strSplit "->" tp
+addParamsToTypeStr tp [] = do  let (p,ps) = strSplit "->" tp
                                nName <- newName "p"
                                (restWP,addedNames) <- addParamsToTypeStr ps []
                                let finalParts = (nameToSmallStr nName ++ ':':p) : filter (not . strNull) [restWP]
                                return (strJoin "->" finalParts,nName:addedNames)
+
+addParamsToTypeStr tp (ep:eps) = do let (pt,pts) = strSplit "->" tp
+                                    (restWP,addedNames) <- addParamsToTypeStr pts eps
+                                    let finalParts = (show ep ++ ':':pt) : filter (not . strNull) [restWP]
+                                    return (strJoin "->" finalParts,ep:addedNames)
 
 
 

@@ -1,6 +1,6 @@
+{-# OPTIONS_GHC -dth-dec-file #-}
 {-# LANGUAGE  QuasiQuotes #-}
 {-# LANGUAGE  TemplateHaskell #-}
--- {-# OPTIONS_GHC -dth-dec-file #-}
 module Test.Tactics where 
 import Language.Haskell.Liquid.ProofCombinators
 import Language.Haskell.Liquid.ProofGenerator
@@ -58,7 +58,7 @@ property n = plus Z n == n
 {-======================================================
             EXAMPLE 2 automatic induction
 =======================================================-}
-
+{-
 -- Normally the proof requires case distinction and inductive hypothesis
 {-@ infix ++ @-}
 {-@ ple rightId @-}
@@ -82,7 +82,7 @@ rightIdP :: Eq a => [a]-> Bool
 rightIdP xs  = xs ++ [] == xs
 |]
 
- 
+ -}
 
 {-======================================================
         Example 3 - limit case expansion and induction
@@ -114,3 +114,28 @@ rightIdP xs  = xs ++ [] == xs
 
 
 
+
+-- -- {-@ test:: Bool @-}
+-- test :: a -> Bool
+-- test _ = True
+
+-- {-@ proof :: Bool @-}
+-- proof :: Bool
+-- proof = test False == True
+
+-- [lhp|ple
+-- proof :: Bool
+-- proof = test False == True
+-- |]
+
+
+[lhp|admit
+proof :: Bool -> Bool
+proof f = True  == False
+|]
+
+[lhp|genProp|reflect|ple
+proof2 :: Bool
+proof2 = False == True
+    ? proof_proof True
+|]

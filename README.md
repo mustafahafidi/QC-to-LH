@@ -19,34 +19,34 @@ property x ls = SOMETHING
 Will generate a proof like this:
 
 ```haskell
-{-@ property_proof :: p1:Bool -> p2:[Bool] -> { property p1 p2 } @-}
+{-@ property_proof :: x:Bool -> ls:[Bool] -> { SOMETHING } @-}
 property_proof :: Bool -> [Bool] -> Bool
 property_proof x ls = SOMETHING
                     ***QED
 ```
 
-The `lhp` QQ used like this, generates only `property_proof` but not the declaration of `property` passed in to it. That's why, to avoid duplicating the code, you can give the option `genProp` to `lhp` to do this for you:
+Where `SOMETHING` is a predicate over `x` and `ls`.
+
+To avoid issues with LH parsing your property, you may want to extract the property (`SOMETHING`) to an external function and have the refined type to include only a function application. To do that you can use the option `genProp` to extract the property in a second function, and `reflect` to lift it to the LH type system:
 
 ```haskell
-[lhp|genProp
+[lhp|genProp|reflect
 property :: Bool -> [Bool] -> Bool
 property x ls = SOMETHING
 |]
 ```
 
-Will generate both the proof and the property.
+Will generate both the property and proof as two separate functions:
 
 ```haskell
+{-@ reflect property @-}
 property :: Bool -> [Bool] -> Bool
 property x ls = SOMETHING
-
 {-@ property_proof :: p1:Bool -> p2:[Bool] -> { property p1 p2 } @-}
 property_proof :: Bool -> [Bool] -> Bool
 property_proof x ls = SOMETHING
                     ***QED
 ```
-
-(Having the property separated from your proof eases the parsing of your specification to LH)
 
 ### LH annotations
 
