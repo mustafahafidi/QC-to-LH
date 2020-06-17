@@ -9,3 +9,5 @@
 -- :set -package ghc
 -- :set -package Cabal
 :set -XTemplateHaskell
+:set -isrc/
+:set -ibenchmarks/

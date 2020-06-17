@@ -345,6 +345,12 @@ Will show `LH`'s result on the binders `property` and `property_proof` as a warn
 
 Or if you have an extension that reads `.liquid` dirs to show you the errors ([like this one for vscode](https://marketplace.visualstudio.com/items?itemName=MustafaHafidi.liquidhaskell-diagnostics)), you can use the option `runLiquid` instead, which will run silently LH on the proof.
 
+# Benchmarks
+
+## Tons of Inductive Problems
+
+Under folder `benchmarks` you can find the proof generator applied to many problems ported to LiquidHaskell from the collection of inductive problems [`TIP`](https://github.com/tip-org/benchmarks).
+
 ## CList and Skew Heap Proofs Case studies
 
 - `src/CList_Proofs.hs` contains the formal proofs of the QuickCheck properties in `src/Lib/CL/QuickCheck.hs`

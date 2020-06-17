@@ -8,7 +8,7 @@
     "spy": "sh -c 'spy run -n \"yarn runghc $0\" src/'",
     "runghc": "stack exec -- runghc -isrc/",
     "ghci": "stack exec -- ghci -isrc/",
-    "liquid": "stack exec -- liquid -isrc/ "
+    "liquid": "stack exec -- liquid -isrc/ -ibenchmarks/"
   },
   "repository": "git@github.com:mustafahafidi/qc-to-lh.git",
   "author": "Mustafa <mustafahafidi96@gmail.com>",
