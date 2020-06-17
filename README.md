@@ -361,5 +361,6 @@ In `package.json` are provided some other commands that run liquidhaskell with `
 
 - [..] Benchmark `lhp`
 - [..] Support for higher order properties (arrows as arguments)
+- [..] An option to select which proofs to generate in a module (and ignore the rest)
 - [..] Consider support for case expansion in sub terms (for example the type [[a]])
 - [..](optimization) make case expansion reuse user-provided cases, if induction prop is used, then it should add them directly to pre-existing clause
