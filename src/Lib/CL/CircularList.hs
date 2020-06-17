@@ -70,6 +70,7 @@ module Lib.CL.CircularList (
     balance, packL, packR,
     -- ** Information
     isEmpty, size, 
+    (=*=),eqf
 ) where
 
 import Control.Applicative hiding (empty)
@@ -100,22 +101,22 @@ data CList a = Empty
 
 -- The same as Eq CList's (==)
 
+{-@ reflect eqf @-}
+eqf ::  CList Int -> CList Int -> Bool
+eqf a b = toList a == toList b
+
+{-@ reflect =*= @-}
+{-@ infix 4 =*= @-}
+(=*=) :: CList Int -> CList Int -> Bool
+x =*= y = (any (eqf x) (toList (allRotations y)))
+
+
 {- Creating CLists -}
 -- | An empty CList.
 {-@ reflect empty @-}
 {-@  empty :: {ls:CList a | ls==Empty && (size ls) == 0} @-}
 empty :: CList a
 empty = Empty -- ? (prop_empty Empty)
-
-
-
-{- {-@ prop_empty ::ls:CList a -> { ls==Empty ==> (size ls) == 0} @-}
-prop_empty :: CList a -> Proof
-prop_empty Empty = size Empty ==. 0
-                   ***QED
-prop_empty cl = ()
-  -}
-
 -- |Starting with the focus, go right and accumulate all
 -- elements of the CList in a list.
 

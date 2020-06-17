@@ -12,13 +12,16 @@ import Prelude  hiding (length,
                         splitAt,
                         any
                         )
-import Lib.LH.Prelude  
+import Lib.LH.Prelude 
+-- import Lib.CL.CircularList
+-- import Lib.QC.Heap
+-- import Heap_Proofs
 
 
 {-@ LIQUID "--ple-local" @-}
 {-@ LIQUID "--reflection" @-}
 {-@ LIQUID "--shortnames" @-}
-
+{-@ LIQUID "--smttimeout=10" @-}
 
 
 
@@ -101,41 +104,3 @@ rightIdP xs  = xs ++ [] == xs
 -- assoc2 :: Eq a => [a] -> [a] -> [a] -> [a] -> Bool
 -- assoc2 xs ys zs ws = xs ++ (ys ++ (zs ++ ws)) == ((xs ++ ys) ++ zs) ++ ws
 -- |]
-
-
--- [lhp|genProp|reflect|ple|caseExpand
--- prop_packL ::  CList Int -> Bool
--- prop_packL c@(CList l f r) = c =*= (packL c)
---         ? (distributivityP l (reverse r))
---         ? involutionP r
-
--- prop_packL c = c =*= (packL c)
--- |]
-
-
-
-
--- -- {-@ test:: Bool @-}
--- test :: a -> Bool
--- test _ = True
-
--- {-@ proof :: Bool @-}
--- proof :: Bool
--- proof = test False == True
-
--- [lhp|ple
--- proof :: Bool
--- proof = test False == True
--- |]
-
-
-[lhp|admit
-proof :: Bool -> Bool
-proof f = True  == False
-|]
-
-[lhp|genProp|reflect|ple
-proof2 :: Bool
-proof2 = False == True
-    ? proof_proof True
-|]

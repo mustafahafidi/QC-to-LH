@@ -121,21 +121,12 @@ prop_fromList_focus = focus (fromList ([1]::[Int])) == Just 1
 {-======================================================
             (VERY) DEEP PROPERTIES
 =======================================================-}
-{-@ reflect eqf @-}
-eqf ::  CList Int -> CList Int -> Bool
-eqf a b = toList a == toList b
-
-{-@ reflect =*= @-}
-{-@ infix 4 =*= @-}
-(=*=) :: CList Int -> CList Int -> Bool
-x =*= y = (any (eqf x) (toList (allRotations y)))
-
 [lhp|genProp|reflect|ple|caseExpand
 lemma_refl :: CList Int -> Bool
 lemma_refl cl = cl =*= cl
 |]
 
-
+-- {-@ rewriteWith prop_rot_proof [rightIdP, involutionP] @-}
 [lhp|genProp|reflect|ple
 prop_rot :: CList Int -> Bool
 prop_rot c@(CList [] f rs@(_:_))  =   c =*= (rotR  (rotL c))
@@ -152,16 +143,13 @@ prop_rot c = c =*= (rotR $ rotL c)
 |]
 
 
+{-@ rewriteWith prop_packL_proof [distributivityP, involutionP] @-}
 [lhp|genProp|reflect|ple|caseExpand
 prop_packL ::  CList Int -> Bool
-prop_packL c@(CList l f r) = c =*= (packL c)
-        ? (distributivityP l (reverse r))
-        ? involutionP r
-
 prop_packL c = c =*= (packL c)
 |]
 
-
+-- {-@ rewriteWith prop_packR_proof [rightIdP] @-}
 [lhp|genProp|reflect|ple
 prop_packR ::  CList Int -> Bool
 prop_packR c@(CList l f r) = c =*= (packR c)
@@ -188,3 +176,15 @@ prop_list c@(CList l f r) = (c =*= (fromList . toList $ c))
 
 prop_list c = (c =*= (fromList . toList $ c))
 |]
+
+
+
+
+-- {-@ reflect eqf @-}
+-- eqf ::  CList Int -> CList Int -> Bool
+-- eqf a b = toList a == toList b
+
+-- {-@ reflect =*= @-}
+-- {-@ infix 4 =*= @-}
+-- (=*=) :: CList Int -> CList Int -> Bool
+-- x =*= y = (any (eqf x) (toList (allRotations y)))

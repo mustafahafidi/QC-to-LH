@@ -125,20 +125,20 @@ generateProofFromDecl decs opts =
             case isSuffixOf "Bool" (pprint sd) of
                 False -> failWith "The given declaration must return a boolean to be transformed to a LiquidHaskell proof"
                 True  -> do
-            -- Handle options
-                optionDecs <- generateFromOptions (show nm) parsedDecls opts 
+                -- Handle options
+                    optionDecs <- generateFromOptions (show nm) parsedDecls opts 
 
-            -- Transform signature to LH annotation
-                lhDec <- transformSignature opts sd bd
+                -- Transform signature to LH annotation
+                    lhDec <- transformSignature opts sd bd
 
-            -- Generate the body
-                finalBody <- transformBody opts sd bd
+                -- Generate the body
+                    finalBody <- transformBody opts sd bd
 
-            -- Run liquidhaskell locally on binder if asked
-                runLiquidHaskell opts (show nm)
-                           
+                -- Run liquidhaskell locally on binder if asked
+                    runLiquidHaskell opts (show nm)
+                            
 
-                return $ optionDecs ++ lhDec ++ [finalBody]
+                    return $ optionDecs ++ lhDec ++ [finalBody]
 
 
 -- ======================================================

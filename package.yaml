@@ -1,4 +1,4 @@
-name: qc-to-lh
+name: liquidhaskell-proof-generator
 version: "0.1.0.0"
 category: Testing
 author: Mustafa Hafidi
