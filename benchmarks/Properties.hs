@@ -18,11 +18,13 @@ import Lib.Definitions
 import Prelude hiding (take, drop,
                       (++),
                       (+),(-), (<=), (<), min, max,
-                      length, elem, not, dropWhile,takeWhile,last,zip
+                      length, elem, not, dropWhile,takeWhile,last,zip,
+                      const
                       )
 
 {-@ LIQUID "--reflection" @-}
 {-@ LIQUID "--exactdc" @-}
+{-@ LIQUID "--higherorder" @-}
 {-@ LIQUID "--ple-local" @-}
 {-
 {-======================================================
@@ -444,7 +446,6 @@ prop_33 a b
   = (min a b == a) == (a <<= b)
 |]
 
--}
 {-======================================================
                      prop_34
 =======================================================-}
@@ -453,17 +454,21 @@ prop_34 ::  NAT -> NAT -> Bool
 prop_34 a b
   = (min a b == b) == (b <<= a)
 |]
-{-
+-}
 
 {-======================================================
                       skipped prop_35
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+[lhp|genProp|reflect|ple|caseExpand
 prop_35 ::  [NAT] -> Bool
+
+-- the property:
 prop_35 xs
-  = dropWhile (\ _ -> False) xs == xs
+  = dropWhile (const False) xs == xs
 |]
 
+
+{-
 
 {-======================================================
                       skipped prop_36
