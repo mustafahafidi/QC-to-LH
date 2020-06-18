@@ -310,7 +310,7 @@ prop_22 a b c
   = (max (max a b) c == max a (max b c))
 |]
 
--}
+
 
 {-======================================================
                      prop_23
@@ -321,20 +321,20 @@ prop_23 a b
   = (max a b == max b a)
 |]
 
-
-{-
+-}
 
 
 {-======================================================
                       skipped prop_24
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+[lhp|genProp|reflect|ple|induction|caseExpand
 prop_24 ::  NAT -> NAT -> Bool
 prop_24 a b
-  = ((max a b) == a) == (b <= a)
+  = ((max a b) == a) == (b <<= a)
 |]
 
 
+{-
 
 {-======================================================
                       skipped prop_25
