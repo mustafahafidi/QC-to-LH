@@ -43,7 +43,7 @@ prop_02  n xs ys = (count n xs + count n ys == count n (xs ++ ys))
 
 
 {-======================================================
-                   prop_03
+                   prop_03 (hint-lemma)
 =======================================================-}
 {-@ rewriteWith prop_03_proof [lemma_count_proof] @-}
 [lhp|genProp|reflect|ple
@@ -177,7 +177,7 @@ prop_13 n x xs
 
 
 {-======================================================
-                   prop_15
+                   prop_15 (hint-lemma)
 =======================================================-}
 -- rewrite error: Could not generate any rewrites from equality. Likely causes: 
 --  - There are free (uninstantiatable) variables on both sides of the equality
@@ -242,12 +242,12 @@ prop_19 n xs
   = (length (drop n xs) == length xs - n)
 |]
 
--}
+
 
 {-======================================================
-                      skipped prop_20
+                     prop_20 (hint-lemma-induction)
 =======================================================-}
-{-@ rewriteWith prop_20_proof [prop_20_lemma_proof] @-}
+-- {-@ rewriteWith prop_20_proof [prop_20_lemma_proof] @-}
 [lhp|genProp|inline|ple|caseExpand
 prop_20 ::  [NAT] -> Bool
 prop_20 ls@(x : xs)
@@ -288,17 +288,19 @@ prop_20_lemma x xs = length (insort x (sort xs)) == S (length (sort xs))
 --   -- )
 --   *** QED
 
-{-
+
+
 
 {-======================================================
-                    skipped prop_21
+                   prop_21
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+[lhp|genProp|reflect|ple|induction|caseExpandP:1
 prop_21 ::  NAT -> NAT -> Bool
 prop_21 n m
-  = (n <= (n + m))
+  = (n <<= (n + m))
 |]
 
+-}
 {-======================================================
                       skipped prop_22
 =======================================================-}
@@ -307,6 +309,8 @@ prop_22 ::  NAT -> NAT -> NAT -> Bool
 prop_22 a b c
   = (max (max a b) c == max a (max b c))
 |]
+
+{-
 
 {-======================================================
                       skipped prop_23
