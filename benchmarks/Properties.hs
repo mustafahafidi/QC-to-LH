@@ -333,7 +333,6 @@ prop_24 a b
 |]
 
 
--}
 
 {-======================================================
                      prop_25
@@ -344,7 +343,7 @@ prop_25 a b
   = ((max a b) == b) == (a <<= b)
 |]
 
-{-
+
 
 {-======================================================
                      prop_26
@@ -354,6 +353,7 @@ prop_26 ::  NAT -> [NAT] -> [NAT] -> Bool
 prop_26 x xs ys
   = (x `elem` xs) ==> (x `elem` (xs ++ ys))
 |]
+
 
 
 {-======================================================
@@ -379,17 +379,23 @@ prop_28 x xs
   = (x `elem` (xs ++ [x]))
 |]
 
-
+-}
 {-======================================================
-                      skipped prop_29
+                     prop_29 (hint-induction)
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+[lhp|genProp|reflect|ple
 prop_29 ::  NAT -> [NAT] -> Bool
+prop_29 n ls@(x : xs)
+  | n == x = trivial
+  | otherwise = (n `elem` (ins1 n ls))
+                    ? prop_29_proof n xs
+  
+-- the property:
 prop_29 x xs
   = (x `elem` ins1 x xs)
 |]
 
-
+{-
 {-======================================================
                       skipped prop_30
 =======================================================-}
