@@ -1,4 +1,5 @@
 {-# LANGUAGE  QuasiQuotes #-}
+{-# LANGUAGE  TemplateHaskell #-}
 {-# OPTIONS_GHC -dth-dec-file #-}
 
 {-======================================================
@@ -18,10 +19,10 @@ import Prelude hiding (take, drop,
                       (++),
                       (+),(-), (<=), (<), min, max,
                       length, elem, not, dropWhile,takeWhile,last,zip
-                      
                       )
 
 {-@ LIQUID "--reflection" @-}
+{-@ LIQUID "--exactdc" @-}
 {-@ LIQUID "--ple-local" @-}
 {-
 {-======================================================
@@ -39,10 +40,10 @@ prop_01 n xs = (take n xs ++ drop n xs == xs)
 prop_02 :: NAT -> [NAT] -> [NAT] -> Bool
 prop_02  n xs ys = (count n xs + count n ys == count n (xs ++ ys))
 |]
--}
+
 
 {-======================================================
-                    skipped prop_03
+                   prop_03
 =======================================================-}
 {-@ rewriteWith prop_03_proof [lemma_count_proof] @-}
 [lhp|genProp|reflect|ple
@@ -52,7 +53,6 @@ prop_03 n xs ys
     -- ? lemma_count_proof n xs ys
     ? lemma_diseq_proof (count n xs) (count n ys)
 |]
-
 
 [lhp|genProp|inline|admit
 lemma_count :: NAT -> [NAT] -> [NAT] -> Bool
@@ -66,24 +66,7 @@ lemma_diseq n m = n <= n+m
 
 
 
-{-  -}
--- {-@ reflect prop_03 @-}
--- prop_03 :: NAT -> [NAT] -> [NAT] -> Bool
--- prop_03 n xs ys = ((count n) xs) <= (count n) (xs ++ ys)
--- {-@ ple prop_03_proof @-}
--- {-@ prop_03_proof :: n:NAT -> xs:[NAT] -> ys:[NAT] -> { prop_03 n xs ys} @-}
--- prop_03_proof :: NAT -> [NAT] -> [NAT] -> Proof
--- prop_03_proof n@Lib.Definitions.Z xs ys
---   = (((count n) xs) <= (count n) (xs ++ ys)) *** QED
-  
--- prop_03_proof n@(Lib.Definitions.S p254) xs ys
---   = (((count n) xs) <= (count n) (xs ++ ys)
---        ? ((prop_03_proof p254) xs) ys)
---       *** Admit
 
-
-
-{-
 {-======================================================
                   prop_04
 =======================================================-}
@@ -189,15 +172,36 @@ prop_13 n x xs
 --   = (filter p (xs ++ ys) === (filter p xs) ++ (filter p ys))
 -- |]
 
+-}
+
+
 
 {-======================================================
-                      skipped prop_15
+                   prop_15
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+-- rewrite error: Could not generate any rewrites from equality. Likely causes: 
+--  - There are free (uninstantiatable) variables on both sides of the equality
+--  - The rewrite would diverge
+
+-- {-@ rewriteWith prop_15_proof [lemma_insert_proof] @-}
+[lhp|genProp|reflect|ple
 prop_15 ::  NAT -> [NAT] -> Bool
-prop_15 x xs
-  = (length (ins x xs) == S (length xs))
+prop_15 n (x:xs) 
+  | n<<x = trivial
+  | otherwise = () ? prop_15_lemma_proof n x xs
+-- the property:
+prop_15 n ls = (length (insert n ls) == S (length ls))
 |]
+
+[lhp|genProp|inline|ple
+prop_15_lemma :: NAT -> NAT -> [NAT] -> Bool
+prop_15_lemma n x lls@(l:ls) 
+          | n<<l = trivial
+          | otherwise = () ? prop_15_lemma_proof n l ls
+prop_15_lemma n x ls = length (insert n ls) == length (x:ls)
+|]
+
+{-
 
 {-======================================================
                  prop_16

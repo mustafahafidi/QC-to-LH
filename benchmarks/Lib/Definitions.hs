@@ -88,11 +88,6 @@ dropWhile p (x:xs) =
 -- (S _) == Z     = False
 -- (S x) == (S y) = x == y
 
-{-@ reflect < @-}
-_     < Z     = False
-Z     < _     = True
-(S x) < (S y) = x < y
-
 {-@ reflect min @-}
 min Z     y     = Z
 min (S x) Z     = Z
@@ -121,6 +116,12 @@ infix  4  <=
 Z     <= _     = True
 _     <= Z     = False
 (S x) <= (S y) = x <= y
+
+infix  4  <<
+{-@ reflect << @-}
+_     << Z     = False
+Z     << _     = True
+(S x) << (S y) = x << y
 
 infix 0 ==>
 {-@ reflect ==> @-}
@@ -161,13 +162,13 @@ insort n (x:xs) =
     True -> n : x : xs
     _ -> x : (insort n xs)
 
-{-@ reflect ins @-}
-ins :: NAT -> [NAT] -> [NAT]
-ins n [] = [n]
-ins n (x:xs) =
-  case n < x of
-    True -> n : x : xs
-    _ -> x : (ins n xs)
+{-@ reflect insert @-}
+insert :: NAT -> [NAT] -> [NAT]
+insert n [] = [n]
+insert n (x:xs) 
+  | n<<x = n : x : xs
+  | otherwise = x : (insert n xs)
+
 
 {-@ reflect ins1 @-}
 ins1 :: NAT -> [NAT] -> [NAT]
