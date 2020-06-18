@@ -110,12 +110,12 @@ Z     - _     = Z
 x     - Z     = x
 (S x) - (S y) = x - y
 
-infix  4  <=
-{-@ reflect <= @-}
--- {-@ (<=) :: n1:NAT -> n2:NAT -> { natToInt n1 <= natToInt n2 } @-}
-Z     <= _     = True
-_     <= Z     = False
-(S x) <= (S y) = x <= y
+infix  4  <<=
+{-@ reflect <<= @-}
+-- {-@ (<=) :: n1:NAT -> n2:NAT -> { natToInt n1 <<= natToInt n2 } @-}
+Z     <<= _     = True
+_     <<= Z     = False
+(S x) <<= (S y) = x <<= y
 
 infix  4  <<
 {-@ reflect << @-}
@@ -152,13 +152,13 @@ last (x:xs) = last xs
 sorted :: [NAT] -> Bool
 sorted [] = True
 sorted [x] = True
-sorted (x:y:ys) = (x <= y) && sorted (y:ys)
+sorted (x:y:ys) = (x <<= y) && sorted (y:ys)
 
 {-@ reflect insort @-}
 insort :: NAT -> [NAT] -> [NAT]
 insort n [] = [n]
 insort n (x:xs) =
-  case n <= x of
+  case n <<= x of
     True -> n : x : xs
     _ -> x : (insort n xs)
 

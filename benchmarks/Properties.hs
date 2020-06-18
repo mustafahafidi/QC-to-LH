@@ -172,7 +172,7 @@ prop_13 n x xs
 --   = (filter p (xs ++ ys) === (filter p xs) ++ (filter p ys))
 -- |]
 
--}
+
 
 
 
@@ -201,7 +201,7 @@ prop_15_lemma n x lls@(l:ls)
 prop_15_lemma n x ls = length (insert n ls) == length (x:ls)
 |]
 
-{-
+
 
 {-======================================================
                  prop_16
@@ -213,22 +213,24 @@ prop_16 x xs
 |]
 
 
-{-======================================================
-                    skipped prop_17
-=======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
-prop_17 ::  NAT -> Bool
-prop_17 n
-  = ((n <= Z) == (n == Z))
-|]
 
 {-======================================================
-                    skipped prop_18
+                   prop_17
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+[lhp|genProp|reflect|ple
+prop_17 ::  NAT -> Bool
+prop_17 n = ((n <<= Z) == (n == Z))
+|]
+
+
+
+{-======================================================
+                   prop_18
+=======================================================-}
+[lhp|genProp|reflect|ple|induction|caseExpandP:1
 prop_18 ::  NAT -> NAT -> Bool
 prop_18 i m
-  = (i < S (i + m))
+  = (i << S (i + m))
 |]
 
 {-======================================================
@@ -241,6 +243,7 @@ prop_19 n xs
 |]
 
 
+
 {-======================================================
                       skipped prop_20
 =======================================================-}
@@ -249,7 +252,6 @@ prop_20 ::  [NAT] -> Bool
 prop_20 xs
   = (length (sort xs) == length xs)
 |]
-
 
 
 {-======================================================
