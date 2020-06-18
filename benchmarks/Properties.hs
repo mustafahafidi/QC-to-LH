@@ -476,17 +476,23 @@ prop_36 xs
   = takeWhile (const True) xs == xs
 |]
 
+-}
 
 {-======================================================
-                      skipped prop_37
+                     prop_37
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+[lhp|genProp|reflect|ple
 prop_37 ::  NAT -> [NAT] -> Bool
+prop_37 n ls@(x:xs)
+  | n == x = () ? prop_37_proof n xs
+  | otherwise = () ? prop_37_proof n xs
+  
+
 prop_37 x xs
-  = not (x `elem` delete x xs)
+  = not (x `elem` (delete x xs))
 |]
 
-
+{-
 {-======================================================
                         prop_38
 =======================================================-}
