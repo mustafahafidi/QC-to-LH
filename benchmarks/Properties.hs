@@ -302,7 +302,7 @@ prop_21 n m
 
 -}
 {-======================================================
-                      skipped prop_22
+                     prop_22
 =======================================================-}
 [lhp|genProp|reflect|ple|induction|caseExpand
 prop_22 ::  NAT -> NAT -> NAT -> Bool
