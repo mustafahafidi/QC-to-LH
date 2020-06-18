@@ -1,4 +1,5 @@
 {-# LANGUAGE  QuasiQuotes #-}
+{-# OPTIONS_GHC -dth-dec-file #-}
 
 {-======================================================
 Porting TIP problems from  
@@ -10,6 +11,7 @@ To improve verification time, run this file in LH by pieces (leave uncommented o
 
 import Language.Haskell.Liquid.ProofCombinators
 import Language.Haskell.Liquid.ProofGenerator
+import Language.Haskell.Liquid.UX.QuasiQuoter
 import Lib.Definitions
 
 import Prelude hiding (take, drop,
@@ -21,7 +23,6 @@ import Prelude hiding (take, drop,
 
 {-@ LIQUID "--reflection" @-}
 {-@ LIQUID "--ple-local" @-}
-{-@ LIQUID "--ple" @-}
 {-
 {-======================================================
                         prop_01
@@ -38,16 +39,51 @@ prop_01 n xs = (take n xs ++ drop n xs == xs)
 prop_02 :: NAT -> [NAT] -> [NAT] -> Bool
 prop_02  n xs ys = (count n xs + count n ys == count n (xs ++ ys))
 |]
+-}
 
 {-======================================================
                     skipped prop_03
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+{-@ rewriteWith prop_03_proof [lemma_count_proof] @-}
+[lhp|genProp|reflect|ple
 prop_03 :: NAT -> [NAT] -> [NAT] -> Bool
 prop_03 n xs ys
   = count n xs <= count n (xs ++ ys)
+    -- ? lemma_count_proof n xs ys
+    ? lemma_diseq_proof (count n xs) (count n ys)
 |]
 
+
+[lhp|genProp|inline|admit
+lemma_count :: NAT -> [NAT] -> [NAT] -> Bool
+lemma_count n xs ys = count n (xs ++ ys) == (count n xs) + (count n ys)
+|]
+
+[lhp|genProp|reflect|admit
+lemma_diseq :: NAT -> NAT -> Bool
+lemma_diseq n m = n <= n+m
+|]
+
+
+
+{-  -}
+-- {-@ reflect prop_03 @-}
+-- prop_03 :: NAT -> [NAT] -> [NAT] -> Bool
+-- prop_03 n xs ys = ((count n) xs) <= (count n) (xs ++ ys)
+-- {-@ ple prop_03_proof @-}
+-- {-@ prop_03_proof :: n:NAT -> xs:[NAT] -> ys:[NAT] -> { prop_03 n xs ys} @-}
+-- prop_03_proof :: NAT -> [NAT] -> [NAT] -> Proof
+-- prop_03_proof n@Lib.Definitions.Z xs ys
+--   = (((count n) xs) <= (count n) (xs ++ ys)) *** QED
+  
+-- prop_03_proof n@(Lib.Definitions.S p254) xs ys
+--   = (((count n) xs) <= (count n) (xs ++ ys)
+--        ? ((prop_03_proof p254) xs) ys)
+--       *** Admit
+
+
+
+{-
 {-======================================================
                   prop_04
 =======================================================-}
@@ -57,7 +93,7 @@ prop_04 n xs
   = (S (count n xs) == count n (n : xs))
 |]
 
--}
+
 
 {-======================================================
                         prop_05
@@ -67,7 +103,7 @@ prop_05 :: NAT -> NAT -> [NAT] -> Bool
 prop_05 n x xs
   = (n == x) ==> (S (count n xs) == count n (x : xs))
 |]
-{-
+
 {-======================================================
                         prop_06
 =======================================================-}

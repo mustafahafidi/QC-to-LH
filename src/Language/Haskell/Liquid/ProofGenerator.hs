@@ -36,6 +36,7 @@ import System.Environment
 
 data Option = Ple 
             | Reflect 
+            | Inline 
             | Ignore 
             | GenProp 
             | Debug 
@@ -593,6 +594,7 @@ generateFromOptions pn pd (Debug:os:oss)   = generateFromOptions pn pd (os:Debug
 generateFromOptions pn pd (Ple:os) =  boilerplate pn pd os ("ple " ++ pn++proof_suffix)
 generateFromOptions pn pd (Ignore:os) = boilerplate pn pd os ("ignore " ++ pn++proof_suffix)
 generateFromOptions pn pd (Reflect:os) = boilerplate pn pd os ("reflect " ++ pn)
+generateFromOptions pn pd (Language.Haskell.Liquid.ProofGenerator.Inline:os) = boilerplate pn pd os ("inline " ++ pn)
 
 generateFromOptions pn pd (GenProp:os)   = do   restDecs <- generateFromOptions pn pd os
                                             --   failWith $ show $ map pprint (cleanProof pd)
