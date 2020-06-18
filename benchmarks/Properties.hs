@@ -476,7 +476,7 @@ prop_36 xs
   = takeWhile (const True) xs == xs
 |]
 
--}
+
 
 {-======================================================
                      prop_37
@@ -492,7 +492,7 @@ prop_37 x xs
   = not (x `elem` (delete x xs))
 |]
 
-{-
+
 {-======================================================
                         prop_38
 =======================================================-}
@@ -584,17 +584,28 @@ prop_46 xs
 |]
 
 
-
+-}
 {-======================================================
-                      skipped prop_47
+                     prop_47
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+{-@ rewriteWith prop_47_proof [prop_47_lemma_proof]  @-}
+[lhp|genProp|reflect|ple
 prop_47 ::  Tree a -> Bool
+prop_47 a@(Node l x r)
+  = ()
+      -- ? prop_47_lemma_proof (height (mirror r)) (height (mirror l))
+      ? prop_47_proof l
+      ? prop_47_proof r
 prop_47 a
   = (height (mirror a) == height a)
 |]
 
+[lhp|genProp|inline|ple|admit
+prop_47_lemma :: NAT -> NAT -> Bool
+prop_47_lemma n m = max n m == max m n
+|]
 
+{-
 {-======================================================
                       skipped prop_48
 =======================================================-}
