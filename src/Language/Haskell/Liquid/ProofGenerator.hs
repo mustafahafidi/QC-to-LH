@@ -60,6 +60,7 @@ proof_suffix = "_proof"
 -- It accepts the following options:
 --   - `ple` generates the ple annotation for *the proof*
 --   - `ignore` generates the `ignore` annotation for *the proof*
+--   - `inline` generates the `inline` annotation for *the property*, works only in conjunction of `genProp`
 --   - `reflect` generates the `reflect` annotation for *the property*, works only in conjunction of `genProp`
 --   - `genProp` generates the propery along with the proof
 --   - `admit` to wrap the proof with "***Admit" instead of "***QED"
@@ -89,8 +90,9 @@ parseOptions str = do
         opts <- parseGivenOptions (filter (\s->not $ strNull s) (strSplitAll "|" os ))
         
 
-        when (not (elem GenProp opts) &&
-              elem Reflect opts ) $ failWith "you cannot use `reflect` without `genProp`"
+        when (not (elem GenProp opts) 
+            && (elem Reflect opts 
+              || elem Language.Haskell.Liquid.ProofGenerator.Inline opts)) $ failWith "you cannot use `reflect` or `inline` without `genProp`"
         generateProofFromDecl body opts
 
     where

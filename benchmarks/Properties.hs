@@ -242,17 +242,53 @@ prop_19 n xs
   = (length (drop n xs) == length xs - n)
 |]
 
-
+-}
 
 {-======================================================
                       skipped prop_20
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+{-@ rewriteWith prop_20_proof [prop_20_lemma_proof] @-}
+[lhp|genProp|inline|ple|caseExpand
 prop_20 ::  [NAT] -> Bool
-prop_20 xs
-  = (length (sort xs) == length xs)
+prop_20 ls@(x : xs)
+  = ()
+    ? prop_20_lemma_proof x xs
+    ? prop_20_proof xs
+-- property
+prop_20 xs = (length (sort xs) == length xs)
 |]
 
+[lhp|genProp|inline|ple|admit
+prop_20_lemma :: NAT -> [NAT] -> Bool
+prop_20_lemma x xs = length (insort x (sort xs)) == S (length (sort xs))
+|]
+
+-- {-@ reflect prop_20 @-}
+-- prop_20 :: [NAT] -> Bool
+-- prop_20 xs = ((length (sort xs)) == length xs)
+
+-- {-@ ple prop_20_proof @-}
+-- {-@ rewriteWith prop_20_proof [prop_20_lemma_proof] @-}
+-- {-@ prop_20_proof :: ns:[NAT] -> { prop_20 ns } @-}
+-- prop_20_proof :: [NAT] -> Proof
+-- prop_20_proof xs@[] = trivial
+
+-- prop_20_proof ls@(x : xs)
+--   = length (sort ls) == length ls 
+--     ? prop_20_lemma_proof x xs
+--     ? prop_20_proof xs
+
+--   -- ?(length (sort ls)
+--   -- === length (insort x (sort xs))
+--   --   ? prop_20_lemma_proof x xs
+--   -- === S (length (sort xs))
+--   --   ? prop_20_proof xs
+--   -- === S (length xs)
+--   -- === length ls
+--   -- )
+--   *** QED
+
+{-
 
 {-======================================================
                     skipped prop_21
