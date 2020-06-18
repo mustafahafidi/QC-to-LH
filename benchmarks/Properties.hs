@@ -454,29 +454,26 @@ prop_34 ::  NAT -> NAT -> Bool
 prop_34 a b
   = (min a b == b) == (b <<= a)
 |]
--}
 
 {-======================================================
-                      skipped prop_35
+                     prop_35
 =======================================================-}
 [lhp|genProp|reflect|ple|caseExpand
 prop_35 ::  [NAT] -> Bool
-
--- the property:
 prop_35 xs
   = dropWhile (const False) xs == xs
 |]
 
 
-{-
+
 
 {-======================================================
-                      skipped prop_36
+                     prop_36
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+[lhp|genProp|reflect|ple|induction|caseExpand
 prop_36 ::  [NAT] -> Bool
 prop_36 xs
-  = takeWhile (\ _ -> True) xs == xs
+  = takeWhile (const True) xs == xs
 |]
 
 
