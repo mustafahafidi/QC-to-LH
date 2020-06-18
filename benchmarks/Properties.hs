@@ -394,7 +394,6 @@ prop_29 n ls@(x : xs)
 prop_29 x xs
   = (x `elem` ins1 x xs)
 |]
--}
 
 {-======================================================
                      prop_30
@@ -412,7 +411,7 @@ prop_30 x xs
   = (x `elem` (insert x xs))
 |]
 
-{-
+
 
 
 {-======================================================
@@ -436,26 +435,25 @@ prop_32 a b
 
 
 
-
 {-======================================================
-                      skipped prop_33
+                     prop_33
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+[lhp|genProp|reflect|ple|induction|caseExpand
 prop_33 ::  NAT -> NAT -> Bool
 prop_33 a b
-  = (min a b == a) == (a <= b)
+  = (min a b == a) == (a <<= b)
 |]
 
-
+-}
 {-======================================================
-                      skipped prop_34
+                     prop_34
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+[lhp|genProp|reflect|ple|induction|caseExpand
 prop_34 ::  NAT -> NAT -> Bool
 prop_34 a b
-  = (min a b == b) == (b <= a)
+  = (min a b == b) == (b <<= a)
 |]
-
+{-
 
 {-======================================================
                       skipped prop_35
