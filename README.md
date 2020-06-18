@@ -1,6 +1,6 @@
 ## Proof Generator for LiquidHaskell
 
-This project aims to facilitate the migration/conversion of QuickCheck properties to LiquidHaskell proofs, by automating the translation process of QuickCheck tests to LiquidHaskell formal proof obligations with some heuristics/tactics for proof automation.
+This project aims to facilitate the migration/conversion of QuickCheck properties to LiquidHaskell proofs, by automating the translation process of QuickCheck tests to LiquidHaskell formal proof obligations with **heuristics/tactics for proof automation**.
 
 It can also be used as a mini proof assistant to help the overall experience and reduce the manual work in LiquidHaskell proofs.
 
