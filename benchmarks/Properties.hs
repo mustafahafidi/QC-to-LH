@@ -379,7 +379,7 @@ prop_28 x xs
   = (x `elem` (xs ++ [x]))
 |]
 
--}
+
 {-======================================================
                      prop_29 (hint-induction)
 =======================================================-}
@@ -394,16 +394,25 @@ prop_29 n ls@(x : xs)
 prop_29 x xs
   = (x `elem` ins1 x xs)
 |]
+-}
+
+{-======================================================
+                     prop_30
+=======================================================-}
+[lhp|genProp|reflect|ple
+prop_30 ::  NAT -> [NAT] -> Bool
+prop_30 n ls@(x:xs) 
+  | n<<x = trivial
+  | n==x = trivial
+  | otherwise = ()
+                ? prop_30_proof n xs
+
+-- the property:
+prop_30 x xs
+  = (x `elem` (insert x xs))
+|]
 
 {-
-{-======================================================
-                      skipped prop_30
-=======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
-prop_30 ::  NAT -> [NAT] -> Bool
-prop_30 x xs
-  = (x `elem` ins x xs)
-|]
 
 
 {-======================================================
