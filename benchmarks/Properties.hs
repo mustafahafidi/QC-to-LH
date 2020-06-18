@@ -321,11 +321,10 @@ prop_23 a b
   = (max a b == max b a)
 |]
 
--}
 
 
 {-======================================================
-                      skipped prop_24
+                     prop_24
 =======================================================-}
 [lhp|genProp|reflect|ple|induction|caseExpand
 prop_24 ::  NAT -> NAT -> Bool
@@ -334,17 +333,18 @@ prop_24 a b
 |]
 
 
-{-
+-}
 
 {-======================================================
-                      skipped prop_25
+                     prop_25
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+[lhp|genProp|reflect|ple|induction|caseExpand
 prop_25 ::  NAT -> NAT -> Bool
 prop_25 a b
-  = ((max a b) == b) == (a <= b)
+  = ((max a b) == b) == (a <<= b)
 |]
 
+{-
 
 {-======================================================
                      prop_26
