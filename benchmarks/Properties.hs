@@ -624,8 +624,6 @@ prop_48 xs
   = not (null xs) ==> (butlast xs ++ [last xs] == xs)
 |]
 
--}
-
 {-======================================================
                    prop_49 (hints-caseExpand,lemma,induction)
 =======================================================-}
@@ -663,18 +661,20 @@ rightIdApp xs = xs ++ [] == xs
 -- prop_49_proof ls@(x1:x2: xs) rs@(y : ys)
 --   = () ? prop_49_proof (x2:xs) rs
 
-{-
 
+-}
 {-======================================================
-                      skipped prop_50
+                  prop_50 (hints: caseExpand, induction)
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+[lhp|genProp|reflect|ple|caseExpand
 prop_50 ::  [NAT] -> Bool
+prop_50 ls@(x1:x2:xs)
+  = () ? prop_50_proof (x2:xs)
 prop_50 xs
   = (butlast xs == take (length xs - S Z) xs)
 |]
 
-
+{-
 {-======================================================
                         prop_51
 =======================================================-}
