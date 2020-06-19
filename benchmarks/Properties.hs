@@ -861,7 +861,7 @@ prop_58 n xs ys
   = (drop n (zip xs ys) == zip (drop n xs) (drop n ys))
 |]
 
--}
+
 
 {-======================================================
                      prop_59
@@ -878,18 +878,24 @@ prop_59 xs ys
 rightIdApp :: Eq a => [a] -> Bool
 rightIdApp xs = xs ++ [] == xs
 |]
+-}
 
-{-
 {-======================================================
                       skipped prop_60
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+[lhp|genProp|reflect|ple
 prop_60 ::  [NAT] -> [NAT] -> Bool
+prop_60 ls@(x1:x2:xs) rs@(y : ys)
+  = ((not (null rs)) ==> ((last (ls ++ rs)) == last rs)) 
+  === ((last (ls ++ rs)) == last rs)
+  === (last ((x2:xs ++ rs)) == last rs)
+    ? prop_60_proof (x2:xs) rs
+
 prop_60 xs ys
   = not (null ys) ==> (last (xs ++ ys) == last ys)
 |]
 
-
+{-
 {-======================================================
                       skipped prop_61
 =======================================================-}
