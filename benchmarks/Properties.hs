@@ -809,9 +809,9 @@ prop_55 n xs ys
   = (drop n (xs ++ ys) == drop n xs ++ drop (n - length xs) ys)
 |]
 
--}
+
 {-======================================================
-                     prop_56
+                     prop_56 (hint: lemma)
 =======================================================-}
 [lhp|genProp|reflect|ple
 prop_56 ::  NAT -> NAT -> [NAT] -> Bool
@@ -841,7 +841,7 @@ prop_56_lemma n m = case m of
                       S sm -> (n + m) == S (n + sm)
 |]  
 
-{-
+
 {-======================================================
                         prop_57
 =======================================================-}
@@ -861,17 +861,25 @@ prop_58 n xs ys
   = (drop n (zip xs ys) == zip (drop n xs) (drop n ys))
 |]
 
+-}
 
 {-======================================================
-                      skipped prop_59
+                     prop_59
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+-- {-@ rewriteWith prop_59_proof [rightIdApp_proof] @-} -- rewrite doesn't replace the call ?
+[lhp|genProp|reflect|ple
 prop_59 ::  [NAT] -> [NAT] -> Bool
 prop_59 xs ys
-  = (ys == []) ==> (last (xs ++ ys) == last xs)
+  = (((ys == []) ==> (last (xs ++ ys) == last xs)))
+  ? rightIdApp_proof xs
 |]
 
+[lhp|genProp|inline|ple|induction|caseExpand
+rightIdApp :: Eq a => [a] -> Bool
+rightIdApp xs = xs ++ [] == xs
+|]
 
+{-
 {-======================================================
                       skipped prop_60
 =======================================================-}
