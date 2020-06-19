@@ -662,7 +662,7 @@ rightIdApp xs = xs ++ [] == xs
 --   = () ? prop_49_proof (x2:xs) rs
 
 
--}
+
 {-======================================================
                   prop_50 (hints: caseExpand, induction)
 =======================================================-}
@@ -674,7 +674,7 @@ prop_50 xs
   = (butlast xs == take (length xs - S Z) xs)
 |]
 
-{-
+
 {-======================================================
                         prop_51
 =======================================================-}
@@ -683,17 +683,27 @@ prop_51 ::  [NAT] -> NAT -> Bool
 prop_51 xs x
   = (butlast (xs ++ [x]) == xs)
 |]
-
+-}
 
 {-======================================================
-                      skipped prop_52
+                   prop_52 (hint: lemma)
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+
+[lhp|genProp|reflect|ple
 prop_52 ::  NAT -> [NAT] -> Bool
+prop_52 n ls@(x:xs) = ()
+            ? prop_52_proof n xs
+            ? prop_52_lemma_proof n (rev xs) [x]
 prop_52 n xs
   = (count n xs == count n (rev xs))
 |]
 
+[lhp|genProp|reflect|ple|admit
+prop_52_lemma :: NAT -> [NAT] -> [NAT] -> Bool
+prop_52_lemma n xs ys = count n (xs ++ ys) == count n (ys ++ xs)
+|]
+
+{-
 -- This property is the same as prod #50
 
 {-======================================================
