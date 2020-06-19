@@ -683,7 +683,7 @@ prop_51 ::  [NAT] -> NAT -> Bool
 prop_51 xs x
   = (butlast (xs ++ [x]) == xs)
 |]
--}
+
 
 {-======================================================
                    prop_52 (hint: lemma)
@@ -703,19 +703,42 @@ prop_52_lemma :: NAT -> [NAT] -> [NAT] -> Bool
 prop_52_lemma n xs ys = count n (xs ++ ys) == count n (ys ++ xs)
 |]
 
-{-
--- This property is the same as prod #50
-
+-}
 {-======================================================
-                      skipped prop_53
+                     prop_53 (hint: lemma)
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+[lhp|genProp|reflect|ple
 prop_53 ::  NAT -> [NAT] -> Bool
+prop_53 n ls@(x:xs) = ()
+                      ? prop_53_lemma_proof n x (sort xs)
+                      ? prop_53_proof n xs
+-- the property 
 prop_53 n xs
   = (count n xs == count n (sort xs))
 |]
+-- lemmas
+[lhp|genProp|inline|ple
+prop_53_lemma ::  NAT -> NAT -> [NAT] -> Bool
+prop_53_lemma n x ls@(y:ys) 
+        | x <<= y = trivial
+        | otherwise = ()
+                  --           (count n (insort x ls) == count n (x:ls))
+                  -- === (count n (y : (insort x ys)) == count n (x:ls))
+                  ? prop_53_lemma_count_proof n [x] ls
+                  ? prop_53_lemma_count_proof n ys [x]
+                  ? prop_53_lemma_proof n x ys
+                  -- === (count n (insort x ys) == count n (ys ++ [x]))
+-- the property:
+prop_53_lemma n x xs = count n (insort x xs) == count n (x:xs)
+|]
 
+-- same as prop_52_lemma
+[lhp|genProp|reflect|ple|admit
+prop_53_lemma_count :: NAT -> [NAT] -> [NAT] -> Bool
+prop_53_lemma_count n xs ys = count n (xs ++ ys) == count n (ys ++ xs)
+|]
 
+{-
 {-======================================================
                       skipped prop_54
 =======================================================-}
