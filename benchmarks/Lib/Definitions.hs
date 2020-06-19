@@ -102,7 +102,6 @@ max (S x) (S y) = S (max x y)
 
 infixl 6  +
 {-@ reflect + @-}
--- {-@ (+) ::  n1:NAT -> n2:NAT -> {r:NAT | natToInt n1 + natToInt n2 == natToInt r} @-}
 Z     + y = y
 x     + Z = x
 (S x) + y = S (x + y)

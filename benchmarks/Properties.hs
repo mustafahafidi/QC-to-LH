@@ -738,7 +738,7 @@ prop_53_lemma_count :: NAT -> [NAT] -> [NAT] -> Bool
 prop_53_lemma_count n xs ys = count n (xs ++ ys) == count n (ys ++ xs)
 |]
 
--}
+
 {-======================================================
                      prop_54
 =======================================================-}
@@ -799,7 +799,7 @@ prop_54_lemma_dist n m = S (n - m) == S n - m
 
 
 
-{-
+
 {-======================================================
                         prop_55
 =======================================================-}
@@ -809,17 +809,39 @@ prop_55 n xs ys
   = (drop n (xs ++ ys) == drop n xs ++ drop (n - length xs) ys)
 |]
 
-
+-}
 {-======================================================
-                      skipped prop_56
+                     prop_56
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+[lhp|genProp|reflect|ple
 prop_56 ::  NAT -> NAT -> [NAT] -> Bool
+prop_56
+  n@(S sn)
+  m@(S sm)
+  ls@( x: xs)
+  = ()
+  --   ( (((drop n) ((drop m) ls)) == (drop (n + m)) ls) )
+  -- === ((((drop n) ((drop sm) xs)) == (drop (n + m)) ls))
+      ? prop_56_lemma_proof n m
+  -- === (((drop n) ((drop m) ls)) == (drop (S(n + sm)) ls))
+  -- === (((drop n) ((drop sm) xs)) == (drop (n + sm) xs))
+        ? prop_56_proof n sm xs
+  *** QED
+
+-- property:
 prop_56 n m xs
   = (drop n (drop m xs) == drop (n + m) xs)
 |]
 
+-- same as prop_54_lemma
+[lhp|genProp|reflect|ple|admit
+prop_56_lemma :: NAT -> NAT -> Bool
+prop_56_lemma n m = case m of
+                      Z -> True
+                      S sm -> (n + m) == S (n + sm)
+|]  
 
+{-
 {-======================================================
                         prop_57
 =======================================================-}
