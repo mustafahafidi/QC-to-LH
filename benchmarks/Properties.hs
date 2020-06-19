@@ -23,8 +23,8 @@ import Prelude hiding (take, drop,
                       )
 
 {-@ LIQUID "--reflection" @-}
-{-@ LIQUID "--exactdc" @-}
-{-@ LIQUID "--higherorder" @-}
+-- {-@ LIQUID "--exactdc" @-}
+-- {-@ LIQUID "--higherorder" @-}
 {-@ LIQUID "--ple-local" @-}
 {-
 {-======================================================
@@ -703,7 +703,7 @@ prop_52_lemma :: NAT -> [NAT] -> [NAT] -> Bool
 prop_52_lemma n xs ys = count n (xs ++ ys) == count n (ys ++ xs)
 |]
 
--}
+
 {-======================================================
                      prop_53 (hint: lemma)
 =======================================================-}
@@ -738,17 +738,68 @@ prop_53_lemma_count :: NAT -> [NAT] -> [NAT] -> Bool
 prop_53_lemma_count n xs ys = count n (xs ++ ys) == count n (ys ++ xs)
 |]
 
-{-
+-}
 {-======================================================
-                      skipped prop_54
+                     prop_54
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+-- {-@ rewriteWith prop_54 [prop_54_lemma_dist_proof] @-} -- not a replacement of the ? call
+[lhp|genProp|reflect|ple
 prop_54 ::  NAT -> NAT -> Bool
+prop_54 n@(S sn) m@(Z) = ()
+    ? prop_54_proof sn m
+    
+prop_54 n@(S sn) m@(S sm) = ()
+    ? prop_54_proof sn sm
+    ? prop_54_lemma_proof sm n
+    ? prop_54_lemma_dist_proof (sm + sn) sn
+
+
 prop_54 n m
   = ((m + n) - n == m)
 |]
+[lhp|genProp|reflect|ple|admit
+prop_54_lemma :: NAT -> NAT -> Bool
+prop_54_lemma n m = case m of
+                      Z -> True
+                      S sm -> (n + m) == S (n + sm)
+|]  
+[lhp|genProp|inline|ple|admit
+prop_54_lemma_dist :: NAT -> NAT -> Bool
+prop_54_lemma_dist n m = S (n - m) == S n - m
+|]  
+
+-- {-@ reflect prop_54 @-}
+-- prop_54 :: NAT -> NAT -> Bool
+-- prop_54 n m = ((m + n) - n== m)
+-- {-@ ple prop_54_proof @-}
+-- {-@ prop_54_proof :: n:NAT -> m:NAT -> {prop_54 n m} @-}
+-- prop_54_proof :: NAT -> NAT -> Proof
+-- prop_54_proof n@(S sn) m@(Z)
+--   = prop_54 n m
+--   === ((m + n)-n== m)
+--   === (n - n == m)
+--   === (sn - sn == m)
+--   === ((m + sn) - sn == m)
+--     ? prop_54_proof sn m
+--   *** QED
+
+-- prop_54_proof n@(S sn) m@(S sm)
+--   = prop_54 n m
+--   === ((m + n)-n== m)
+--   === (S(sm + n) - n == m)
+--   === ((sm + n) - sn == m)
+--     ? prop_54_lemma_proof sm n
+--   === (S (sm + sn) - sn == m)
+--         ? prop_54_lemma_dist_proof (sm + sn) sn
+--   === (S ((sm + sn) - sn) == m)
+--     ? prop_54_proof sn sm
+--   *** QED
+-- prop_54_proof n m = (((m + n) - n == m)) *** QED
 
 
+
+
+{-
 {-======================================================
                         prop_55
 =======================================================-}
