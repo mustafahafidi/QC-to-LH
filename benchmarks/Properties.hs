@@ -19,7 +19,7 @@ import Prelude hiding (take, drop,
                       (++),
                       (+),(-), (<=), (<), min, max,
                       length, elem, not, dropWhile,takeWhile,last,zip,
-                      const
+                      const, null
                       )
 
 {-@ LIQUID "--reflection" @-}
@@ -584,7 +584,6 @@ prop_46 xs
 |]
 
 
--}
 {-======================================================
                      prop_47
 =======================================================-}
@@ -604,18 +603,28 @@ prop_47 a
 prop_47_lemma :: NAT -> NAT -> Bool
 prop_47_lemma n m = max n m == max m n
 |]
+-}
 
-{-
 {-======================================================
-                      skipped prop_48
+                     prop_48
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+[lhp|genProp|reflect|ple
 prop_48 ::  [NAT] -> Bool
+prop_48 ls@(x:xs@(y:ys)) 
+  = ()
+  --   (not (null ls) ==> (butlast ls ++ [last ls] == ls))
+  -- ===   (null ls || (butlast ls ++ [last ls] == ls))
+  -- ===  (butlast ls ++ [last ls] == ls)
+  -- ===  (x:(butlast xs) ++ [last xs] == ls)
+  -- === (butlast xs ++ [last xs] == xs)
+    ? prop_48_proof xs
+  -- === True
+  
 prop_48 xs
   = not (null xs) ==> (butlast xs ++ [last xs] == xs)
 |]
 
-
+{-
 {-======================================================
                       skipped prop_49
 =======================================================-}

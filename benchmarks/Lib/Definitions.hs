@@ -2,8 +2,10 @@ module Lib.Definitions where
 
 import Prelude hiding (take, drop,
                       (++),
-                      (+),(-), (<=), (<), min, max, length,elem,not,dropWhile,takeWhile, last,zip
+                      (+),(-), (<=), (<), min, max, length,elem,not,dropWhile,takeWhile, last,zip,
+                      null
                       )
+                      
 import qualified Prelude as P
 
 data NAT = Z | S NAT
@@ -134,7 +136,10 @@ length :: [a] -> NAT
 length [] = Z
 length (_:xs) = S (length xs)
 
-
+{-@ reflect null @-}
+null :: [a] -> Bool
+null [] = True
+null _  = False
 
 {-@ reflect butlast @-}
 butlast :: [a] -> [a]
