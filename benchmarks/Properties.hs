@@ -603,10 +603,10 @@ prop_47 a
 prop_47_lemma :: NAT -> NAT -> Bool
 prop_47_lemma n m = max n m == max m n
 |]
--}
+
 
 {-======================================================
-                     prop_48
+                     prop_48 (hint-caseExpand)
 =======================================================-}
 [lhp|genProp|reflect|ple
 prop_48 ::  [NAT] -> Bool
@@ -624,16 +624,46 @@ prop_48 xs
   = not (null xs) ==> (butlast xs ++ [last xs] == xs)
 |]
 
-{-
+-}
+
 {-======================================================
-                      skipped prop_49
+                   prop_49 (hints-caseExpand,lemma,induction)
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
-prop_49 ::  [NAT] -> [NAT] -> Bool
+[lhp|genProp|reflect|ple|caseExpand
+prop_49 ::  [NAT] -> [NAT] -> Bool 
+prop_49 ls@(x : xs) rs@[]
+  =  () ? rightIdApp_proof ls
+prop_49 ls@(x1:x2: xs) rs@(y : ys)
+  = () ? prop_49_proof (x2:xs) rs
 prop_49 xs ys
   = (butlast (xs ++ ys) == butlastConcat xs ys)
 |]
 
+[lhp|genProp|reflect|ple|induction|caseExpand
+rightIdApp :: Eq a => [a] -> Bool
+rightIdApp xs = xs ++ [] == xs
+|]
+
+-- {-@ reflect prop_49 @-}
+-- prop_49 :: [NAT] -> [NAT] -> Bool
+-- prop_49 xs ys = ((butlast (xs ++ ys)) == (butlastConcat xs) ys)
+
+-- {-@ ple prop_49_proof @-}
+-- {-@ prop_49_proof :: xs:[NAT] -> ys:[NAT] -> { prop_49 xs ys } @-}
+-- prop_49_proof :: [NAT] -> [NAT] -> Proof
+-- prop_49_proof xs@[] ys@[]
+--   = trivial
+-- prop_49_proof xs@[] ys@(p427 : p428)
+--   = trivial
+-- prop_49_proof ls@([x]) rs@(y : ys)
+--   = trivial
+-- prop_49_proof ls@(x : xs) rs@[]
+--   =  () ? rightIdApp_proof ls
+
+-- prop_49_proof ls@(x1:x2: xs) rs@(y : ys)
+--   = () ? prop_49_proof (x2:xs) rs
+
+{-
 
 {-======================================================
                       skipped prop_50

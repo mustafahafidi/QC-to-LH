@@ -141,6 +141,11 @@ null :: [a] -> Bool
 null [] = True
 null _  = False
 
+{-@ reflect butlastConcat @-}
+butlastConcat :: [a] -> [a] -> [a]
+butlastConcat xs [] = butlast xs
+butlastConcat xs ys = xs ++ butlast ys
+
 {-@ reflect butlast @-}
 butlast :: [a] -> [a]
 butlast [] = []
@@ -202,10 +207,6 @@ rev :: [a] -> [a]
 rev [] = []
 rev (x:xs) = rev xs ++ [x]
 
-{-@ reflect butlastConcat @-}
-butlastConcat :: [a] -> [a] -> [a]
-butlastConcat xs [] = butlast xs
-butlastConcat xs ys = xs ++ butlast ys
 
 {-@ reflect lastOfTwo @-}
 lastOfTwo :: [NAT] -> [NAT] -> NAT
