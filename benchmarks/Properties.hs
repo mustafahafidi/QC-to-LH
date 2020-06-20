@@ -1012,32 +1012,33 @@ prop_68 n xs
 prop_68_lemma_trans :: NAT -> NAT -> NAT -> Bool
 prop_68_lemma_trans n m d = (n<<=m) ==> (n<<=d)
 |]
-
+-}
 {-======================================================
                    prop_69  (hint: lemma)
 =======================================================-}
+{-@ rewriteWith prop_69_proof [prop_69_pluscommutative_proof] @-} -- here rewriting helps!
 [lhp|genProp|reflect|ple|induction|caseExpand
 prop_69 ::  NAT -> NAT -> Bool
-prop_69 n@(S sn) m@(S sm)
-  = ()
-    -- n <<= (m + n) 
-  ? prop_69_pluscommutative_proof m n
-  -- === sn <<= (sn + m)
-  ? prop_69_pluscommutative_proof sn m
-  ? prop_69_proof sn m
-  -- ***QED
+-- prop_69 n@(S sn) m@(S sm)
+--   = () -- without rewriting:
+--     -- n <<= (m + n) 
+--   -- ? prop_69_pluscommutative_proof m n
+--   -- === sn <<= (sn + m)
+--   -- ? prop_69_pluscommutative_proof sn m
+--   ? prop_69_proof sn m
+--   -- ***QED
 
 -- the property:
 prop_69 n m
   = n <<= (m + n)
 |]
 
-[lhp|genProp|reflect|ple|admit
+[lhp|genProp|inline|ple|admit
 prop_69_pluscommutative :: NAT -> NAT -> Bool
 prop_69_pluscommutative n m = n + m == m + n
 |]
 
--}
+
 {-======================================================
                      prop_70
 =======================================================-}
@@ -1056,6 +1057,7 @@ prop_71 ::  NAT ->  NAT -> [NAT] -> Bool
 prop_71 x y xs
   = ((x == y) == False) ==> (elem x (ins y xs) == elem x xs)
 |]
+
 
 
 {-======================================================
