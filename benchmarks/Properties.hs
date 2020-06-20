@@ -26,6 +26,13 @@ import Prelude hiding (take, drop,
 -- {-@ LIQUID "--exactdc" @-}
 -- {-@ LIQUID "--higherorder" @-}
 {-@ LIQUID "--ple-local" @-}
+
+-- lemma right identity on append
+[lhp|genProp|inline|ple|induction|caseExpand
+rightIdApp :: Eq a => [a] -> Bool
+rightIdApp xs = xs ++ [] == xs
+|]
+--------------------------------------------------
 {-
 {-======================================================
                         prop_01
@@ -864,7 +871,7 @@ prop_58 n xs ys
 
 
 {-======================================================
-                     prop_59
+                     prop_59 (hint: lemma)
 =======================================================-}
 -- {-@ rewriteWith prop_59_proof [rightIdApp_proof] @-} -- rewrite doesn't replace the call ?
 [lhp|genProp|reflect|ple
@@ -878,10 +885,10 @@ prop_59 xs ys
 rightIdApp :: Eq a => [a] -> Bool
 rightIdApp xs = xs ++ [] == xs
 |]
--}
+
 
 {-======================================================
-                      skipped prop_60
+                       prop_60 (hint:caseExpand,induction)
 =======================================================-}
 [lhp|genProp|reflect|ple
 prop_60 ::  [NAT] -> [NAT] -> Bool
@@ -895,17 +902,24 @@ prop_60 xs ys
   = not (null ys) ==> (last (xs ++ ys) == last ys)
 |]
 
-{-
+-}
 {-======================================================
-                      skipped prop_61
+                     prop_61 (hint: lemma, induction)
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+[lhp|genProp|reflect|ple|caseExpand
 prop_61 ::  [NAT] -> [NAT] -> Bool
+prop_61 ls@(x1 : x2 : xs) rs@[]
+  = () ? rightIdApp_proof ls
+
+prop_61 ls@(x1 : x2 : xs) rs
+  = ()? prop_61_proof (x2:xs) rs
+  
+-- the property
 prop_61 xs ys
   = (last (xs ++ ys) == lastOfTwo xs ys)
 |]
 
-
+{-
 {-======================================================
                       skipped prop_62
 =======================================================-}
