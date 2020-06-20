@@ -977,10 +977,10 @@ prop_65 i m =
 --   =  length (filter p xs) <= length xs
 -- |]
 
--}
+
 
 {-======================================================
-                      skipped prop_67
+                     prop_67 (hint: induction)
 =======================================================-}
 [lhp|genProp|reflect|ple
 prop_67 ::  [NAT] -> Bool
@@ -991,17 +991,29 @@ prop_67 xs
   = (length (butlast xs) == length xs - S Z)
 |]
 
-{-
+-}
 {-======================================================
-                      skipped prop_68
+                     prop_68 (hint: lemma)
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+[lhp|genProp|reflect|ple
 prop_68 ::  NAT -> [NAT] -> Bool
+prop_68 n ls@(x:xs) 
+    | n==x = ()
+            ? prop_68_proof n xs
+            ? prop_68_lemma_trans_proof (length (delete n xs)) (length xs) (S (length xs))
+    | otherwise = ()
+            ? prop_68_proof n xs
+            ? prop_68_lemma_trans_proof (length (delete n xs)) (length xs) (S (length xs))
+
 prop_68 n xs
-  = length (delete n xs) <= length xs
+  = length (delete n xs) <<= length xs
 |]
 
-
+[lhp|genProp|reflect|ple|admit
+prop_68_lemma_trans :: NAT -> NAT -> NAT -> Bool
+prop_68_lemma_trans n m d = (n<<=m) ==> (n<<=d)
+|]
+{-
 {-======================================================
                       skipped prop_69
 =======================================================-}
