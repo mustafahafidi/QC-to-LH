@@ -919,7 +919,7 @@ prop_61 xs ys
   = (last (xs ++ ys) == lastOfTwo xs ys)
 |]
 
--}
+
 {-======================================================
                      prop_62 (hint: induction)
 =======================================================-}
@@ -932,17 +932,19 @@ prop_62 xs x
   = not (null xs) ==> (last (x:xs) == last xs)
 |]
 
-{-
+-}
 {-======================================================
-                      skipped prop_63
+                     prop_63 (hint: induction)
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+[lhp|genProp|reflect|ple|caseExpand
 prop_63 ::  NAT -> [NAT] -> Bool
+prop_63 n@(S sn) ls@(x1:x2:xs) = () ? prop_63_proof sn (x2:xs)
+
 prop_63 n xs
-  = (n < length xs) ==> (last (drop n xs) == last xs)
+  = (n << length xs) ==> (last (drop n xs) == last xs)
 |]
 
-
+{-
 {-======================================================
                       skipped prop_64
 =======================================================-}
