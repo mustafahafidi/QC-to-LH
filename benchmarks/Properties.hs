@@ -932,7 +932,7 @@ prop_62 xs x
   = not (null xs) ==> (last (x:xs) == last xs)
 |]
 
--}
+
 {-======================================================
                      prop_63 (hint: induction)
 =======================================================-}
@@ -944,17 +944,21 @@ prop_63 n xs
   = (n << length xs) ==> (last (drop n xs) == last xs)
 |]
 
-{-
+-}
+
 {-======================================================
-                      skipped prop_64
+                     prop_64 (hint: induction)
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+[lhp|genProp|reflect|ple
 prop_64 ::  NAT -> [NAT] -> Bool
+prop_64 n ls@(x1:x2:xs)
+  = () ? prop_64_proof n (x2:xs)
+  
 prop_64 x xs
   = (last (xs ++ [x]) == x)
 |]
 
-
+{-
 {-======================================================
                         prop_65
 =======================================================-}
