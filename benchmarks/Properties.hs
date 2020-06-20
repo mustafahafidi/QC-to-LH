@@ -632,7 +632,7 @@ prop_48 xs
 |]
 
 {-======================================================
-                   prop_49 (hints-caseExpand,lemma,induction)
+                   prop_49 (hint: caseExpand,lemma,induction)
 =======================================================-}
 [lhp|genProp|reflect|ple|caseExpand
 prop_49 ::  [NAT] -> [NAT] -> Bool 
@@ -991,7 +991,6 @@ prop_67 xs
   = (length (butlast xs) == length xs - S Z)
 |]
 
--}
 {-======================================================
                      prop_68 (hint: lemma)
 =======================================================-}
@@ -1013,17 +1012,33 @@ prop_68 n xs
 prop_68_lemma_trans :: NAT -> NAT -> NAT -> Bool
 prop_68_lemma_trans n m d = (n<<=m) ==> (n<<=d)
 |]
-{-
+-}
+
 {-======================================================
-                      skipped prop_69
+                   prop_69  (hint: lemma)
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+[lhp|genProp|reflect|ple|induction|caseExpand
 prop_69 ::  NAT -> NAT -> Bool
+prop_69 n@(S sn) m@(S sm)
+  = ()
+    -- n <<= (m + n) 
+  ? prop_69_pluscommutative_proof m n
+  -- === sn <<= (sn + m)
+  ? prop_69_pluscommutative_proof sn m
+  ? prop_69_proof sn m
+  -- ***QED
+
+-- the property:
 prop_69 n m
-  = n <= (m + n)
+  = n <<= (m + n)
 |]
 
+[lhp|genProp|reflect|ple|admit
+prop_69_pluscommutative :: NAT -> NAT -> Bool
+prop_69_pluscommutative n m = n + m == m + n
+|]
 
+{-
 {-======================================================
                       skipped prop_70
 =======================================================-}
