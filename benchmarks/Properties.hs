@@ -1012,7 +1012,6 @@ prop_68 n xs
 prop_68_lemma_trans :: NAT -> NAT -> NAT -> Bool
 prop_68_lemma_trans n m d = (n<<=m) ==> (n<<=d)
 |]
--}
 
 {-======================================================
                    prop_69  (hint: lemma)
@@ -1038,17 +1037,17 @@ prop_69_pluscommutative :: NAT -> NAT -> Bool
 prop_69_pluscommutative n m = n + m == m + n
 |]
 
-{-
+-}
 {-======================================================
-                      skipped prop_70
+                     prop_70
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+[lhp|genProp|reflect|ple|induction|caseExpand
 prop_70 ::  NAT -> NAT -> Bool
 prop_70 m n
-  = m <= n ==> (m <= S n)
+  = m <<= n ==> (m <<= S n)
 |]
 
-
+{-
 {-======================================================
                       skipped prop_71
 =======================================================-}
