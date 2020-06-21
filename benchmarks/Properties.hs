@@ -1012,7 +1012,7 @@ prop_68 n xs
 prop_68_lemma_trans :: NAT -> NAT -> NAT -> Bool
 prop_68_lemma_trans n m d = (n<<=m) ==> (n<<=d)
 |]
--}
+
 {-======================================================
                    prop_69  (hint: lemma)
 =======================================================-}
@@ -1047,19 +1047,43 @@ prop_70 ::  NAT -> NAT -> Bool
 prop_70 m n
   = m <<= n ==> (m <<= S n)
 |]
+-}
 
-{-
 {-======================================================
-                      skipped prop_71
+                     prop_71 (hint: caseExpand, lemma)
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+[lhp|genProp|reflect|ple|induction|caseExpand
 prop_71 ::  NAT ->  NAT -> [NAT] -> Bool
+prop_71 n y ls@(x:xs) 
+
+  | not(n == y) && not (y << x) 
+              = (((n == y) == False) ==> (elem n (insert y ls) == elem n ls))
+                -- === (elem n (insert y ls) == elem n ls)
+                -- === (elem n (x : (insert y xs)) == elem n (x:xs))
+                    ? prop_71_lemma2_proof n (insert y xs)
+                    ? prop_71_lemma2_proof n ls
+                -- === ((n==x || (elem n (insert y xs)) == (n==x || elem n xs)))
+                -- === (n==x || ((elem n (insert y xs)) == (elem n xs)))
+                    ? (prop_71_proof n y xs)
+                -- ***QED
+  | not(n == y) && (y << x) = trivial
+  | otherwise = () ***QED
+
 prop_71 x y xs
-  = ((x == y) == False) ==> (elem x (ins y xs) == elem x xs)
+  = ((x == y) == False) ==> (elem x (insert y xs) == elem x xs)
+|]
+
+
+[lhp|genProp|reflect|ple|caseExpandP:1
+prop_71_lemma2 :: NAT -> [NAT] -> Bool
+prop_71_lemma2 n ls = case ls of
+                        (x:xs) -> elem n ls == (n==x || elem n xs)
+                        _     -> True
 |]
 
 
 
+{-
 {-======================================================
                       skipped prop_72
 =======================================================-}
