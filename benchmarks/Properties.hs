@@ -1047,7 +1047,7 @@ prop_70 ::  NAT -> NAT -> Bool
 prop_70 m n
   = m <<= n ==> (m <<= S n)
 |]
--}
+
 
 {-======================================================
                      prop_71 (hint: caseExpand, lemma)
@@ -1083,17 +1083,71 @@ prop_71_lemma2 n ls = case ls of
 
 
 
-{-
+
+
 {-======================================================
-                      skipped prop_72
+                     prop_72 (hint: lemma)
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+-- {-@ rewriteWith prop_72_proof [prop_72_lemma_rev_proof] @-}
+-- {-@ rewriteWith prop_72_proof [prop_72_lemma_proof] @-}
+[lhp|genProp|reflect|ple
 prop_72 ::  NAT -> [NAT] -> Bool
+prop_72 i@(Z) ls@(x:xs)
+  = 
+    (rev (drop i ls) == take (length ls - i) (rev ls))
+  -- === (rev ls == take (length ls) (rev ls))
+  -- === (rev xs ++ [x] == take (S (length xs)) (rev xs ++ [x]))
+  -- === (rev (drop i xs) ++ [x] == take (S (length xs)) (rev xs ++ [x]))
+        ? prop_72_proof i xs
+  -- === ((take (length xs) (rev xs)) ++ [x] == take (S (length xs)) (rev xs ++ [x]))
+      ? prop_72_lemma_rev_proof xs
+      ? prop_72_lemma_proof (rev xs) [x]
+  === (take (length [x] + length (rev xs)) (rev xs ++ [x]) == take (S (length xs)) (rev xs ++ [x]))
+      ? ((length [x] + length (rev xs) )
+      === (S Z + length (rev xs) )
+      === (S (Z + length (rev xs)) )
+      === (S (length (rev xs)))
+      )
+  === (take (S (length (rev xs)) ) (rev xs ++ [x]) == take (S (length xs)) (rev xs ++ [x]))
+  ***QED
+
+prop_72 i@(S sn) ls@(x:xs)
+   = (rev (drop i ls) == take (length ls - i) (rev ls))
+  -- === (rev (drop sn xs) == take (length xs - sn) (rev xs ++ [x]))
+        ? prop_72_proof sn xs
+  -- === (take (length xs - sn) (rev xs) == take (length xs - sn) (rev xs ++ [x]))
+      ? prop_72_lemma1_proof (length xs) sn
+      ? prop_72_lemma2_proof (length xs - sn) (rev xs) [x]
+      ? prop_72_lemma_rev_proof xs
+  -- === (take (length xs - sn) (rev xs) == take (length xs - sn) (rev xs ++ [x]))
+  ***QED
+
 prop_72 i xs
   = (rev (drop i xs) == take (length xs - i) (rev xs))
 |]
 
 
+[lhp|genProp|inline|ple|induction|caseExpand|admit
+prop_72_lemma_rev :: [NAT] -> Bool
+prop_72_lemma_rev ls = length (rev ls) == length ls
+|]
+
+[lhp|genProp|inline|ple|induction|caseExpand|admit
+prop_72_lemma :: [NAT] -> [NAT] -> Bool
+prop_72_lemma ls rs = (take (length ls) ls) ++ rs == take (length rs + length ls ) (ls ++ rs)
+|]
+
+[lhp|genProp|reflect|ple|induction|caseExpand|admit
+prop_72_lemma1 :: NAT -> NAT -> Bool
+prop_72_lemma1 m n =  (m - n) <<= m
+|]
+
+[lhp|genProp|reflect|ple|induction|caseExpand|admit
+prop_72_lemma2 :: NAT -> [NAT] -> [NAT] -> Bool
+prop_72_lemma2 n ls rs  = (n <<= length ls) ==> take n ls == take n (ls ++ rs)
+|]
+-}
+{-
 {-======================================================
                       higherorder prop_73
 =======================================================-}
