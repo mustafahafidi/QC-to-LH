@@ -1225,7 +1225,6 @@ prop_76 ::  NAT ->  NAT -> [NAT] -> Bool
 prop_76 n m xs
   = ((n == m) == False) ==> (count n (xs ++ [m]) == count n xs)
 |]
--}
 {-======================================================
                      prop_77 (hint: lemma, caseExpand)
 =======================================================-}
@@ -1281,17 +1280,32 @@ prop_77_lemma1 ls = case ls of
 prop_77_theorem1 :: NAT -> NAT -> Bool
 prop_77_theorem1 n m = not(n <<= m) ==> m << n && m <<= n
 |]
-{-
+
+-}
+
 {-======================================================
-                      skipped prop_78
+                   prop_78 (hint: lemma)
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+[lhp|genProp|reflect|ple
 prop_78 ::  [NAT] -> Bool
+prop_78 ls@(x:xs)
+  = (sorted (sort ls))
+  -- === (sorted (insort x (sort xs)))
+      ? prop_78_lemma_proof x (sort xs)
+  -- === (sorted (sort xs))
+    ? prop_78_proof xs
+
+
 prop_78 xs
   = (sorted (sort xs))
 |]
 
+[lhp|genProp|reflect|ple|admit
+prop_78_lemma :: NAT -> [NAT] -> Bool
+prop_78_lemma n ls = sorted (insort n ls) == sorted ls
+|]
 
+{-
 {-======================================================
                         prop_79
 =======================================================-}
@@ -1373,29 +1387,3 @@ prop_86 x y xs
 
 -----------------}
 
--- {-======================================================
---                     prop_03
--- =======================================================-}
--- {-@ reflect prople @-}
--- prople :: NAT -> NAT -> NAT -> Bool
--- prople n1 n2 n3 = (n1 <= n2) ==> (n1 <= n2 + n3)
--- {-@ prople_proof :: n1:NAT -> n2:NAT -> n3:NAT -> { prople n1 n2 n3 } @-}
--- prople_proof :: NAT -> NAT -> NAT -> Proof
--- prople_proof n1 n2 n3 = ()***Admit
-
--- {-@ reflect prop_03 @-}
--- prop_03 :: NAT -> [NAT] -> [NAT] -> Bool
--- prop_03 n xs ys = ((count n) xs) <= (count n) (xs ++ ys)
--- -- {-@ rewriteWith prop_03_proof [prop_02_proof] @-}
--- {-@ prop_03_proof :: n:NAT -> xs:[NAT] -> ys:[NAT] -> { prop_03 n xs ys } @-}
--- prop_03_proof :: NAT -> [NAT] -> [NAT] -> Proof
--- prop_03_proof n@Z xs ys
---   = (((count n) xs) <= (count n) (xs ++ ys)) 
---       ? prop_02_proof n xs ys
---  === (((count n) xs) <= (count n xs + count n ys))
---       ? prople_proof ((count n) xs) (count n xs) (count n ys)
---   *** QED
--- prop_03_proof n@(S p232) xs ys
---   = (((count n) xs) <= (count n) (xs ++ ys)
---        ? ((prop_03_proof p232) xs) ys)
---       *** Admit
