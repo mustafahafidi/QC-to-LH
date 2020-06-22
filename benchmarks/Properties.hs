@@ -1146,8 +1146,7 @@ prop_72_lemma1 m n =  (m - n) <<= m
 prop_72_lemma2 :: NAT -> [NAT] -> [NAT] -> Bool
 prop_72_lemma2 n ls rs  = (n <<= length ls) ==> take n ls == take n (ls ++ rs)
 |]
--}
-{-
+
 {-======================================================
                       higherorder prop_73
 =======================================================-}
@@ -1159,13 +1158,53 @@ prop_72_lemma2 n ls rs  = (n <<= length ls) ==> take n ls == take n (ls ++ rs)
 
 
 {-======================================================
-                      skipped prop_74
+                     skipped prop_74 (LH stuck)
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+-- {-@ rewriteWith prop_74_proof [prop_74_lemma_rev_proof] @-}
+[lhp|genProp|reflect|ple
 prop_74 ::  NAT -> [NAT] -> Bool
+prop_74 i@Z ls@(x:xs)
+  = (rev (take i ls) == drop (length ls - i) (rev ls))
+  -- === (rev [] == drop (length ls - i) (rev ls))
+  -- === (rev (take i xs) == drop (length ls - i) (rev ls))
+      ? prop_74_proof i xs
+  -- === (drop (length xs) (rev xs) == drop (length ls) (rev xs ++ [x]))
+      ? prop_74_lemma2_proof ls
+      -- ? prop_74_lemma_rev_proof xs
+      -- ? (length xs <<= length ls === True)
+      ? prop_74_lemma1_proof (length xs) xs [x]
+      ? ((length xs <<= length (rev xs)) ==> (drop (length ls) (rev xs ++ [x])
+      == drop (length xs) (rev xs))
+      === True
+        )
+  -- === True
+  ***Admit
+
+prop_74 i@(S sn) ls@(x:xs)
+  = (rev (take i ls) == drop (length ls - i) (rev ls))
+  ***Admit
+
 prop_74 i xs
   = (rev (take i xs) == drop (length xs - i) (rev xs))
 |]
+
+[lhp|genProp|reflect|ple|admit
+prop_74_lemma1 :: NAT -> [NAT] -> [NAT] -> Bool
+prop_74_lemma1 n ls rs  = (n <<= length (rev ls)) ==> drop n (rev ls) == drop n (rev ls ++ rs)
+|]
+
+[lhp|genProp|reflect|ple|admit
+prop_74_lemma2 :: [NAT] -> Bool
+prop_74_lemma2 ls = case ls of
+                      (x:xs) -> length xs <<= length (rev ls)
+                      _ -> True
+|]
+
+
+-- [lhp|genProp|inline|ple|admit
+-- prop_74_lemma_rev :: [NAT] -> Bool
+-- prop_74_lemma_rev ls = length (rev ls) == length ls
+-- |]
 
 
 {-======================================================
@@ -1186,16 +1225,63 @@ prop_76 ::  NAT ->  NAT -> [NAT] -> Bool
 prop_76 n m xs
   = ((n == m) == False) ==> (count n (xs ++ [m]) == count n xs)
 |]
-
+-}
 {-======================================================
-                      skipped prop_77
+                     prop_77 (hint: lemma, caseExpand)
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+[lhp|genProp|reflect|ple
 prop_77 ::  NAT -> [NAT] -> Bool
+prop_77 n ls@([x]) 
+  | sorted ls && not(n<<=x) =
+       sorted (insort n ls)
+      === sorted ([x,n])
+      === x <<= n
+        ? prop_77_theorem1_proof n x
+      
+  | otherwise = trivial 
+     
+prop_77 n ls@(x1:x2:xs)
+  | sorted ls && not(n<<=x1) && not(n<<=x2) = 
+      (sorted ls ==> sorted (insort n ls))
+      -- === sorted (insort n ls)
+      -- === sorted (x1:insort n (x2:xs))
+      -- === sorted (x1:x2:insort n xs)
+      -- === ((x1<<=x2) && sorted (x2:insort n xs))
+      -- === sorted (x2:insort n xs)
+      -- === sorted (insort n (x2:xs))
+          ? prop_77_proof n (x2:xs)
+          ? prop_77_lemma1_proof (x2:xs)
+
+  | sorted ls && not(n<<=x1) && (n<<=x2) = 
+     (sorted ls ==> sorted (insort n ls))
+      -- === sorted (insort n ls)
+      -- === sorted (x1:insort n (x2:xs))
+      -- === sorted (x1:n:x2:xs)
+      -- ===  ((x1 <<= n) && sorted (x2:xs))
+          ? prop_77_lemma1_proof ls
+      -- === (x1 <<= n)
+          ? prop_77_theorem1_proof n x1
+
+  | sorted ls && (n<<=x1) = trivial
+  | otherwise = trivial
+
+-- the property:
 prop_77 x xs
   = sorted xs ==> sorted (insort x xs)
 |]
 
+[lhp|genProp|reflect|ple|admit
+prop_77_lemma1 :: [NAT] -> Bool
+prop_77_lemma1 ls = case ls of
+                        (x:xs) -> sorted ls ==> sorted xs
+                        _      -> True
+|]
+
+[lhp|genProp|reflect|ple|admit
+prop_77_theorem1 :: NAT -> NAT -> Bool
+prop_77_theorem1 n m = not(n <<= m) ==> m << n && m <<= n
+|]
+{-
 {-======================================================
                       skipped prop_78
 =======================================================-}
