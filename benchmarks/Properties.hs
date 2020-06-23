@@ -1474,7 +1474,7 @@ prop_T03 x y = length (x ++ y ) == length (y ) + length x
 
 
 {-======================================================
-                    prop_T04
+                    prop_T04 (hint: lemma)
 =======================================================-}
 {-@ rewriteWith prop_T04_proof [prop_T03_proof, prop_T02_proof, prop_T01_proof] @-}
 [lhp|genProp|reflect|ple|induction|caseExpand
@@ -1483,34 +1483,31 @@ prop_T04 x = length (x ++ x) == double (length x)
 |]
 
 {-======================================================
-                    prop_T05
+                    prop_T05 (hint: lemma)
 =======================================================-}
-[lhp|genProp|reflect|ple
+-- {-@ rewriteWith  prop_T05_proof [prop_T03_proof] @-}
+[lhp|genProp|inline|ple
 prop_T05 :: [a] -> Bool
 prop_T05 ls@(x:xs) = (length (rev ls) == length ls)
-              -- === length (rev xs ++ [x]) == length ls
                   ? prop_T03_proof (rev xs) [x]
               === (length [x] + length (rev xs)  == S (length xs))
-              -- === length (rev xs) + S Z == S (length xs)
-                  -- ? prop_T01_comm_proof (length (rev xs)) (S Z)
               === (S Z  + length (rev xs) == S (length xs))
               === (S (Z  + length (rev xs)) == S (length xs))
               === (S (length (rev xs)) == S (length xs))
-              -- === (S (length (rev xs)) == S (length xs))
-              -- === (S (length (rev xs)) == S (length xs))
                   ? prop_T05_proof xs
-
-
-              ***QED
 prop_T05 x = length (rev x) == length x
 |]
 
 {-======================================================
                     prop_T06
 =======================================================-}
-[lhp|genProp|reflect|ple|admit
+{-@ rewriteWith  prop_T06_proof [prop_T03_proof,prop_T05_proof,prop_T01_comm_proof] @-}
+[lhp|genProp|inline|ple
 prop_T06 :: [a] -> [a] -> Bool
 prop_T06 x y = length (rev (x ++ y )) == length x + length y
+                -- ? prop_T05_proof (x++y)
+                -- ? prop_T03_proof x y
+                -- ? prop_T01_comm_proof (length x) (length y)
 |]
 
 {-
