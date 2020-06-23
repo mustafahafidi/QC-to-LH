@@ -23,8 +23,6 @@ import Prelude hiding (take, drop,
                       )
 
 {-@ LIQUID "--reflection" @-}
--- {-@ LIQUID "--exactdc" @-}
--- {-@ LIQUID "--higherorder" @-}
 {-@ LIQUID "--ple-local" @-}
 {-@ LIQUID "--diff" @-}
 
@@ -154,16 +152,6 @@ prop_11 xs
 |]
 
 
-
-{-======================================================
-                    higherorder prop_12
-=======================================================-}
--- [lhp|genProp|reflect|ple
--- prop_12 :: NAT -> NAT -> Bool
--- prop_12 n f xs
---   = (drop n (map f xs) === map f (drop n xs))
--- |]
-
 {-======================================================
                         prop_13
 =======================================================-}
@@ -172,15 +160,6 @@ prop_13 ::  NAT -> NAT -> [NAT] -> Bool
 prop_13 n x xs
   = (drop (S n) (x : xs) == drop n xs)
 |]
-
-{-======================================================
-                    higherorder prop_14
-=======================================================-}
--- [lhp|genProp|reflect|ple
--- prop_14 :: NAT -> NAT -> Bool
--- prop_14 p xs ys
---   = (filter p (xs ++ ys) === (filter p xs) ++ (filter p ys))
--- |]
 
 
 
@@ -533,15 +512,6 @@ prop_40 xs
 |]
 
 
-{-======================================================
-                      higherorder prop_41
-=======================================================-}
--- [lhp|genProp|reflect|ple|induction|caseExpand|ignore
--- prop_41 ::  NAT -> [NAT] -> Bool
--- prop_41 n f xs
---   = (take n (map f xs) === map f (take n xs))
--- |]
-
 
 {-======================================================
                         prop_42
@@ -551,16 +521,6 @@ prop_42 ::  NAT -> NAT -> [NAT] -> Bool
 prop_42 n x xs
   = (take (S n) (x:xs) == x : (take n xs))
 |]
-
-
-{-======================================================
-                      higherorder prop_43
-=======================================================-}
--- [lhp|genProp|reflect|ple|induction|caseExpand|ignore
--- prop_43 ::  NAT -> [NAT] -> Bool
--- prop_43 p xs
---   = (takeWhile p xs ++ dropWhile p xs === xs)
--- |]
 
 
 {-======================================================
@@ -958,26 +918,22 @@ prop_64 x xs
   = (last (xs ++ [x]) == x)
 |]
 
-
+-}
 {-======================================================
                         prop_65
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+{-@ rewriteWith prop_65_proof [prop_T01_comm_proof] @-}
+[lhp|genProp|reflect|ple|induction|caseExpand
 prop_65 ::  NAT -> NAT -> Bool
-prop_65 i m =
-   i < S (m + i)
+prop_65 i m = i << S (m + i)
 |]
 
-
-{-======================================================
-                      higherorder prop_66
-=======================================================-}
--- [lhp|genProp|reflect|ple|induction|caseExpand|ignore
--- prop_66 ::  NAT -> [NAT] -> Bool
--- prop_66 p xs
---   =  length (filter p xs) <= length xs
+-- [lhp|genProp|reflect|ple
+-- prop_65_theorem :: NAT -> NAT -> Bool
+-- prop_65_theorem n m = n <<
 -- |]
 
+{-
 
 
 {-======================================================
@@ -1148,64 +1104,6 @@ prop_72_lemma2 :: NAT -> [NAT] -> [NAT] -> Bool
 prop_72_lemma2 n ls rs  = (n <<= length ls) ==> take n ls == take n (ls ++ rs)
 |]
 
-{-======================================================
-                      higherorder prop_73
-=======================================================-}
--- [lhp|genProp|reflect|ple|induction|caseExpand|ignore
--- prop_73 ::  NAT -> [NAT] -> Bool
--- prop_73 p xs
---   = (rev (filter p xs) == filter p (rev xs))
--- |]
-
-
-{-======================================================
-                     skipped prop_74 (LH stuck)
-=======================================================-}
--- {-@ rewriteWith prop_74_proof [prop_74_lemma_rev_proof] @-}
-[lhp|genProp|reflect|ple
-prop_74 ::  NAT -> [NAT] -> Bool
-prop_74 i@Z ls@(x:xs)
-  = (rev (take i ls) == drop (length ls - i) (rev ls))
-  -- === (rev [] == drop (length ls - i) (rev ls))
-  -- === (rev (take i xs) == drop (length ls - i) (rev ls))
-      ? prop_74_proof i xs
-  -- === (drop (length xs) (rev xs) == drop (length ls) (rev xs ++ [x]))
-      ? prop_74_lemma2_proof ls
-      -- ? prop_74_lemma_rev_proof xs
-      -- ? (length xs <<= length ls === True)
-      ? prop_74_lemma1_proof (length xs) xs [x]
-      ? ((length xs <<= length (rev xs)) ==> (drop (length ls) (rev xs ++ [x])
-      == drop (length xs) (rev xs))
-      === True
-        )
-  -- === True
-  ***Admit
-
-prop_74 i@(S sn) ls@(x:xs)
-  = (rev (take i ls) == drop (length ls - i) (rev ls))
-  ***Admit
-
-prop_74 i xs
-  = (rev (take i xs) == drop (length xs - i) (rev xs))
-|]
-
-[lhp|genProp|reflect|ple|admit
-prop_74_lemma1 :: NAT -> [NAT] -> [NAT] -> Bool
-prop_74_lemma1 n ls rs  = (n <<= length (rev ls)) ==> drop n (rev ls) == drop n (rev ls ++ rs)
-|]
-
-[lhp|genProp|reflect|ple|admit
-prop_74_lemma2 :: [NAT] -> Bool
-prop_74_lemma2 ls = case ls of
-                      (x:xs) -> length xs <<= length (rev ls)
-                      _ -> True
-|]
-
-
--- [lhp|genProp|inline|ple|admit
--- prop_74_lemma_rev :: [NAT] -> Bool
--- prop_74_lemma_rev ls = length (rev ls) == length ls
--- |]
 
 
 {-======================================================
@@ -1536,37 +1434,3 @@ prop_T07 x y = length (qrev x y) == length x + length y
 prop_T07_lemma :: NAT -> NAT -> Bool
 prop_T07_lemma n m = S n + m == n + S m
 |]
-{-
-{-======================================================
-                    prop_T08
-=======================================================-}
-[lhp|genProp|reflect|ple
-prop_T08 :: NAT -> NAT -> [a] -> Bool
-prop_T08 x y z = drop x (drop y z) == drop y (drop x z)
-|]
-
-{-======================================================
-                    prop_T09
-=======================================================-}
-[lhp|genProp|reflect|ple
-prop_T09 :: NAT -> NAT -> [a] -> NAT -> Bool
-prop_T09 x y z w = drop w (drop x (drop y z)) == drop y (drop x (drop w z))
-|]
-
-{-======================================================
-                    prop_T10
-=======================================================-}
-[lhp|genProp|reflect|ple
-prop_T10 :: [a] -> Bool
-prop_T10 x = rev (rev x) == x
-|]
-
-{-======================================================
-                    prop_T11
-=======================================================-}
-[lhp|genProp|reflect|ple
-prop_T11 :: [a] -> [a] -> Bool
-prop_T11 x y = rev (rev x ++ rev y) == y ++ x
-|]
-
--}
