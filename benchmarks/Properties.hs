@@ -26,6 +26,7 @@ import Prelude hiding (take, drop,
 -- {-@ LIQUID "--exactdc" @-}
 -- {-@ LIQUID "--higherorder" @-}
 {-@ LIQUID "--ple-local" @-}
+-- {-@ LIQUID "--diff" @-}
 
 -- lemma right identity on append
 [lhp|genProp|inline|ple|induction|caseExpand
@@ -1429,7 +1430,7 @@ prop_86 x y xs
 prop_86_theorem :: NAT -> NAT -> Bool
 prop_86_theorem n m = n << m ==> n <<= m && not (n == m)
 |]
-
+-}
 {-======================================================
 -- THEOREMS
 -- https://github.com/tip-org/benchmarks/blob/master/original/prod/Properties.hs
@@ -1438,7 +1439,7 @@ prop_86_theorem n m = n << m ==> n <<= m && not (n == m)
                         prop_T01 (hint: lemma)
 =======================================================-}
 {-@ rewriteWith  prop_T01_proof [prop_T01_comm_proof] @-}
-[lhp|genProp|reflect|ple
+[lhp|genProp|inline|ple
 prop_T01 :: NAT -> Bool
 prop_T01 x@(S sn) = 
   double x == x + x 
@@ -1456,30 +1457,31 @@ prop_T01_comm n m = n+m == m+n
 {-======================================================
                       prop_T02
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand
+[lhp|genProp|inline|ple|induction|caseExpand
 prop_T02 :: [a] -> [a] -> Bool
 prop_T02 x y = length (x ++ y) == length (y ++ x)
 |]
 
--}
+
 
 {-======================================================
                     prop_T03
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand
+[lhp|genProp|inline|ple|induction|caseExpand
 prop_T03 :: [a] -> [a] -> Bool
 prop_T03 x y = length (x ++ y ) == length (y ) + length x
 |]
 
-{-
+
 {-======================================================
                     prop_T04
 =======================================================-}
-[lhp|genProp|reflect|ple
+{-@ rewriteWith prop_T04_proof [prop_T03_proof, prop_T02_proof, prop_T01_proof] @-}
+[lhp|genProp|reflect|ple|induction|caseExpand
 prop_T04 :: [a] -> Bool
 prop_T04 x = length (x ++ x) == double (length x)
 |]
-
+{-
 {-======================================================
                     prop_T05
 =======================================================-}
