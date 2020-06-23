@@ -246,3 +246,9 @@ const v _ = v
 double :: NAT -> NAT
 double Z     = Z
 double (S x) = S (S (double x))
+
+
+{-@ reflect qrev @-}
+qrev :: [a] -> [a] -> [a]
+qrev []     acc = acc
+qrev (x:xs) acc = qrev xs (x:acc)

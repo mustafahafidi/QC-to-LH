@@ -1510,15 +1510,33 @@ prop_T06 x y = length (rev (x ++ y )) == length x + length y
                 -- ? prop_T01_comm_proof (length x) (length y)
 |]
 
-{-
+
 {-======================================================
                     prop_T07
 =======================================================-}
+-- {-@ rewriteWith prop_T07 [prop_T01_comm_proof,prop_T07_lemma_proof]  @-}
 [lhp|genProp|reflect|ple
 prop_T07 :: [a] -> [a] -> Bool
+prop_T07 ls@(x:xs) y = (length (qrev ls y) == length ls + length y)
+                  -- === (length (qrev xs (x:y)) == length ls + length y  )
+                      ? prop_T07_proof xs (x:y)
+                  -- === (length xs + length (x:y) == length ls + length y  )
+                        ? prop_T01_comm_proof (length xs) (length (x:y))
+                  -- === (length (x:y) + length xs == length ls + length y  )
+                  -- === ((S (length y)) + length xs == length ls + length y  )
+                      ? prop_T07_lemma_proof (length y) (length xs)
+                  -- === (length y + S( length xs )== length ls + length y  )
+                  -- === (length y + length (x:xs) == length ls + length y  )
+                      ? prop_T01_comm_proof  (length y) (length ls)
+                
 prop_T07 x y = length (qrev x y) == length x + length y
 |]
 
+[lhp|genProp|inline|ple|induction|caseExpand
+prop_T07_lemma :: NAT -> NAT -> Bool
+prop_T07_lemma n m = S n + m == n + S m
+|]
+{-
 {-======================================================
                     prop_T08
 =======================================================-}
