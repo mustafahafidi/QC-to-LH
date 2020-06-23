@@ -1324,7 +1324,7 @@ prop_80 n xs ys
   = (take n (xs ++ ys) == take n xs ++ take (n - length xs) ys)
 |]
 
--}
+
 {-======================================================
                  prop_81 (hint: lemma)
 =======================================================-}
@@ -1349,7 +1349,7 @@ prop_81_theorem_comm :: NAT -> NAT -> Bool
 prop_81_theorem_comm n m = n+m == m+n
 |]
 
-{-
+
 {-======================================================
                         prop_82
 =======================================================-}
@@ -1377,18 +1377,32 @@ prop_84 xs ys zs
   = (zip xs (ys ++ zs) == zip (take (length ys) xs) ys ++ zip (drop (length ys) xs) zs)
 |]
 
--- One way to prove this is to first show "Nick's lemma":
--- length xs = length ys ==> zip xs ys ++ zip as bs = zip (xs ++ as) (ys ++ bs)
+-}
+
 {-======================================================
-                      skipped prop_85
+                   prop_85 (hint: lemma)
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+-- {-@ rewriteWith prop_85_proof [prop_85_lemma_proof] @-}
+[lhp|genProp|reflect|ple
 prop_85 :: [NAT] -> [NAT] -> Bool
+prop_85 ls@(x:xs) rs@(y:ys) =
+    (zip (rev ls) (rev rs) == rev (zip ls rs))
+  -- === (zip (rev ls) (rev rs) == rev ((x, y) : (zip xs ys)))
+  -- === (zip (rev ls) (rev rs) == rev (zip xs ys) ++ [(x,y)])
+      ? prop_85_proof xs ys
+  -- === (zip (rev ls) (rev rs) == zip (rev xs) (rev ys) ++ [(x,y)])
+  -- === (zip (rev xs ++ [x]) (rev ys ++ [y]) == zip (rev xs) (rev ys) ++ [(x,y)])
+    ? prop_85_lemma_proof (rev xs) (rev ys) [x] [y]
+
 prop_85 xs ys
   = (length xs == length ys) ==> (zip (rev xs) (rev ys) == rev (zip xs ys))
 |]
 
-
+[lhp|genProp|inline|ple|admit
+prop_85_lemma :: [NAT] -> [NAT] -> [NAT] -> [NAT] ->Bool
+prop_85_lemma ls rs xs ys = zip (ls ++ xs) (rs ++ ys) == zip ls rs ++ zip xs ys
+|]
+{-
 {-======================================================
                       skipped prop_86
 =======================================================-}
