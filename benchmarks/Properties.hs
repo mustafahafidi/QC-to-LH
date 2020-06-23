@@ -1281,7 +1281,6 @@ prop_77_theorem1 :: NAT -> NAT -> Bool
 prop_77_theorem1 n m = not(n <<= m) ==> m << n && m <<= n
 |]
 
--}
 
 {-======================================================
                    prop_78 (hint: lemma)
@@ -1305,7 +1304,7 @@ prop_78_lemma :: NAT -> [NAT] -> Bool
 prop_78_lemma n ls = sorted (insort n ls) == sorted ls
 |]
 
-{-
+
 {-======================================================
                         prop_79
 =======================================================-}
@@ -1325,17 +1324,32 @@ prop_80 n xs ys
   = (take n (xs ++ ys) == take n xs ++ take (n - length xs) ys)
 |]
 
-
+-}
 {-======================================================
-                      skipped prop_81
+                 prop_81 (hint: lemma)
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+[lhp|genProp|reflect|ple
 prop_81 ::  NAT ->  NAT -> [NAT] -> Bool
+prop_81 n@Z m@(S sm) ls@(x:xs)
+  = prop_81_proof n sm xs
+
+prop_81 n@(S sn) m@(S sm) ls@(x:xs)
+  = (take n (drop m ls) == drop m (take (n + m) ls))
+  -- === (take n (drop sm xs) == drop sm (take (n + sm ) xs))
+      ? prop_81_theorem_comm_proof m n
+      ? prop_81_theorem_comm_proof sm n
+      ? prop_81_proof n sm xs
+
 prop_81 n m xs 
   = (take n (drop m xs) == drop m (take (n + m) xs))
 |]
 
+[lhp|genProp|reflect|ple|induction|caseExpand
+prop_81_theorem_comm :: NAT -> NAT -> Bool
+prop_81_theorem_comm n m = n+m == m+n
+|]
 
+{-
 {-======================================================
                         prop_82
 =======================================================-}
