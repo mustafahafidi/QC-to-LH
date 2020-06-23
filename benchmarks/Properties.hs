@@ -1,6 +1,6 @@
 {-# LANGUAGE  QuasiQuotes #-}
 {-# LANGUAGE  TemplateHaskell #-}
-{-# OPTIONS_GHC -dth-dec-file #-}
+-- {-# OPTIONS_GHC -dth-dec-file #-}
 
 {-======================================================
 Porting TIP problems from  
@@ -26,7 +26,7 @@ import Prelude hiding (take, drop,
 -- {-@ LIQUID "--exactdc" @-}
 -- {-@ LIQUID "--higherorder" @-}
 {-@ LIQUID "--ple-local" @-}
--- {-@ LIQUID "--diff" @-}
+{-@ LIQUID "--diff" @-}
 
 -- lemma right identity on append
 [lhp|genProp|inline|ple|induction|caseExpand
@@ -1481,23 +1481,39 @@ prop_T03 x y = length (x ++ y ) == length (y ) + length x
 prop_T04 :: [a] -> Bool
 prop_T04 x = length (x ++ x) == double (length x)
 |]
-{-
+
 {-======================================================
                     prop_T05
 =======================================================-}
 [lhp|genProp|reflect|ple
 prop_T05 :: [a] -> Bool
+prop_T05 ls@(x:xs) = (length (rev ls) == length ls)
+              -- === length (rev xs ++ [x]) == length ls
+                  ? prop_T03_proof (rev xs) [x]
+              === (length [x] + length (rev xs)  == S (length xs))
+              -- === length (rev xs) + S Z == S (length xs)
+                  -- ? prop_T01_comm_proof (length (rev xs)) (S Z)
+              === (S Z  + length (rev xs) == S (length xs))
+              === (S (Z  + length (rev xs)) == S (length xs))
+              === (S (length (rev xs)) == S (length xs))
+              -- === (S (length (rev xs)) == S (length xs))
+              -- === (S (length (rev xs)) == S (length xs))
+                  ? prop_T05_proof xs
+
+
+              ***QED
 prop_T05 x = length (rev x) == length x
 |]
 
 {-======================================================
                     prop_T06
 =======================================================-}
-[lhp|genProp|reflect|ple
+[lhp|genProp|reflect|ple|admit
 prop_T06 :: [a] -> [a] -> Bool
 prop_T06 x y = length (rev (x ++ y )) == length x + length y
 |]
 
+{-
 {-======================================================
                     prop_T07
 =======================================================-}
