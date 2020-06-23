@@ -1377,7 +1377,7 @@ prop_84 xs ys zs
   = (zip xs (ys ++ zs) == zip (take (length ys) xs) ys ++ zip (drop (length ys) xs) zs)
 |]
 
--}
+
 
 {-======================================================
                    prop_85 (hint: lemma)
@@ -1402,16 +1402,31 @@ prop_85 xs ys
 prop_85_lemma :: [NAT] -> [NAT] -> [NAT] -> [NAT] ->Bool
 prop_85_lemma ls rs xs ys = zip (ls ++ xs) (rs ++ ys) == zip ls rs ++ zip xs ys
 |]
-{-
+-}
+
 {-======================================================
-                      skipped prop_86
+                     prop_86 (hint: caseExpand, lemma)
 =======================================================-}
-[lhp|genProp|reflect|ple|induction|caseExpand|ignore
+[lhp|genProp|reflect|ple
 prop_86 :: NAT -> NAT -> [NAT] -> Bool
+prop_86 n y ls@[]
+  = () ? prop_86_theorem_proof n y
+
+prop_86 n y ls@(x:xs)
+  | y<<x = () ? prop_86_theorem_proof n y
+  
+  | n==x = trivial
+
+ | otherwise = (elem n (insert y ls) == elem n ls)
+            === (elem n (x: insert y xs) == elem n ls)
+            === (elem n (insert y xs) == elem n xs)
+              ? prop_86_proof n y xs
 prop_86 x y xs
-  = x < y ==> (elem x (ins y xs) == elem x xs)
+  = x << y ==> (elem x (insert y xs) == elem x xs)
 |]
 
-
------------------}
+[lhp|genProp|reflect|ple|admit
+prop_86_theorem :: NAT -> NAT -> Bool
+prop_86_theorem n m = n << m ==> n <<= m && not (n == m)
+|]
 
