@@ -1435,7 +1435,7 @@ prop_86_theorem n m = n << m ==> n <<= m && not (n == m)
 -- https://github.com/tip-org/benchmarks/blob/master/original/prod/Properties.hs
 =======================================================-}
 {-======================================================
-                        prop_T01
+                        prop_T01 (hint: lemma)
 =======================================================-}
 {-@ rewriteWith  prop_T01_proof [prop_T01_comm_proof] @-}
 [lhp|genProp|reflect|ple
@@ -1453,7 +1453,6 @@ prop_T01_comm :: NAT -> NAT -> Bool
 prop_T01_comm n m = n+m == m+n
 |]
 
--}
 {-======================================================
                       prop_T02
 =======================================================-}
@@ -1462,16 +1461,17 @@ prop_T02 :: [a] -> [a] -> Bool
 prop_T02 x y = length (x ++ y) == length (y ++ x)
 |]
 
+-}
 
-{-
 {-======================================================
                     prop_T03
 =======================================================-}
-[lhp|genProp|reflect|ple
+[lhp|genProp|reflect|ple|induction|caseExpand
 prop_T03 :: [a] -> [a] -> Bool
 prop_T03 x y = length (x ++ y ) == length (y ) + length x
 |]
 
+{-
 {-======================================================
                     prop_T04
 =======================================================-}
