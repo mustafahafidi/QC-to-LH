@@ -239,3 +239,10 @@ mirror (Node l x r) = Node (mirror r) x (mirror l)
 {-@ reflect const @-}
 const :: a -> b -> a
 const v _ = v
+
+
+
+{-@ reflect double @-}
+double :: NAT -> NAT
+double Z     = Z
+double (S x) = S (S (double x))

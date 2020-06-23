@@ -1402,7 +1402,7 @@ prop_85 xs ys
 prop_85_lemma :: [NAT] -> [NAT] -> [NAT] -> [NAT] ->Bool
 prop_85_lemma ls rs xs ys = zip (ls ++ xs) (rs ++ ys) == zip ls rs ++ zip xs ys
 |]
--}
+
 
 {-======================================================
                      prop_86 (hint: caseExpand, lemma)
@@ -1429,4 +1429,111 @@ prop_86 x y xs
 prop_86_theorem :: NAT -> NAT -> Bool
 prop_86_theorem n m = n << m ==> n <<= m && not (n == m)
 |]
+-}
 
+{-======================================================
+-- THEOREMS
+-- https://github.com/tip-org/benchmarks/blob/master/original/prod/Properties.hs
+=======================================================-}
+{-======================================================
+                        prop_T01
+=======================================================-}
+{-@ rewriteWith  prop_T01_proof [prop_T01_comm_proof] @-}
+[lhp|genProp|reflect|ple
+prop_T01 :: NAT -> Bool
+prop_T01 x@(S sn) = 
+  double x == x + x 
+  --           === S (S double sn) ==  S (sn + x)
+  --           ==! S (S double sn) ==  S (S (sn + sn))
+                ? prop_T01_proof sn
+prop_T01 x = double x == x + x
+|]
+
+[lhp|genProp|inline|ple|induction|caseExpand
+prop_T01_comm :: NAT -> NAT -> Bool
+prop_T01_comm n m = n+m == m+n
+|]
+
+{-
+{-======================================================
+                      prop_T02
+=======================================================-}
+[lhp|genProp|reflect|ple|induction|caseExpand
+prop_T02 :: [a] -> [a] -> Bool
+prop_T02 x y = length (x ++ y) == length (y ++ x)
+|]
+
+
+{-======================================================
+                    prop_T03
+=======================================================-}
+[lhp|genProp|reflect|ple
+prop_T03 :: [a] -> [a] -> Bool
+prop_T03 x y = length (x ++ y ) == length (y ) + length x
+|]
+
+{-======================================================
+                    prop_T04
+=======================================================-}
+[lhp|genProp|reflect|ple
+prop_T04 :: [a] -> Bool
+prop_T04 x = length (x ++ x) == double (length x)
+|]
+
+{-======================================================
+                    prop_T05
+=======================================================-}
+[lhp|genProp|reflect|ple
+prop_T05 :: [a] -> Bool
+prop_T05 x = length (rev x) == length x
+|]
+
+{-======================================================
+                    prop_T06
+=======================================================-}
+[lhp|genProp|reflect|ple
+prop_T06 :: [a] -> [a] -> Bool
+prop_T06 x y = length (rev (x ++ y )) == length x + length y
+|]
+
+{-======================================================
+                    prop_T07
+=======================================================-}
+[lhp|genProp|reflect|ple
+prop_T07 :: [a] -> [a] -> Bool
+prop_T07 x y = length (qrev x y) == length x + length y
+|]
+
+{-======================================================
+                    prop_T08
+=======================================================-}
+[lhp|genProp|reflect|ple
+prop_T08 :: NAT -> NAT -> [a] -> Bool
+prop_T08 x y z = drop x (drop y z) == drop y (drop x z)
+|]
+
+{-======================================================
+                    prop_T09
+=======================================================-}
+[lhp|genProp|reflect|ple
+prop_T09 :: NAT -> NAT -> [a] -> NAT -> Bool
+prop_T09 x y z w = drop w (drop x (drop y z)) == drop y (drop x (drop w z))
+|]
+
+{-======================================================
+                    prop_T10
+=======================================================-}
+[lhp|genProp|reflect|ple
+prop_T10 :: [a] -> Bool
+prop_T10 x = rev (rev x) == x
+|]
+
+{-======================================================
+                    prop_T11
+=======================================================-}
+[lhp|genProp|reflect|ple
+prop_T11 :: [a] -> [a] -> Bool
+prop_T11 x y = rev (rev x ++ rev y) == y ++ x
+|]
+
+-}
