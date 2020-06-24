@@ -39,6 +39,7 @@ data Option = Ple
             | Inline 
             | Ignore 
             | GenProp 
+            | NoSpec 
             | Debug 
             | Admit
             | CaseExpand
@@ -58,18 +59,19 @@ proof_suffix = "_proof"
 -- |A QuasiQuoter that takes the declaration of a 
 -- property and generates a proof obligation for it
 -- It accepts the following options:
---   - `ple` generates the ple annotation for *the proof*
---   - `ignore` generates the `ignore` annotation for *the proof*
---   - `inline` generates the `inline` annotation for *the property*, works only in conjunction of `genProp`
---   - `reflect` generates the `reflect` annotation for *the property*, works only in conjunction of `genProp`
---   - `genProp` generates the propery along with the proof
---   - `admit` to wrap the proof with "***Admit" instead of "***QED"
---   - `debug` generates a warning containing the generated refinement types & LH annotations
---   - `runLiquid` runs LH locally and silently on the proof (useful with IDE integration)
---   - `runLiquidW` runs LH locally to the proof and shows the result as a warning
---   - `caseExpand` enables case expansion/pattern matching on ADTs
---   - `caseExpandP:{n}` limits the case expansion to the first {n} parameters
---   - `inductionP:{n}` limits the inductive calls to the first {n} parameters
+-- - `ple` generates the LH `ple` annotation for _the proof_
+-- - `ignore` generates the LH `ignore` annotation for _the proof_
+-- - `genProp` generates the propery along with the proof
+-- - `inline` generates the `inline` annotation for _the property_, works only in conjunction of `genProp`
+-- - `reflect` generates the `reflect` annotation for _the property_, works only in conjunction of `genProp`
+-- - `noSpec` generates only the proof body and lets the user specify the refinement type of the proof
+-- - `admit` to wrap the proof body with "**_Admit" instead of "_**QED"
+-- - `debug` generates a warning containing the generated refinement types & LH annotations
+-- - `caseExpand` enables case expansion/pattern matching on ADTs
+-- - `caseExpandP:{n}` limits the case expansion to the first {n} parameters
+-- - `inductionP:{n}` limits the inductive calls to the first {n} parameters
+-- - (very experimental) `runLiquid` runs LH locally and silently on the proof (useful with IDE integration)
+-- - (very experimental) `runLiquidW` runs LH locally to the proof and shows the result as a warning
 --------------------------------------------------------------
 lhp :: QuasiQuoter
 lhp = QuasiQuoter {
@@ -125,14 +127,14 @@ generateProofFromDecl decs opts =
             let proofName = show nm ++proof_suffix
             
             -- check that it returns a boolean
-            case isSuffixOf "Bool" (pprint sd) of
+            case (isSuffixOf "Bool" (pprint sd) || isSuffixOf "Proof" (pprint sd) || isSuffixOf "()" (pprint sd)) of
                 False -> failWith "The given declaration must return a boolean to be transformed to a LiquidHaskell proof"
                 True  -> do
                 -- Handle options
                     optionDecs <- generateFromOptions (show nm) parsedDecls opts 
 
                 -- Transform signature to LH annotation
-                    lhDec <- transformSignature opts sd bd
+                    lhDec <- if (elem NoSpec opts) then return [SigD (mkName proofName) sigType] else transformSignature opts sd bd
 
                 -- Generate the body
                     finalBody <- transformBody opts sd bd

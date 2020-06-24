@@ -72,6 +72,20 @@ property x ls = SOMETHING
 
 You can use the symbols in any other Haskell code, so you're not limited only to LH. For instance, the property can be run with QuickCheck.
 
+### Custom refinement type
+
+If you want `lhp` to not generate the refinement type for your proof, you can use the option `noSpec`:
+
+```haskell
+{-@ rightId_proof:: xs:[a] -> { SOMETHING } @-}
+[lhp|noSpec|ple
+rightId :: [a] -> Proof
+rightId xs     = ()
+|]
+```
+
+Note that using `noSpec` you are no longer required to report the boolean property inside `lhp`, but you can just provide the proof body/hints.
+
 ## Proof Automation
 
 ### Automatic Case Splitting
@@ -304,6 +318,31 @@ assocP_proof xs@(p686 : p687) ys zs
        ? ((assocP_proof p687) ys) zs)
       *** QED
 ```
+
+## Options Reference
+
+The `lhp` QuasiQuoter takes the declaration of a
+property and generates a proof obligation for it.
+
+It accepts the following options:
+
+- `ple` generates the LH `ple` annotation for _the proof_
+- `ignore` generates the LH `ignore` annotation for _the proof_
+- `genProp` generates the propery along with the proof
+- `inline` generates the `inline` annotation for _the property_, works only in conjunction of `genProp`
+- `reflect` generates the `reflect` annotation for _the property_, works only in conjunction of `genProp`
+- `noSpec` generates only the proof body and lets the user specify the refinement type of the proof
+
+- `admit` to wrap the proof body with "**_Admit" instead of "_**QED"
+- `debug` generates a warning containing the generated refinement types & LH annotations
+- `caseExpand` enables case expansion/pattern matching on ADTs
+- `caseExpandP:{n}` limits the case expansion to the first {n} parameters
+- `inductionP:{n}` limits the inductive calls to the first {n} parameters
+
+- (very experimental) `runLiquid` runs LH locally and silently on the proof (useful with IDE integration)
+- (very experimental) `runLiquidW` runs LH locally to the proof and shows the result as a warning
+
+---
 
 ## Debugging
 

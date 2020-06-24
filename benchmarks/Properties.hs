@@ -1,6 +1,6 @@
 {-# LANGUAGE  QuasiQuotes #-}
 {-# LANGUAGE  TemplateHaskell #-}
--- {-# OPTIONS_GHC -dth-dec-file #-}
+{-# OPTIONS_GHC -dth-dec-file #-}
 
 {-======================================================
 Porting TIP problems from  
@@ -12,7 +12,6 @@ To improve verification time, run this file in LH by pieces (leave uncommented o
 
 import Language.Haskell.Liquid.ProofCombinators
 import Language.Haskell.Liquid.ProofGenerator
-import Language.Haskell.Liquid.UX.QuasiQuoter
 import Lib.Definitions
 
 import Prelude hiding (take, drop,
@@ -385,7 +384,7 @@ prop_29 x xs
 |]
 
 {-======================================================
-                     prop_30
+                     prop_30 (hint: caseExpand)
 =======================================================-}
 [lhp|genProp|reflect|ple
 prop_30 ::  NAT -> [NAT] -> Bool
@@ -466,7 +465,7 @@ prop_36 xs
 
 
 {-======================================================
-                     prop_37
+                     prop_37 (hint: caseExpand)
 =======================================================-}
 [lhp|genProp|reflect|ple
 prop_37 ::  NAT -> [NAT] -> Bool
@@ -708,7 +707,7 @@ prop_53_lemma_count n xs ys = count n (xs ++ ys) == count n (ys ++ xs)
 
 
 {-======================================================
-                     prop_54
+                     prop_54 (hint: lemma)
 =======================================================-}
 -- {-@ rewriteWith prop_54 [prop_54_lemma_dist_proof] @-} -- not a replacement of the ? call
 [lhp|genProp|reflect|ple
@@ -919,19 +918,15 @@ prop_64 x xs
 |]
 
 -}
+
 {-======================================================
-                        prop_65
+                        prop_65 (hint: lemma)
 =======================================================-}
 {-@ rewriteWith prop_65_proof [prop_T01_comm_proof] @-}
 [lhp|genProp|reflect|ple|induction|caseExpand
 prop_65 ::  NAT -> NAT -> Bool
 prop_65 i m = i << S (m + i)
 |]
-
--- [lhp|genProp|reflect|ple
--- prop_65_theorem :: NAT -> NAT -> Bool
--- prop_65_theorem n m = n <<
--- |]
 
 {-
 
@@ -1375,7 +1370,7 @@ prop_T03 x y = length (x ++ y ) == length (y ) + length x
                     prop_T04 (hint: lemma)
 =======================================================-}
 {-@ rewriteWith prop_T04_proof [prop_T03_proof, prop_T02_proof, prop_T01_proof] @-}
-[lhp|genProp|reflect|ple|induction|caseExpand
+[lhp|genProp|reflect|ple
 prop_T04 :: [a] -> Bool
 prop_T04 x = length (x ++ x) == double (length x)
 |]
@@ -1397,7 +1392,7 @@ prop_T05 x = length (rev x) == length x
 |]
 
 {-======================================================
-                    prop_T06
+                    prop_T06 (hint: lemma)
 =======================================================-}
 {-@ rewriteWith  prop_T06_proof [prop_T03_proof,prop_T05_proof,prop_T01_comm_proof] @-}
 [lhp|genProp|inline|ple
@@ -1410,7 +1405,7 @@ prop_T06 x y = length (rev (x ++ y )) == length x + length y
 
 
 {-======================================================
-                    prop_T07
+                    prop_T07 (hint: lemma)
 =======================================================-}
 -- {-@ rewriteWith prop_T07 [prop_T01_comm_proof,prop_T07_lemma_proof]  @-}
 [lhp|genProp|reflect|ple
@@ -1434,3 +1429,7 @@ prop_T07 x y = length (qrev x y) == length x + length y
 prop_T07_lemma :: NAT -> NAT -> Bool
 prop_T07_lemma n m = S n + m == n + S m
 |]
+
+
+
+
