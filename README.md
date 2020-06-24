@@ -77,8 +77,8 @@ You can use the symbols in any other Haskell code, so you're not limited only to
 If you want `lhp` to not generate the refinement type for your proof, you can use the option `noSpec`:
 
 ```haskell
-{-@ rightId_proof:: xs:[a] -> { SOMETHING } @-}
-[lhp|noSpec|ple
+{-@ rightId_proof:: xs:[a] -> { xs ++ [] = xs } @-}
+[lhp|noSpec|ple|induction|caseExpand
 rightId :: [a] -> Proof
 rightId xs     = ()
 |]
