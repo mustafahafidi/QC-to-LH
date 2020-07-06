@@ -1,0 +1,47 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 05bbfa993083bf26bbbbf188d2237884070cb369329b2dca7542e0c4ac3e470d
+
+name:           liquidhaskell-proof-generator
+version:        0.1.0.0
+category:       Testing
+author:         Mustafa Hafidi
+maintainer:     mustafahafidi96@gmail.com
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+
+library
+  exposed-modules:
+      Language.Haskell.Liquid.ProofGenerator
+  other-modules:
+      CList_Proofs
+      Heap_Proofs
+      Lib.CL.CircularList
+      Lib.CL.QuickCheck
+      Lib.LH.Prelude
+      Lib.QC.Heap
+      Test.CList_Proofs
+      Test.Heap_Proofs
+      Test.Tactics
+      Paths_liquidhaskell_proof_generator
+  hs-source-dirs:
+      src
+  other-extensions: ScopedTypeVariables TemplateHaskell QuasiQuotes PatternGuards
+  ghc-options: -W -threaded -fdefer-typed-holes
+  build-depends:
+      QuickCheck
+    , base >=4.9.1.0 && <5
+    , haskell-src-meta
+    , liquid-fixpoint >=0.8.0.0
+    , liquidhaskell
+    , process
+    , strings
+    , template-haskell
+  default-language: Haskell2010
