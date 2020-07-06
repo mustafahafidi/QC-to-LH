@@ -1,12 +1,15 @@
 {-# LANGUAGE  QuasiQuotes #-}
 {-# LANGUAGE  TemplateHaskell #-}
-{-# OPTIONS_GHC -dth-dec-file #-}
+-- {-# OPTIONS_GHC -dth-dec-file #-}
 
 {-======================================================
 Porting TIP problems from  
 https://github.com/tip-org/benchmarks/blob/master/original/isaplanner/Properties.hs
 
 To improve verification time, run this file in LH by pieces (leave uncommented only the proof you want to check)
+
+
+
 ======================================================-}
 
 
@@ -23,7 +26,7 @@ import Prelude hiding (take, drop,
 
 {-@ LIQUID "--reflection" @-}
 {-@ LIQUID "--ple-local" @-}
-{-@ LIQUID "--diff" @-}
+-- {-@ LIQUID "--diff" @-}
 
 -- lemma right identity on append
 [lhp|genProp|inline|ple|induction|caseExpand
@@ -50,7 +53,7 @@ prop_02  n xs ys = (count n xs + count n ys == count n (xs ++ ys))
 
 
 {-======================================================
-                   prop_03 (hint-lemma)
+                   prop_03 (hint: lemma) (cvc4-ok, non-simp-ind)
 =======================================================-}
 {-@ rewriteWith prop_03_proof [lemma_count_proof] @-}
 [lhp|genProp|reflect|ple
@@ -165,12 +168,8 @@ prop_13 n x xs
 
 
 {-======================================================
-                   prop_15 (hint-lemma)
+                   prop_15 (hint: lemma) (cvc4-ok, non-simp-ind)
 =======================================================-}
--- rewrite error: Could not generate any rewrites from equality. Likely causes: 
---  - There are free (uninstantiatable) variables on both sides of the equality
---  - The rewrite would diverge
-
 -- {-@ rewriteWith prop_15_proof [lemma_insert_proof] @-}
 [lhp|genProp|reflect|ple
 prop_15 ::  NAT -> [NAT] -> Bool
@@ -233,7 +232,7 @@ prop_19 n xs
 
 
 {-======================================================
-                     prop_20 (hint-lemma-induction)
+                     prop_20 (hint: lemma, induction) (cvc4-ok, non-simp-ind)
 =======================================================-}
 -- {-@ rewriteWith prop_20_proof [prop_20_lemma_proof] @-}
 [lhp|genProp|inline|ple|caseExpand
@@ -369,7 +368,7 @@ prop_28 x xs
 
 
 {-======================================================
-                     prop_29 (hint-induction)
+                     prop_29 (hint: induction) (cvc4-ok, non-simp-ind)
 =======================================================-}
 [lhp|genProp|reflect|ple
 prop_29 ::  NAT -> [NAT] -> Bool
@@ -384,7 +383,7 @@ prop_29 x xs
 |]
 
 {-======================================================
-                     prop_30 (hint: caseExpand)
+                     prop_30 (hint: caseExpand) (non-simp-ind)
 =======================================================-}
 [lhp|genProp|reflect|ple
 prop_30 ::  NAT -> [NAT] -> Bool
@@ -465,7 +464,7 @@ prop_36 xs
 
 
 {-======================================================
-                     prop_37 (hint: caseExpand)
+                     prop_37 (hint: caseExpand) (cvc4-ok, non-simp-ind)
 =======================================================-}
 [lhp|genProp|reflect|ple
 prop_37 ::  NAT -> [NAT] -> Bool
@@ -550,9 +549,9 @@ prop_46 xs
   = (zip ([]::[NAT]) xs == [])
 |]
 
-
+-}
 {-======================================================
-                     prop_47
+                     prop_47 (hint: lemma)
 =======================================================-}
 {-@ rewriteWith prop_47_proof [prop_47_lemma_proof]  @-}
 [lhp|genProp|reflect|ple
@@ -571,9 +570,9 @@ prop_47_lemma :: NAT -> NAT -> Bool
 prop_47_lemma n m = max n m == max m n
 |]
 
-
+{-
 {-======================================================
-                     prop_48 (hint-caseExpand)
+                     prop_48 (hint: caseExpand) (cvc4-ok, non-simp-ind)
 =======================================================-}
 [lhp|genProp|reflect|ple
 prop_48 ::  [NAT] -> Bool
@@ -592,7 +591,7 @@ prop_48 xs
 |]
 
 {-======================================================
-                   prop_49 (hint: caseExpand,lemma,induction)
+                   prop_49 (hint: caseExpand,lemma)
 =======================================================-}
 [lhp|genProp|reflect|ple|caseExpand
 prop_49 ::  [NAT] -> [NAT] -> Bool 
@@ -631,7 +630,7 @@ rightIdApp xs = xs ++ [] == xs
 
 
 {-======================================================
-                  prop_50 (hints: caseExpand, induction)
+                  prop_50 (hint: caseExpand, induction) (non-simp-ind)
 =======================================================-}
 [lhp|genProp|reflect|ple|caseExpand
 prop_50 ::  [NAT] -> Bool
@@ -831,7 +830,7 @@ prop_58 n xs ys
 
 
 {-======================================================
-                     prop_59 (hint: lemma)
+                     prop_59 (hint: lemma) (cvc4-ok, non-simp-ind)
 =======================================================-}
 -- {-@ rewriteWith prop_59_proof [rightIdApp_proof] @-} -- rewrite doesn't replace the call ?
 [lhp|genProp|reflect|ple
@@ -848,7 +847,7 @@ rightIdApp xs = xs ++ [] == xs
 
 
 {-======================================================
-                       prop_60 (hint:caseExpand,induction)
+                       prop_60 (hint:caseExpand,induction) (non-simp-ind)
 =======================================================-}
 [lhp|genProp|reflect|ple
 prop_60 ::  [NAT] -> [NAT] -> Bool
@@ -864,7 +863,7 @@ prop_60 xs ys
 
 
 {-======================================================
-                     prop_61 (hint: lemma, induction)
+                     prop_61 (hint: lemma)
 =======================================================-}
 [lhp|genProp|reflect|ple|caseExpand
 prop_61 ::  [NAT] -> [NAT] -> Bool
@@ -881,7 +880,7 @@ prop_61 xs ys
 
 
 {-======================================================
-                     prop_62 (hint: induction)
+                     prop_62 (hint: induction) (cvc4-ok, non-simp-ind)
 =======================================================-}
 [lhp|genProp|reflect|ple
 prop_62 ::  [NAT] -> NAT -> Bool
@@ -894,7 +893,7 @@ prop_62 xs x
 
 
 {-======================================================
-                     prop_63 (hint: induction)
+                     prop_63 (hint: induction) (non-simp-ind)
 =======================================================-}
 [lhp|genProp|reflect|ple|caseExpand
 prop_63 ::  NAT -> [NAT] -> Bool
@@ -906,7 +905,7 @@ prop_63 n xs
 
 
 {-======================================================
-                     prop_64 (hint: induction)
+                     prop_64 (hint: induction) (non-simp-ind)
 =======================================================-}
 [lhp|genProp|reflect|ple
 prop_64 ::  NAT -> [NAT] -> Bool
@@ -917,7 +916,7 @@ prop_64 x xs
   = (last (xs ++ [x]) == x)
 |]
 
--}
+
 
 {-======================================================
                         prop_65 (hint: lemma)
@@ -928,11 +927,11 @@ prop_65 ::  NAT -> NAT -> Bool
 prop_65 i m = i << S (m + i)
 |]
 
-{-
+
 
 
 {-======================================================
-                     prop_67 (hint: induction)
+                     prop_67 (hint: induction) (non-simp-ind)
 =======================================================-}
 [lhp|genProp|reflect|ple
 prop_67 ::  [NAT] -> Bool
@@ -1002,7 +1001,7 @@ prop_70 m n
 
 
 {-======================================================
-                     prop_71 (hint: caseExpand, lemma)
+                     prop_71 (hint: caseExpand, lemma) (cvc4-ok, non-simp-ind)
 =======================================================-}
 [lhp|genProp|reflect|ple|induction|caseExpand
 prop_71 ::  NAT ->  NAT -> [NAT] -> Bool
@@ -1323,7 +1322,7 @@ prop_86 x y xs
 prop_86_theorem :: NAT -> NAT -> Bool
 prop_86_theorem n m = n << m ==> n <<= m && not (n == m)
 |]
--}
+
 {-======================================================
 -- THEOREMS
 -- https://github.com/tip-org/benchmarks/blob/master/original/prod/Properties.hs
@@ -1430,6 +1429,10 @@ prop_T07_lemma :: NAT -> NAT -> Bool
 prop_T07_lemma n m = S n + m == n + S m
 |]
 
+-}
 
 
-
+[lhp|genProp|reflect|ple|induction|caseExpandP:1
+prop_06 :: NAT -> NAT -> Bool
+prop_06 n m = (n - (n + m) == Z)
+|]
