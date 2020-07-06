@@ -3,7 +3,7 @@ module Lib.CL.QuickCheck where
 
 import Test.QuickCheck
 import Lib.CL.CircularList 
-import CList_Proofs ((=*=))
+-- import CList_Proofs ((=*=))
 import Prelude  hiding (length, 
                         (++), 
                         reverse, 
@@ -14,6 +14,7 @@ import Prelude  hiding (length,
                         )
 import Lib.LH.Prelude 
 {-@ LIQUID "--reflection"    @-}
+{-@ LIQUID "--no-adt"    @-}
 
 
 prop_empty :: Bool

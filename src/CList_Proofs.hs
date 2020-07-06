@@ -10,7 +10,7 @@
 module CList_Proofs where
 import Lib.LH.Prelude
 -- import Lib.LH.Equational
-import Lib.CL.CircularList
+import Lib.CL.CircularList hiding ((=*=))
 import Language.Haskell.Liquid.ProofCombinators
 import Prelude hiding (length, null, splitAt, (++), reverse,any)
 
