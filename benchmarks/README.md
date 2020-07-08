@@ -5,5 +5,7 @@
 2. Needed induction help: `prop.*(hint: caseExpand *\)|(hint:.*induction.*)|(hint.*non-simp-ind))`
 
 3. Needed lemma help: `(hint:.*lemma(?!.*induction)(?!.*non-simp-ind))`
+
    Equality lemma: `(hint:.*lemma(?!.*induction)(?!.*non-simp-ind).*\n.*\n.*rewrite)`
+   
    Failed rewriting: `(hint:.*lemma(?!.*induction)(?!.*non-simp-ind).*\n.*\n--.*rewrite)`
