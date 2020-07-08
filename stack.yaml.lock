@@ -6,36 +6,30 @@
 packages:
 - completed:
     subdir: ./liquid-fixpoint
-    cabal-file:
-      size: 7169
-      sha256: a9f1205a61626cc3073e6c97b9d08342bfa1b933edd44360c08b275b805742be
     name: liquid-fixpoint
     version: 0.8.0.2
     git: https://github.com/zgrannan/liquidhaskell.git
     pantry-tree:
-      size: 19397
-      sha256: b2f9fd69aeb9c54929c0d9218bab282f9e3c24d2daa9a73371b441f43a631f3c
-    commit: e75022dbfbde553c8fdde258dab4964cfde666ab
+      size: 19477
+      sha256: 13a8dc698ebe0971b2271c29e9bd21f279cdcf696687ce664964e2f8e288e724
+    commit: d4823bb4d08d2626967ee3864f1a27fd2ed6e125
   original:
     subdir: ./liquid-fixpoint
     git: https://github.com/zgrannan/liquidhaskell.git
-    commit: e75022dbfbde553c8fdde258dab4964cfde666ab
+    commit: d4823bb4d08d2626967ee3864f1a27fd2ed6e125
 - completed:
     subdir: .
-    cabal-file:
-      size: 13155
-      sha256: 7070235a50a4908b77cd4da00163adc37fe40a7245ebab75f669ac37940ad123
     name: liquidhaskell
     version: 0.8.6.0
     git: https://github.com/zgrannan/liquidhaskell.git
     pantry-tree:
-      size: 258055
-      sha256: 75f59fb8fa64b5d29a26ddac8e24771895af0590444c5d34c084c7b1326cdf8a
-    commit: e75022dbfbde553c8fdde258dab4964cfde666ab
+      size: 258151
+      sha256: 54e782652c00521ba404540e6f302068ca55ccf55fda29b7649d4e0762ada59d
+    commit: d4823bb4d08d2626967ee3864f1a27fd2ed6e125
   original:
     subdir: .
     git: https://github.com/zgrannan/liquidhaskell.git
-    commit: e75022dbfbde553c8fdde258dab4964cfde666ab
+    commit: d4823bb4d08d2626967ee3864f1a27fd2ed6e125
 - completed:
     hackage: tasty-rerun-1.1.14@sha256:ba9c19a281535bea566e1044bc02c36ef17abcb310af4b6a149ec11780c7ce35,3083
     pantry-tree:
@@ -94,9 +88,6 @@ packages:
     hackage: aeson-1.4.7.1
 - completed:
     subdir: optics-core
-    cabal-file:
-      size: 4481
-      sha256: 5ef54e29886b22220d98e899877053a6d007d74146582243b2aed1f6aff1c6d3
     name: optics-core
     version: '0.2'
     git: https://github.com/well-typed/optics.git
@@ -110,9 +101,6 @@ packages:
     commit: 0a4940cc927df3f50151692282f8b148bf326886
 - completed:
     subdir: optics-th
-    cabal-file:
-      size: 1941
-      sha256: 3ed5f59070dd410e8f6471f5b37ca6f9b9f73b6b1f5e42941f48a16a292b2472
     name: optics-th
     version: '0.2'
     git: https://github.com/well-typed/optics.git

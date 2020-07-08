@@ -38,7 +38,7 @@ packages:
 #
 extra-deps:
   - git: https://github.com/zgrannan/liquidhaskell.git
-    commit: e75022dbfbde553c8fdde258dab4964cfde666ab
+    commit: d4823bb4d08d2626967ee3864f1a27fd2ed6e125
     subdirs:
       - ./liquid-fixpoint
       - "."
