@@ -26,7 +26,7 @@ import Prelude hiding (take, drop,
 
 {-@ LIQUID "--reflection" @-}
 {-@ LIQUID "--ple-local" @-}
--- {-@ LIQUID "--diff" @-}
+{-@ LIQUID "--max-rw-ordering-constraints=0" @-}
 
 -- lemma right identity on append
 [lhp|genProp|inline|ple|induction|caseExpand
@@ -703,12 +703,12 @@ prop_53_lemma n x xs = count n (insort x xs) == count n (x:xs)
 prop_53_lemma_count :: NAT -> [NAT] -> [NAT] -> Bool
 prop_53_lemma_count n xs ys = count n (xs ++ ys) == count n (ys ++ xs)
 |]
-
+-}
 
 {-======================================================
                      prop_54 (hint: lemma)
 =======================================================-}
--- {-@ rewriteWith prop_54 [prop_54_lemma_dist_proof] @-} -- not a replacement of the ? call
+-- {-@ rewriteWith prop_54 [prop_54_lemma_dist_proof] @-}  rechecked
 [lhp|genProp|reflect|ple
 prop_54 ::  NAT -> NAT -> Bool
 prop_54 n@(S sn) m@(Z) = ()
@@ -723,12 +723,14 @@ prop_54 n@(S sn) m@(S sm) = ()
 prop_54 n m
   = ((m + n) - n == m)
 |]
+
 [lhp|genProp|reflect|ple|admit
 prop_54_lemma :: NAT -> NAT -> Bool
 prop_54_lemma n m = case m of
                       Z -> True
                       S sm -> (n + m) == S (n + sm)
 |]  
+
 [lhp|genProp|inline|ple|admit
 prop_54_lemma_dist :: NAT -> NAT -> Bool
 prop_54_lemma_dist n m = S (n - m) == S n - m
@@ -763,7 +765,7 @@ prop_54_lemma_dist n m = S (n - m) == S n - m
 -- prop_54_proof n m = (((m + n) - n == m)) *** QED
 
 
-
+{-
 
 
 {-======================================================
@@ -1039,8 +1041,7 @@ prop_71_lemma2 n ls = case ls of
 {-======================================================
                      prop_72 (hint: lemma)
 =======================================================-}
--- {-@ rewriteWith prop_72_proof [prop_72_lemma_rev_proof] @-}
--- {-@ rewriteWith prop_72_proof [prop_72_lemma_proof] @-}
+-- {-@ rewriteWith prop_72_proof [prop_72_lemma_rev_proof, prop_72_lemma_proof] @-} rechecked
 [lhp|genProp|reflect|ple
 prop_72 ::  NAT -> [NAT] -> Bool
 prop_72 i@(Z) ls@(x:xs)
@@ -1272,10 +1273,11 @@ prop_84 xs ys zs
 
 
 
+
 {-======================================================
                    prop_85 (hint: lemma)
 =======================================================-}
--- {-@ rewriteWith prop_85_proof [prop_85_lemma_proof] @-}
+-- {-@ rewriteWith prop_85_proof [prop_85_lemma_proof] @-} rechecked
 [lhp|genProp|reflect|ple
 prop_85 :: [NAT] -> [NAT] -> Bool
 prop_85 ls@(x:xs) rs@(y:ys) =
@@ -1331,13 +1333,8 @@ prop_86_theorem n m = n << m ==> n <<= m && not (n == m)
                         prop_T01 (hint: lemma)
 =======================================================-}
 {-@ rewriteWith  prop_T01_proof [prop_T01_comm_proof] @-}
-[lhp|genProp|inline|ple
+[lhp|genProp|inline|ple|induction|caseExpand
 prop_T01 :: NAT -> Bool
-prop_T01 x@(S sn) = 
-  double x == x + x 
-  --           === S (S double sn) ==  S (sn + x)
-  --           ==! S (S double sn) ==  S (S (sn + sn))
-                ? prop_T01_proof sn
 prop_T01 x = double x == x + x
 |]
 
@@ -1361,7 +1358,7 @@ prop_T02 x y = length (x ++ y) == length (y ++ x)
 =======================================================-}
 [lhp|genProp|inline|ple|induction|caseExpand
 prop_T03 :: [a] -> [a] -> Bool
-prop_T03 x y = length (x ++ y ) == length (y ) + length x
+prop_T03 x y = length (x ++ y ) == length (y) + length x
 |]
 
 
@@ -1374,18 +1371,16 @@ prop_T04 :: [a] -> Bool
 prop_T04 x = length (x ++ x) == double (length x)
 |]
 
+
 {-======================================================
                     prop_T05 (hint: lemma)
 =======================================================-}
--- {-@ rewriteWith  prop_T05_proof [prop_T03_proof] @-}
+{-@ rewriteWith  prop_T05_proof [prop_T03_proof] @-}
 [lhp|genProp|inline|ple
 prop_T05 :: [a] -> Bool
 prop_T05 ls@(x:xs) = (length (rev ls) == length ls)
-                  ? prop_T03_proof (rev xs) [x]
               === (length [x] + length (rev xs)  == S (length xs))
-              === (S Z  + length (rev xs) == S (length xs))
               === (S (Z  + length (rev xs)) == S (length xs))
-              === (S (length (rev xs)) == S (length xs))
                   ? prop_T05_proof xs
 prop_T05 x = length (rev x) == length x
 |]
@@ -1406,7 +1401,7 @@ prop_T06 x y = length (rev (x ++ y )) == length x + length y
 {-======================================================
                     prop_T07 (hint: lemma)
 =======================================================-}
--- {-@ rewriteWith prop_T07 [prop_T01_comm_proof,prop_T07_lemma_proof]  @-}
+-- {-@ rewriteWith prop_T07 [prop_T01_comm_proof,prop_T07_lemma_proof]  @-} rechecked
 [lhp|genProp|reflect|ple
 prop_T07 :: [a] -> [a] -> Bool
 prop_T07 ls@(x:xs) y = (length (qrev ls y) == length ls + length y)
@@ -1424,15 +1419,10 @@ prop_T07 ls@(x:xs) y = (length (qrev ls y) == length ls + length y)
 prop_T07 x y = length (qrev x y) == length x + length y
 |]
 
+
 [lhp|genProp|inline|ple|induction|caseExpand
 prop_T07_lemma :: NAT -> NAT -> Bool
 prop_T07_lemma n m = S n + m == n + S m
 |]
 
 -}
-
-
-[lhp|genProp|reflect|ple|induction|caseExpandP:1
-prop_06 :: NAT -> NAT -> Bool
-prop_06 n m = (n - (n + m) == Z)
-|]
