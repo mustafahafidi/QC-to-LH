@@ -1,10 +1,11 @@
 ## Proof Generator for LiquidHaskell
 
 This project aims to facilitate the migration/conversion of QuickCheck properties to LiquidHaskell proofs, by automating the translation process of QuickCheck tests to LiquidHaskell formal proof obligations with **heuristics/tactics for proof automation**.
-
 It can also be used as a mini proof assistant to help the overall experience and reduce the manual work in LiquidHaskell proofs.
 
-## Usage
+The usage of this package with the `rewriting` feature in LiquidHaskell could potentially make your proofs highly automated. More information on this work can be found in the paper [REST: REwriting in SmT solvers](https://github.com/zgrannan/rest/) and [in this thesis work](https://github.com/mustafahafidi/qc-to-lh/#).
+
+## Basic Usage
 
 This repository provides the `lhp` QuasiQuoter that generates boilerplate code to write proofs in liquidhaskell, and possibly tries to help in proving them.
 Take this as an example:
@@ -152,9 +153,9 @@ assocP_proof xs@[] ys zs = ...
 assocP_proof xs@(_ : _) ys zs =...
 ```
 
-## Exhaustive Induction
+## Semi-Exhaustive Induction
 
-The tool implements a heuristic to automatically generate induction hypotheses for your proofs. It generates all possible inductive hypotheses on your recursive (well defined) parameters. This heuristic works only when you use the automatic case expansion, otherwise the proof generator wouldn't be sure that you'd have a base case for your proof (thus that it terminates).
+The tool implements a tactic to automatically generate induction hypotheses for your proofs. It generates a set of direct inductive hypotheses on the recursive (well defined) parameters. This heuristic works only when you use the automatic case expansion, otherwise the proof generator wouldn't be sure that you'd have a base case for each inductive case in your proof structure.
 
 Suppose you want to prove the following property:
 
@@ -259,7 +260,7 @@ assocP_proof xs@(p068 : p069) ys@(p070 : p071) zs@(p072 : p073)
       *** QED
 ```
 
-To avoid this explosion, you can use the option `inductionP:1` where `1` means that you want the induction to be generated only on the first parameter of the proof. That will cut all the excess and reduce the verification time.
+To avoid this explosion, you can use the option `inductionP:1` where `1` means that you want the induction to be generated only on the first parameter of the proof. That will cut all the other inductive hypotheses and reduce the verification time.
 Thus, for the case above, you would have an inductive call only for the cases where the first parameter `xs` is non-empty (thus 4). The following is safe:
 
 ```haskell
@@ -299,7 +300,7 @@ assocP_proof xs@(p068 : p069) ys@(p070 : p071) zs@(p072 : p073)
       *** QED
 ```
 
-Alternatively, you are flexible to limit the case expansion and let the induction follow:
+However, the case expansion on all parameters is also unnecessary for this proof; hence, you are flexible to limit it (and let the induction follow):
 
 ```haskell
 [lhp|genProp|reflect|ple|induction|caseExpandP:1
@@ -319,7 +320,15 @@ assocP_proof xs@(p686 : p687) ys zs
       *** QED
 ```
 
-## Options Reference
+
+## Conclusion
+In conclusion, when you have an inductive problem, use the options `induction|caseExpand` to attempt proving it by structural induction. If it verifies, limit case expansion to reduce verification time further.
+
+
+# Use with Rewriting
+This proof generator can help automating your proofs further when combined with the `rewriting` feature recently added in LiquidHaskell. Examples on combined usage can be found in the benchmarks under /benchmark. The combination of the two features are described in detail in our [paper here](https://github.com/zgrannan/rest/blob/master/REST-POPL21.pdf).
+
+# Options Reference
 
 The `lhp` QuasiQuoter takes the declaration of a
 property and generates a proof obligation for it.
@@ -404,7 +413,6 @@ In `package.json` are provided some other commands that run liquidhaskell with `
 
 # TODO:
 
-- [..] Benchmark `lhp`
 - [..] Support for higher order properties (arrows as arguments)
 - [..] An option to select which proofs to generate in a module (and ignore the rest)
 - [..] Consider support for case expansion in sub terms (for example the type [[a]])
