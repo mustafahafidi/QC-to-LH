@@ -6,6 +6,6 @@
 
 3. Needed lemma help: `(hint:.*lemma(?!.*induction)(?!.*non-simp-ind))`
 
-   Equality lemma: `(hint:.*lemma(?!.*induction)(?!.*non-simp-ind).*\n.*\n.*rewrite)`
+   Possible use of rewriting (equality lemmata): `(hint:.*lemma(?!.*induction)(?!.*non-simp-ind).*\n.*\n.*rewrite)`
    
    Failed rewriting: `(hint:.*lemma(?!.*induction)(?!.*non-simp-ind).*\n.*\n--.*rewrite)`
