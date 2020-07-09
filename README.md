@@ -28,7 +28,7 @@ property_proof x ls = SOMETHING
 
 Where `SOMETHING` is a predicate over `x` and `ls`.
 
-To avoid issues with LH parsing your property, you may want to extract the property (`SOMETHING`) to an external function and have the refined type to include only a function application. To do that you can use the option `genProp` to extract the property in a second function, and `reflect` to lift it to the LH type system:
+To avoid issues with LH parsing your property or to be able to execute the property at runtime, you may want to extract the property (`SOMETHING`) to an external function and have the refined type to include only a function application. To do that you can use the option `genProp` to extract the property in a second function, and `reflect` to lift it to the LH type system:
 
 ```haskell
 [lhp|genProp|reflect
