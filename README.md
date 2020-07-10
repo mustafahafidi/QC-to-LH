@@ -345,6 +345,7 @@ It accepts the following options:
 - `admit` to wrap the proof body with "**_Admit" instead of "_**QED"
 - `debug` generates a warning containing the generated refinement types & LH annotations
 - `caseExpand` enables case expansion/pattern matching on ADTs
+- `induction` enables structural induction on the parameters
 - `caseExpandP:{n}` limits the case expansion to the first {n} parameters
 - `inductionP:{n}` limits the inductive calls to the first {n} parameters
 
