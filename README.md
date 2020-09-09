@@ -28,7 +28,7 @@ property_proof x ls = SOMETHING
 
 Where `SOMETHING` is a predicate over `x` and `ls`.
 
-To avoid issues with LH parsing your property, you may want to extract the property (`SOMETHING`) to an external function and have the refined type to include only a function application. To do that you can use the option `genProp` to extract the property in a second function, and `reflect` to lift it to the LH type system:
+To avoid issues with LH parsing your property or to be able to execute the property at runtime, you may want to extract the property (`SOMETHING`) to an external function and have the refined type to include only a function application. To do that you can use the option `genProp` to extract the property in a second function, and `reflect` to lift it to the LH type system:
 
 ```haskell
 [lhp|genProp|reflect
@@ -345,6 +345,7 @@ It accepts the following options:
 - `admit` to wrap the proof body with "**_Admit" instead of "_**QED"
 - `debug` generates a warning containing the generated refinement types & LH annotations
 - `caseExpand` enables case expansion/pattern matching on ADTs
+- `induction` enables structural induction on the parameters
 - `caseExpandP:{n}` limits the case expansion to the first {n} parameters
 - `inductionP:{n}` limits the inductive calls to the first {n} parameters
 
