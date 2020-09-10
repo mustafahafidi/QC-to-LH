@@ -1,0 +1,937 @@
+prop_01
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_01 : (take n xs ++ drop n xs) = xs"
+
+Zeno output at "isa/Zeno.thy".
+prop_02
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_02 : (count n xs + count n ys) = count n ((xs ++ ys))"
+
+Zeno output at "isa/Zeno.thy".
+prop_03
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_03 : (count n xs <<= count n ((xs ++ ys))) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_04
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_04 : S (count n xs) = count n ((n : xs))"
+
+Zeno output at "isa/Zeno.thy".
+prop_05
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... None found.
+
+Could neither prove nor disprove: 
+"AddCommuteZeno.prop_05 : 
+case (n == x) of
+  False -> True
+  True -> (S (count n xs) == count n ((x : xs))) = True"
+prop_06
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_06 : ((n - (n + m)) == Z) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_07
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_07 : (((n + m) - n) == m) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_08
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_08 : (((k + m) - (k + n)) == (m - n)) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_09
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... None found.
+
+Could neither prove nor disprove: 
+"AddCommuteZeno.prop_09 : (((i - j) - k) == (i - (j + k))) = True"
+prop_10
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_10 : ((m - m) == Z) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_11
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_11 : drop Z xs = xs"
+
+Zeno output at "isa/Zeno.thy".
+prop_13
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_13 : drop (S n) ((x : xs)) = drop n xs"
+
+Zeno output at "isa/Zeno.thy".
+prop_15
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_15 : length (insert n ls) = S (length ls)"
+
+Zeno output at "isa/Zeno.thy".
+prop_16
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... None found.
+
+Could neither prove nor disprove: 
+"AddCommuteZeno.prop_16 : 
+case ((
+      case $fEq[] (D:Eq ==) of
+        D:Eq _uc -> _uc) xs []) of
+  False -> True
+  True -> (last ((x : xs)) == x) = True"
+prop_17
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_17 : 
+case (n <<= Z) of
+  False -> 
+    case (n == Z) of
+      False -> True
+      True -> False
+  True -> (n == Z) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_18
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_18 : (i << S ((i + m))) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_19
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_19 : (length (drop n xs) == (length xs - n)) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_20
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_20 : (length (sort xs) == length xs) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_21
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_21 : (n <<= (n + m)) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_22
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_22 : (max (max a1 b) c == max a1 (max b c)) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_23
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_23 : (max a1 b == max b a1) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_24
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_24 : 
+case (max a1 b == a1) of
+  False -> 
+    case (b <<= a1) of
+      False -> True
+      True -> False
+  True -> (b <<= a1) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_25
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_25 : 
+case (max a1 b == b) of
+  False -> 
+    case (a1 <<= b) of
+      False -> True
+      True -> False
+  True -> (a1 <<= b) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_26
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... None found.
+
+Could neither prove nor disprove: 
+"AddCommuteZeno.prop_26 : 
+case elem x xs of
+  False -> True
+  True -> elem x ((xs ++ ys)) = True"
+prop_27
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... prop_28
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_28 : elem x ((xs ++ [x])) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_29
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_29 : elem x (ins1 x xs) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_30
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_30 : elem x (insert x xs) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_31
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_31 : (min (min a1 b) c == min a1 (min b c)) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_32
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_32 : (min a1 b == min b a1) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_33
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_33 : 
+case (min a1 b == a1) of
+  False -> 
+    case (a1 <<= b) of
+      False -> True
+      True -> False
+  True -> (a1 <<= b) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_34
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_34 : 
+case (min a1 b == b) of
+  False -> 
+    case (b <<= a1) of
+      False -> True
+      True -> False
+  True -> (b <<= a1) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_35
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+No properties found.
+prop_36
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+No properties found.
+prop_37
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_37 : 
+case elem x (delete x xs) of
+  False -> True
+  True -> False = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_38
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_38 : (count n ((xs ++ [n])) == S (count n xs)) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_39
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_39 : ((count n ([x]) + count n xs) == count n ((x : xs))) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_40
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+No properties found.
+prop_42
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+No properties found.
+prop_44
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_44 : zip ((x : xs)) ys = 
+case ys of
+  [] -> []
+  : y ys -> ((x, y) : zip xs ys)"
+
+Zeno output at "isa/Zeno.thy".
+prop_45
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_45 : zip ((x : xs)) ((y : ys)) = ((x, y) : zip xs ys)"
+
+Zeno output at "isa/Zeno.thy".
+prop_46
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_46 : zip [] xs = []"
+
+Zeno output at "isa/Zeno.thy".
+prop_47
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... None found.
+
+Could neither prove nor disprove: 
+"AddCommuteZeno.prop_47 : (height (mirror a1) == height a1) = True"
+prop_48
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... prop_49
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+No properties found.
+prop_50
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+No properties found.
+prop_51
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+No properties found.
+prop_52
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_52 : (count n xs == count n (rev xs)) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_53
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... None found.
+
+Could neither prove nor disprove: 
+"AddCommuteZeno.prop_53 : (count n xs == count n (sort xs)) = True"
+prop_54
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_54 : (((m + n) - n) == m) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_55
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+No properties found.
+prop_56
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+No properties found.
+prop_57
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+No properties found.
+prop_58
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_58 : drop n (zip xs ys) = zip (drop n xs) (drop n ys)"
+
+Zeno output at "isa/Zeno.thy".
+prop_59
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... None found.
+
+Could neither prove nor disprove: 
+"AddCommuteZeno.prop_59 : 
+case ((
+      case $fEq[] (D:Eq ==) of
+        D:Eq _uc -> _uc) ys []) of
+  False -> True
+  True -> (last ((xs ++ ys)) == last xs) = True"
+prop_60
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_60 : 
+case ys of
+  [] -> True
+  : ipv ipv1 -> (last ((xs ++ ys)) == last ys) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_61
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... None found.
+
+Could neither prove nor disprove: 
+"AddCommuteZeno.prop_61 : == (last ((xs ++ ys))) (
+  case ys of
+    [] -> last xs
+    : ipv ipv1 -> last ys) = True"
+prop_62
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_62 : 
+case xs of
+  [] -> True
+  : ipv ipv1 -> (last ((x : xs)) == last xs) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_63
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... None found.
+
+Could neither prove nor disprove: 
+"AddCommuteZeno.prop_63 : 
+case (n << length xs) of
+  False -> True
+  True -> (last (drop n xs) == last xs) = True"
+prop_64
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_64 : (last ((xs ++ [x])) == x) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_65
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_65 : (i << S ((m + i))) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_67
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_67 : (length (butlast xs) == (length xs - S Z)) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_68
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_68 : (length (delete n xs) <<= length xs) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_69
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_69 : (n <<= (m + n)) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_70
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_70 : 
+case (m <<= n) of
+  False -> True
+  True -> (m <<= S n) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_71
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... prop_72
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+No properties found.
+prop_75
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... None found.
+
+Could neither prove nor disprove: 
+"AddCommuteZeno.prop_75 : ((count n xs + count n ([m])) == count n ((m : xs))) = True"
+prop_76
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... None found.
+
+Could neither prove nor disprove: 
+"AddCommuteZeno.prop_76 : 
+case (
+  case (n == m) of
+    False -> True
+    True -> False) of
+  False -> True
+  True -> (count n ((xs ++ [m])) == count n xs) = True"
+prop_77
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... None found.
+
+Could neither prove nor disprove: 
+"AddCommuteZeno.prop_77 : 
+case sorted xs of
+  False -> True
+  True -> sorted (insort x xs) = True"
+prop_78
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_78 : sorted (sort xs) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_79
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_79 : (((S m - n) - S k) == ((m - n) - k)) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_80
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+No properties found.
+prop_81
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+No properties found.
+prop_82
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_82 : take n (zip xs ys) = zip (take n xs) (take n ys)"
+
+Zeno output at "isa/Zeno.thy".
+prop_83
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... prop_84
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_84 : zip xs ((ys ++ zs)) = (zip (take (length ys) xs) ys ++ zip (drop (length ys) xs) zs)"
+
+Zeno output at "isa/Zeno.thy".
+prop_85
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... None found.
+
+Could neither prove nor disprove: 
+"AddCommuteZeno.prop_85 : zip (rev xs) (rev ys) = rev (zip xs ys) :- length xs = length ys"
+prop_86
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... prop_T01
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... None found.
+
+Could neither prove nor disprove: 
+"AddCommuteZeno.prop_T01 : (double x == (x + x)) = True"
+prop_T02
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_T02 : (length ((x ++ y)) == length ((y ++ x))) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_T03
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_T03 : (length ((x ++ y)) == (length y + length x)) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_T04
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... None found.
+
+Could neither prove nor disprove: 
+"AddCommuteZeno.prop_T04 : (length ((x ++ x)) == double (length x)) = True"
+prop_T05
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_T05 : (length (rev x) == length x) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_T06
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... 
+Proved "AddCommuteZeno.prop_T06 : (length (rev ((x ++ y))) == (length x + length y)) = True"
+
+Zeno output at "isa/Zeno.thy".
+prop_T07
+Zeno 0.2 - An automated theorem prover for Haskell programs.
+Developed at Imperial College London by William Sonnex, Sophia Drossopoulou and Susan Eisenbach.
+http://www.haskell.org/haskellwiki/Zeno
+
+Searching for counter-examples... None found.
+
+Searching for proofs... None found.
+
+Could neither prove nor disprove: 
+"AddCommuteZeno.prop_T07 : (length (qrev x y) == (length x + length y)) = True"
