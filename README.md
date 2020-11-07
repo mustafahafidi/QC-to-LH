@@ -3,7 +3,7 @@
 This project aims to facilitate the migration/conversion of QuickCheck properties to LiquidHaskell proofs, by automating the translation process of QuickCheck tests to LiquidHaskell formal proof obligations with **heuristics/tactics for proof automation**.
 It can also be used as a mini proof assistant to help the overall experience and reduce the manual work in LiquidHaskell proofs.
 
-The usage of this package with the `rewriting` feature in LiquidHaskell could potentially make your proofs highly automated. More information on this work can be found in the paper [REST: REwriting in SmT solvers](https://github.com/zgrannan/rest/) and [in this thesis work](https://github.com/mustafahafidi/qc-to-lh/#).
+The usage of this package with the `rewriting` feature in LiquidHaskell could potentially make your proofs highly automated. More information on this work can be found in the paper [REST: REwriting in SmT solvers](https://github.com/zgrannan/rest/) and [in this thesis work](http://oa.upm.es/63616/1/TFM_MUSTAFA_HAFIDI.pdf).
 
 ## Basic Usage
 
